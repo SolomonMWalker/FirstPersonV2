@@ -1,0 +1,50 @@
+[gd_scene format=3 uid="uid://24fvrsk85j16"]
+
+[ext_resource type="Script" uid="uid://c3um8q22nk7ch" path="res://PlayerController.cs" id="1_player"]
+[ext_resource type="Script" path="res://GameManager.cs" id="2_gamemgr"]
+[ext_resource type="Material" path="res://checker_material.tres" id="3_checker"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_gojnm"]
+sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+ground_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+
+[sub_resource type="Sky" id="Sky_1c2mv"]
+sky_material = SubResource("ProceduralSkyMaterial_gojnm")
+
+[sub_resource type="Environment" id="Environment_f7g2b"]
+background_mode = 2
+sky = SubResource("Sky_1c2mv")
+glow_enabled = true
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_6cejb"]
+
+[node name="LevelSkeleton" type="Node" unique_id=24507664]
+
+[node name="Managers" type="Node" parent="." unique_id=607727740]
+
+[node name="GameManager" type="Node" parent="Managers" unique_id=880660696]
+script = ExtResource("2_gamemgr")
+
+[node name="EnvAndLighting" type="Node" parent="." unique_id=575912973]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="EnvAndLighting" unique_id=666746491]
+environment = SubResource("Environment_f7g2b")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="EnvAndLighting" unique_id=121450765]
+transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
+shadow_enabled = true
+
+[node name="CSGBox3D" type="CSGBox3D" parent="." unique_id=1876626995]
+transform = Transform3D(9.3, 0, 0, 0, 1, 0, 0, 0, 9.35, 0, -0.5, 0)
+use_collision = true
+material = ExtResource("3_checker")
+
+[node name="CharacterBody3D" type="CharacterBody3D" parent="." unique_id=811290216]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+script = ExtResource("1_player")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBody3D" unique_id=1416489306]
+shape = SubResource("CapsuleShape3D_6cejb")
+
+[node name="Camera3D" type="Camera3D" parent="CharacterBody3D" unique_id=28509902]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
