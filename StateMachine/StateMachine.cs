@@ -39,6 +39,10 @@ public partial class StateMachine : Node
     {
         base._Ready();
 
+        // Mirrors CompoundState.DefaultState: fall back to the first State child, so a machine
+        // built in a scene needs no node-path export to wire itself up.
+        RootState ??= GetChildren().OfType<State>().FirstOrDefault();
+
         if (RootState is null)
         {
             throw new Exception("No Root state present as a child of state machine");

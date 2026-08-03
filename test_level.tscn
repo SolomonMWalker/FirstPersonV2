@@ -1,8 +1,16 @@
 [gd_scene format=3 uid="uid://24fvrsk85j16"]
 
 [ext_resource type="Script" uid="uid://c3um8q22nk7ch" path="res://PlayerController.cs" id="1_player"]
-[ext_resource type="Script" path="res://GameManager.cs" id="2_gamemgr"]
+[ext_resource type="Script" uid="uid://cev8f37yhaveb" path="res://GameManager.cs" id="2_gamemgr"]
 [ext_resource type="Material" path="res://checker_material.tres" id="3_checker"]
+[ext_resource type="Script" uid="uid://qv6hl8f2ylh2" path="res://ClamberController.cs" id="4_clamber"]
+[ext_resource type="Script" path="res://StateMachine/StateMachine.cs" id="5_sm"]
+[ext_resource type="Script" path="res://StateMachine/CompoundState.cs" id="6_compound"]
+[ext_resource type="Script" path="res://PlayerStates/LocomotingState.cs" id="7_locomoting"]
+[ext_resource type="Script" path="res://PlayerStates/GroundedState.cs" id="8_grounded"]
+[ext_resource type="Script" path="res://PlayerStates/InAirState.cs" id="9_inair"]
+[ext_resource type="Script" path="res://PlayerStates/WalkingState.cs" id="10_walking"]
+[ext_resource type="Script" path="res://PlayerStates/ClamberingState.cs" id="11_clambering"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_gojnm"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -39,9 +47,44 @@ transform = Transform3D(9.3, 0, 0, 0, 1, 0, 0, 0, 9.35, 0, -0.5, 0)
 use_collision = true
 material = ExtResource("3_checker")
 
+[node name="CSGBox3D2" type="CSGBox3D" parent="." unique_id=1551242398]
+transform = Transform3D(9.3, 0, 0, 0, 1, 0, 0, 0, 9.35, 0, 1.1, -8)
+use_collision = true
+material = ExtResource("3_checker")
+
 [node name="CharacterBody3D" type="CharacterBody3D" parent="." unique_id=811290216]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 script = ExtResource("1_player")
+
+[node name="ClamberController" type="Node3D" parent="CharacterBody3D" unique_id=884447449]
+script = ExtResource("4_clamber")
+
+[node name="StateMachine" type="Node" parent="CharacterBody3D"]
+script = ExtResource("5_sm")
+
+[node name="Player" type="Node" parent="CharacterBody3D/StateMachine"]
+script = ExtResource("6_compound")
+
+[node name="Locomoting" type="Node" parent="CharacterBody3D/StateMachine/Player"]
+script = ExtResource("7_locomoting")
+
+[node name="AirState" type="Node" parent="CharacterBody3D/StateMachine/Player/Locomoting"]
+script = ExtResource("6_compound")
+
+[node name="Grounded" type="Node" parent="CharacterBody3D/StateMachine/Player/Locomoting/AirState"]
+script = ExtResource("8_grounded")
+
+[node name="InAir" type="Node" parent="CharacterBody3D/StateMachine/Player/Locomoting/AirState"]
+script = ExtResource("9_inair")
+
+[node name="MovementState" type="Node" parent="CharacterBody3D/StateMachine/Player/Locomoting"]
+script = ExtResource("6_compound")
+
+[node name="Walking" type="Node" parent="CharacterBody3D/StateMachine/Player/Locomoting/MovementState"]
+script = ExtResource("10_walking")
+
+[node name="Clambering" type="Node" parent="CharacterBody3D/StateMachine/Player"]
+script = ExtResource("11_clambering")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBody3D" unique_id=1416489306]
 shape = SubResource("CapsuleShape3D_6cejb")

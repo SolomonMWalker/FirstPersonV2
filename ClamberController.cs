@@ -1,132 +1,149 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using FirstPerson.Scenes.Player;
 using Godot;
 
 namespace FirstPerson.Helpers;
 
+// Clamber/mantle for a CharacterBody3D.
+//
+// Detection sweeps the player's OWN collider up, forward, then down — the Godot stair-step idiom
+// with a large step height. Because the sweep uses the real shape, a sweep that completes proves
+// the landing spot is reachable, clear and standable, so there is no separate headroom, room-fit
+// or ledge-thickness check to get wrong.
+//
+// Execution is parameterised by elapsed time, not by position, so the manoeuvre always terminates.
+// Motion goes through the caller's MoveAndSlide as a velocity rather than a GlobalPosition lerp,
+// so collision stays authoritative and the player can never end up inside geometry.
+//
+// Statechart-ready seam: TryStartClamber() is the transition guard, GetClamberVelocity() is
+// StatePhysicsProcessing, !IsClambering is the transition out.
 public partial class ClamberController : Node3D
 {
-    [Export] public PlayerController PlayerController;
-    [Export] public Timer PauseBetweenClamberAttemptsTimer { get; set; }
-    [Export] public float RaycastLength { get; private set; } = 0.25f;
-    [Export] public float ClamberMargin { get; private set; } = 0.26f;
-    //[Export] public float MaxAngleInDeg { get; private set; } = 10f;
-    [Export] public float WaitPerCallInSec { get; private set; } = 0.25f;
+    [Export] public CharacterBody3D Player { get; set; }
 
-    private List<List<RayCast3D>> Raycasts { get; set; } = [];
-    private Node3D RaycastsParent { get; set; }
-    
-    private float ClamberXzDistanceSquared { get; set; }
-    private Vector3 ClamberDestination { get; set; }
-    private Vector2 ClamberDestinationXz { get; set; }
-    private Vector3 ClamberStartPoint { get; set; }
-    private Vector2 ClamberStartPointXz { get; set; }
-    private Vector2 ClamberXzDirection { get; set; }
+    [ExportGroup("Detection")]
+    [Export] public float MaxClamberHeight { get; set; } = 1.6f;
+    // Below this it is a step, not a clamber — leave short obstacles to stair-stepping.
+    [Export] public float MinClamberHeight { get; set; } = 0.4f;
+    [Export] public float ClamberReach { get; set; } = 0.75f;
+    // Above ~0.01 the sweeps snag and report false positives.
+    [Export] public float SafeMargin { get; set; } = 0.001f;
+
+    [ExportGroup("Execution")]
+    [Export] public float ClamberSpeed { get; set; } = 3.0f;
+    [Export] public float MinDuration { get; set; } = 0.2f;
+    [Export] public float MaxDuration { get; set; } = 0.9f;
+    // How far over the lip the rise arcs before coming forward, so the capsule's rounded
+    // bottom does not catch on the edge.
+    [Export] public float Clearance { get; set; } = 0.1f;
+    // Optional. Unset falls back to a lead-in/trail-out ease; see GetClamberVelocity.
+    [Export] public Curve HeightCurve { get; set; }
+    [Export] public Curve ForwardCurve { get; set; }
+    // Blackout after a completed clamber only — never after a failed detection.
+    [Export] public float CooldownSeconds { get; set; } = 0.25f;
+
+    [Export] public bool DebugLog { get; set; }
+
+    public bool IsClambering { get; private set; }
+    public Vector3 ClamberTarget => _landing;
+
+    private Vector3 _start;
+    private Vector3 _landing;
+    private float _elapsed;
+    private float _duration;
+    private float _maxSpeed;
+    private float _cooldown;
 
     public override void _Ready()
     {
-        base._Ready();
-        RaycastsParent = GetNode<Node3D>("Raycasts");
-        foreach (var child in RaycastsParent.GetChildren())
-        {
-            List<RayCast3D> rcList = [];
-            rcList.AddRange(child.GetChildren().Cast<RayCast3D>());
-            Raycasts.Add(rcList);
-        }
+        // Default to the body we hang off, so the usual setup needs no inspector wiring.
+        Player ??= GetParent() as CharacterBody3D;
+        if (Player == null)
+            GD.PushError($"{Name}: Player is unset and the parent is not a CharacterBody3D.");
     }
 
-    private List<(Vector2 localSlice, Vector3 globalEndpoint, bool collided)> GetRaycastEndPoints(List<RayCast3D> raycasts)
+    public override void _PhysicsProcess(double delta)
     {
-        List<(Vector2, Vector3, bool)> collisions = [];
-        foreach (var rc in raycasts)
-        {
-            if (rc.IsColliding())
-            {
-                var globalEndpoint = rc.GetCollisionPoint();
-                var endpoint = ToLocal(globalEndpoint);
-                collisions.Add((new Vector2(endpoint.Z, endpoint.Y), globalEndpoint, true));
-            }
-            else
-            {
-                var globalEndpoint = rc.ToGlobal(rc.TargetPosition);
-                var endpointLocalToThis = ToLocal(globalEndpoint);
-                collisions.Add((new Vector2(endpointLocalToThis.Z, endpointLocalToThis.Y), globalEndpoint, false));
-            }
-        }
-        return collisions;
-    }
-    
-    private (bool success, RaycastCollisionResult result) AttemptClamberCheckRow(List<RayCast3D> raycasts)
-    {
-        var rawCollisions = GetRaycastEndPoints(raycasts);
-        if (rawCollisions.All(c => !c.collided)) return (false, null);
-
-        //If top raycast is colliding, we can't clamber
-        var maxY = rawCollisions.Select(rc => rc.localSlice.Y).Max();
-        var collidedCollisions = rawCollisions
-            .Where(rc => rc.collided)
-            .ToArray();
-        if (collidedCollisions.Any(rc => Math.Abs(rc.localSlice.Y - maxY) < 0.0001f))
-        {
-            return (false, null);
-        }
-
-        var clamberPoint = collidedCollisions
-            .OrderByDescending(c => c.localSlice.Y)
-            .First();
-        return (true, new RaycastCollisionResult
-        {
-            GlobalPositionToClamberTo = clamberPoint.globalEndpoint
-        });
-        //took out extra "check for angle" code for now
+        if (_cooldown > 0f) _cooldown -= (float)delta;
     }
 
-    private (bool success, RaycastCollisionResult result) AttemptClamber()
+    public bool TryStartClamber()
     {
-        if (!PauseBetweenClamberAttemptsTimer.IsStopped()) return (false, null);
-        PauseBetweenClamberAttemptsTimer.Start();
-        foreach (var rcList in Raycasts)
-        {
-            var clamberAttemptRow = AttemptClamberCheckRow(rcList);
-            if (clamberAttemptRow.success) return clamberAttemptRow;
-        }
-        return (false, null);
-    }
-    
-    public bool TryHandleClamber()
-    {
-        var clamberCheck = AttemptClamber();
-        if (!clamberCheck.success) return false;
-        ClamberDestination = clamberCheck.result.GlobalPositionToClamberTo ?? Vector3.Zero;
-        ClamberDestinationXz = new Vector2(ClamberDestination.X, ClamberDestination.Z);
-        ClamberStartPoint = GlobalPosition;
-        ClamberStartPointXz = new Vector2(GlobalPosition.X, GlobalPosition.Z);
-        ClamberXzDirection = ClamberStartPointXz.DirectionTo(ClamberDestinationXz);
-        ClamberXzDistanceSquared = ClamberStartPointXz.DistanceSquaredTo(ClamberDestinationXz);
+        if (IsClambering || _cooldown > 0f) return false;
+        if (!TryFindLanding(out var landing)) return false;
+
+        _start = Player.GlobalPosition;
+        _landing = landing;
+        _elapsed = 0f;
+        _duration = Mathf.Max(Mathf.Clamp((landing.Y - _start.Y) / ClamberSpeed, MinDuration, MaxDuration), 0.01f);
+        _maxSpeed = 4f * _start.DistanceTo(_landing) / _duration;
+        IsClambering = true;
         return true;
     }
-    
-    public void Clamber()
-    {
-        if (PlayerController.BottomOfPlayer.GlobalPosition.Y < ClamberDestination.Y + ClamberMargin)
-        { //move up to clamber Y
-            PlayerController.Velocity = Vector3.Up * PlayerController.ClamberVelocity;
-            PlayerController.MoveAndSlide();
-            return;
-        }
-        if (ClamberXzDistanceSquared > ClamberStartPointXz.DistanceSquaredTo(new Vector2(GlobalPosition.X, GlobalPosition.Z)))
-        { //move forward to clamber Z
-            PlayerController.Velocity = new Vector3(ClamberXzDirection.X, 0, ClamberXzDirection.Y) * PlayerController.ClamberVelocity;
-            PlayerController.MoveAndSlide();
-            return;
-        }
-        PlayerController.Clambering = false;
-    }
-}
 
-public class RaycastCollisionResult
-{
-    public Vector3? GlobalPositionToClamberTo { get; init; }
+    private bool TryFindLanding(out Vector3 landing)
+    {
+        landing = Vector3.Zero;
+        var xform = Player.GlobalTransform;
+        var hit = new KinematicCollision3D();
+
+        // Up first. Sweeping forward before up tunnels through ceilings.
+        // Rise past MaxClamberHeight by Clearance so a ledge of exactly that height still clears
+        // its own lip on the forward sweep — the export means "tallest ledge", not "rise".
+        var rise = MaxClamberHeight + Clearance;
+        if (Player.TestMove(xform, Vector3.Up * rise, hit, SafeMargin))
+            rise = hit.GetTravel().Length();
+        if (rise < MinClamberHeight) return Reject("no headroom to rise");
+        xform.Origin += Vector3.Up * rise;
+
+        // Forward. Blocked means the wall is taller than MaxClamberHeight.
+        var forward = -Player.GlobalBasis.Z * ClamberReach;
+        if (Player.TestMove(xform, forward, null, SafeMargin)) return Reject("no room in front");
+        xform.Origin += forward;
+
+        // Down. Nothing to land on means a gap, not a ledge. Note a capsule *rests on* thin
+        // geometry rather than passing over it, so railings stay clamberable — rejecting those
+        // needs an explicit minimum-depth check, not this sweep.
+        if (!Player.TestMove(xform, Vector3.Down * (rise + 0.05f), hit, SafeMargin))
+            return Reject("nothing to stand on");
+        if (hit.GetNormal().AngleTo(Vector3.Up) > Player.FloorMaxAngle) return Reject("surface too steep");
+
+        landing = xform.Origin + Vector3.Down * hit.GetTravel().Length();
+        if (landing.Y - Player.GlobalPosition.Y < MinClamberHeight) return Reject("too low, that is a step");
+        if (DebugLog)
+            GD.Print($"[Clamber] accepted: from {Player.GlobalPosition} rise {rise:F3} " +
+                     $"downTravel {hit.GetTravel().Length():F3} landing {landing}");
+        return true;
+    }
+
+    // Velocity the caller should assign before its own MoveAndSlide.
+    public Vector3 GetClamberVelocity(double delta)
+    {
+        _elapsed += (float)delta;
+        var t = Mathf.Min(_elapsed / _duration, 1f);
+
+        // Rise first, forward second, no overlap. Starting flush against the ledge the capsule
+        // only clears the lip at the very top of the rise, so any overlap drives it into the
+        // face. Clearance arcs slightly over the lip and settles back down as we come forward.
+        var h = HeightCurve?.Sample(t) ?? Mathf.SmoothStep(0f, 0.5f, t);
+        var f = ForwardCurve?.Sample(t) ?? Mathf.SmoothStep(0.5f, 1f, t);
+
+        var target = new Vector3(
+            Mathf.Lerp(_start.X, _landing.X, f),
+            Mathf.Lerp(_start.Y, _landing.Y + Clearance, h) - Clearance * f,
+            Mathf.Lerp(_start.Z, _landing.Z, f));
+
+        if (t >= 1f)
+        {
+            IsClambering = false;
+            _cooldown = CooldownSeconds;
+        }
+        // Catch-up velocity so a transient scrape doesn't leave us behind schedule, but clamped:
+        // a sustained block otherwise accumulates an impulse big enough to tunnel into geometry.
+        return ((target - Player.GlobalPosition) / (float)delta).LimitLength(_maxSpeed);
+    }
+
+    private bool Reject(string why)
+    {
+        if (DebugLog) GD.Print($"[Clamber] rejected: {why}");
+        return false;
+    }
 }

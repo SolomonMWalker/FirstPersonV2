@@ -5,7 +5,10 @@ solved elsewhere, and what I'd change.
 
 ---
 
-## Part 1 — How it currently works
+## Part 1 — How the original worked
+
+> Parts 1–4 analyse the class **as it was pulled in**. It has since been rewritten along the lines
+> Part 4 recommends — see **Part 5** for how the code works today.
 
 ### The pipeline
 
@@ -287,9 +290,17 @@ The key insight, and the reason I'd lead with this: **clamber is stair-stepping 
 `max_step_height` and a slower, visible execution.** They are the same query.
 
 **Pros** — Detection and validation are *the same operation*. If the sweep completes, the
-destination is provably clear and reachable, because you swept the actual player shape — D1, D2, D3,
-D4 and D7 all disappear at once, not one at a time. Shape-agnostic. Handles slopes, corners and
+destination is provably clear and reachable, because you swept the actual player shape — D2, D3, D4
+and D7 all disappear at once, not one at a time. Shape-agnostic. Handles slopes, corners and
 irregular ledges with no special cases.
+
+**Note on D1 (thin geometry).** The capsule sweep resolves this *differently* from approach B, not
+identically. A line trace passes over a railing and finds nothing, so B rejects it. A capsule
+**rests on** the railing, so the sweep succeeds and reports the rail top as the landing point. That
+is not the old ray-ladder bug — the sweep lands you exactly where the collider is genuinely
+supported, so you don't fall through — but it does mean rails and pipes remain clamberable. If
+rejecting them is a *design* choice rather than a correctness one, it needs an explicit
+minimum-ledge-depth check (a second down-sweep further forward), which neither approach gives free.
 
 **Cons** — Margin-sensitive. Three shape sweeps cost more than three rays. Gives you a landing
 *position* but no wall normal for facing checks or animation alignment. Requires `TestMove` /
@@ -454,23 +465,345 @@ it costs one condition.
 
 ---
 
+## Part 5 — How the current implementation works
+
+### The one-paragraph version
+
+You press jump near a ledge. Before anything else happens, the game **test-drives your own
+collision capsule** through the move you are about to make — lift it straight up, push it forward,
+drop it down — without actually moving you. If that rehearsal ends somewhere flat, clear and high
+enough to be worth it, the real move replays that same path over a fixed span of time and you end
+up standing on the ledge. If the rehearsal fails at any step, nothing happens and your jump goes
+through normally.
+
+The whole design rests on one idea: **the rehearsal uses the real collider, so a rehearsal that
+succeeds is proof the destination fits.** There is no separate "will I fit?" check to get wrong,
+because fitting *is* the check.
+
+### The shape of it
+
+Two classes, one seam between them:
+
+| | Answers | Never does |
+|---|---|---|
+| `ClamberController` | **Whether** a clamber is possible and **where** it lands; what velocity to apply right now | Read input. Move anything. Call `MoveAndSlide`. |
+| `PlayerController` | **When** to ask; applies the returned velocity | Decide whether a ledge is valid |
+
+```
+PlayerController._PhysicsProcess
+  ├─ read space, derive fresh-press edge
+  ├─ tryClamber?  ──► ClamberController.TryStartClamber()
+  │                      └─ TryFindLanding()   3 × TestMove, the rehearsal
+  ├─ IsClambering? ──► ClamberController.GetClamberVelocity(delta)
+  │                    Velocity = result; MoveAndSlide(); return
+  └─ otherwise: normal gravity / jump / WASD
+```
+
+The controller is a `Node3D` hanging off the `CharacterBody3D`, but it is really just a calculator —
+it holds no authority over movement. That is deliberate: it makes the class a drop-in for a
+statechart later, where `TryStartClamber()` becomes a transition guard, `GetClamberVelocity()`
+becomes `StatePhysicsProcessing`, and `!IsClambering` becomes the transition out.
+
+---
+
+### 1. The trigger — `PlayerController._PhysicsProcess`
+
+```csharp
+var jump = Input.IsPhysicalKeyPressed(Key.Space);
+var jumpPressed = jump && !_jumpHeld;
+_jumpHeld = jump;
+
+var tryClamber = jumpPressed || (jump && !IsOnFloor());
+```
+
+`Input.IsPhysicalKeyPressed` is a *held* query, so the fresh-press edge is derived manually by
+remembering last frame's state. Both actions read from that one edge, which is what makes them
+mutually exclusive.
+
+`tryClamber` has two arms and they exist for different reasons:
+
+- **`jumpPressed`** — a fresh press always tries, grounded or not. This is the standing mantle.
+- **`jump && !IsOnFloor()`** — while airborne, a *held* key keeps trying every frame. This is what
+  lets you hold jump, leap at a wall, and mantle the instant the ledge comes into reach, rather
+  than having to time a second tap at the apex.
+
+Grounded-and-held is deliberately excluded. That is the clause that stops you from bouncing the
+instant you land a clamber with the key still down.
+
+Two ordering rules carry real weight:
+
+1. **The clamber block sits above the jump branch and returns early.** A press next to a ledge is
+   consumed by the mantle, so you never get a hop *and* a mantle from one press. If detection
+   fails, control falls through and the same press becomes an ordinary jump.
+2. **`Velocity.Y` is zeroed on the frame the clamber ends.** The last clamber velocity is whatever
+   was needed to reach the target; left in place, gravity would resume from a large upward value
+   and fling you off the ledge.
+
+Note `IsOnFloor()` here reflects the *previous* `MoveAndSlide`, so it lags by a frame. Harmless in
+practice — it only delays the first airborne attempt by ~16ms.
+
+---
+
+### 2. Detection — `TryFindLanding`, the three sweeps
+
+This is the heart of the class. Three `TestMove` calls walk a *copy of the transform* through the
+manoeuvre while the player stands still:
+
+```csharp
+var xform = Player.GlobalTransform;   // a copy — the player does not move
+```
+
+`CharacterBody3D.TestMove` sweeps the body's **actual collision shape** along a motion vector using
+its **actual collision mask** and reports whether it would hit, how far it got, and the surface
+normal. That is why detection and validation collapse into one operation.
+
+| # | Motion | What a failure proves | Reject reason |
+|---|---|---|---|
+| 1 | `Up * (MaxClamberHeight + Clearance)` | A ceiling pins you below usable height | `no headroom to rise` |
+| 2 | `-GlobalBasis.Z * ClamberReach` | The wall is taller than you can clamber | `no room in front` |
+| 3 | `Down * (rise + 0.05)` | There is a gap, not a ledge | `nothing to stand on` |
+
+**Sweep 1 — up.** Rises by `MaxClamberHeight + Clearance`. The `+ Clearance` is not cosmetic: a
+ledge of *exactly* `MaxClamberHeight` has to get *above* its own lip before the forward sweep can
+pass over it. Without the extra, the export would be off by `Clearance` from what its name
+promises. If a ceiling blocks the rise, `rise` is clamped to the distance actually travelled rather
+than failing outright, so low rooms still allow short clambers.
+
+**Up must come first.** Sweeping forward at head height and *then* up would let the capsule pass
+under a ceiling it should have hit — the classic tunnelling bug in this family of algorithms, and
+one the Godot stair-step community documented the hard way.
+
+**Sweep 2 — forward.** `-GlobalBasis.Z` is the player's facing, so the clamber goes where you look,
+not where you are moving. Being blocked here is the "wall too tall" signal: at maximum rise the
+capsule still overlaps the obstacle.
+
+**Sweep 3 — down.** Casts back down by slightly more than it rose. Two rejections come out of it:
+
+```csharp
+if (!Player.TestMove(xform, Vector3.Down * (rise + 0.05f), hit, SafeMargin))
+    return Reject("nothing to stand on");
+if (hit.GetNormal().AngleTo(Vector3.Up) > Player.FloorMaxAngle) return Reject("surface too steep");
+```
+
+Hitting nothing means open air — a gap, a pit, the far side of a thin wall. Hitting something at a
+steeper angle than the body's own `FloorMaxAngle` means it is a slope you could not stand on
+anyway. Reusing `Player.FloorMaxAngle` rather than a private threshold means clamber and walking
+agree on what "floor" means, for free.
+
+Finally the landing point, and the floor of the height range:
+
+```csharp
+landing = xform.Origin + Vector3.Down * hit.GetTravel().Length();
+if (landing.Y - Player.GlobalPosition.Y < MinClamberHeight) return Reject("too low, that is a step");
+```
+
+`MinClamberHeight` is the guard against false positives on open ground — the down-sweep *always*
+finds the floor you are standing on, so without this every jump anywhere would register as a
+clamber onto your own feet. It is also the boundary that leaves short obstacles to stair-stepping.
+
+**`SafeMargin` at 0.001** is not arbitrary. Above roughly 0.01 the sweeps snag on geometry and
+report collisions that are not really there; this is the single most consistent piece of advice in
+the Godot stair-step literature.
+
+**What detection deliberately does *not* establish:** that the ledge is *deep* enough. A capsule
+rests on top of a railing rather than passing over it, so sweep 3 succeeds and rails stay
+clamberable. That is not the old ray-ladder bug — you land where the collider is genuinely
+supported — but rejecting rails as a design choice would need a second down-sweep further forward.
+
+---
+
+### 3. Committing — `TryStartClamber`
+
+```csharp
+if (IsClambering || _cooldown > 0f) return false;
+if (!TryFindLanding(out var landing)) return false;
+```
+
+Two gates, and note what is *absent*: nothing blocks a *failed* detection from being retried next
+frame. Detection runs as often as it is asked. The cooldown only ever starts after a clamber
+**completes**, so a near-miss never blacks out the next attempt.
+
+On success it snapshots the run and precomputes two derived values:
+
+```csharp
+_duration = Mathf.Max(Mathf.Clamp((landing.Y - _start.Y) / ClamberSpeed, MinDuration, MaxDuration), 0.01f);
+_maxSpeed = 4f * _start.DistanceTo(_landing) / _duration;
+```
+
+`_duration` scales with climb height, so a shin-high vault and a chest-high haul both read
+correctly instead of sharing one timing; the clamps stop extremes from looking silly and the
+`Max(…, 0.01f)` protects the division in `GetClamberVelocity` if someone zeroes `MinDuration`.
+`_maxSpeed` is the velocity ceiling explained below.
+
+`_start` and `_landing` are **world positions captured once**. This is the known weak point: on a
+moving platform you clamber to where the ledge *was*.
+
+---
+
+### 4. The motion — `GetClamberVelocity`
+
+Called every physics frame while `IsClambering`. Progress is a function of **elapsed time**, not of
+position:
+
+```csharp
+_elapsed += (float)delta;
+var t = Mathf.Min(_elapsed / _duration, 1f);
+```
+
+That single choice is why the manoeuvre can never hang. `t` advances whether or not you actually
+moved, so it always reaches 1 and the state always exits. The original's position-based
+termination could stall forever; this cannot.
+
+**Two curves, no overlap.**
+
+```csharp
+var h = HeightCurve?.Sample(t) ?? Mathf.SmoothStep(0f, 0.5f, t);   // rise, t 0.0 → 0.5
+var f = ForwardCurve?.Sample(t) ?? Mathf.SmoothStep(0.5f, 1f, t);  // forward, t 0.5 → 1.0
+```
+
+The rise finishes before the forward motion starts, and that separation is load-bearing. Standing
+flush against a ledge, the capsule only clears the lip at the *very top* of the rise — so any
+overlap between the two phases drives it straight into the wall face. (An earlier version blended
+them across t 0.4–0.6 for smoothness and jammed exactly this way.) Assigning `HeightCurve` /
+`ForwardCurve` in the inspector overrides the defaults entirely, so custom curves must preserve
+that ordering.
+
+**The clearance arc.**
+
+```csharp
+Mathf.Lerp(_start.Y, _landing.Y + Clearance, h) - Clearance * f
+```
+
+Read it at three points: at `t=0` (`h=0, f=0`) it is `_start.Y`; at `t=0.5` (`h=1, f=0`) it is
+`_landing.Y + Clearance` — floating just above the lip; at `t=1` (`h=1, f=1`) the `- Clearance * f`
+term has cancelled it back to exactly `_landing.Y`. So the path goes *up and over* and settles down
+as it comes forward, which keeps the capsule's rounded bottom from catching on the edge.
+
+**Velocity, not teleportation.**
+
+```csharp
+return ((target - Player.GlobalPosition) / (float)delta).LimitLength(_maxSpeed);
+```
+
+The method returns the velocity needed to reach this frame's point on the path, and the *caller*
+applies it through `MoveAndSlide`. Physics stays authoritative for the whole manoeuvre, so you can
+never be pushed inside geometry — the one property worth preserving from the original design.
+
+Because it targets an absolute point rather than adding a delta, it self-corrects: a transient
+scrape that costs you ground is made up next frame. `LimitLength(_maxSpeed)` caps that correction.
+Without it, a *sustained* block accumulates position error until the computed velocity is large
+enough to tunnel through the very ledge you are climbing.
+
+On the final frame the state closes itself and arms the cooldown:
+
+```csharp
+if (t >= 1f) { IsClambering = false; _cooldown = CooldownSeconds; }
+```
+
+---
+
+### 5. Wiring and failure behaviour
+
+Both node references self-heal, because hand-written `NodePath` entries in a `.tscn` do not reliably
+resolve into typed node exports:
+
+```csharp
+Player  ??= GetParent() as CharacterBody3D;                    // ClamberController._Ready
+Clamber ??= GetNodeOrNull<ClamberController>("ClamberController");  // PlayerController._Ready
+```
+
+Assign them in the inspector if you like; leave them empty and the conventional layout — controller
+parented to the body — just works. `ClamberController` pushes a clear error if neither path yields
+a body.
+
+`[Export] bool DebugLog` prints the reason for every decision, which is the entire debugging story
+for this feature: `no headroom to rise`, `no room in front`, `nothing to stand on`,
+`surface too steep`, `too low, that is a step`, plus an `accepted:` line carrying the start
+position, rise, down-travel and landing point.
+
+**When something goes wrong mid-clamber**, the failure is graceful rather than sticky: `t` runs out,
+`IsClambering` flips false wherever you happen to be, `Velocity.Y` is zeroed, gravity resumes and
+you fall. No soft-lock, no frozen player, no stuck-in-geometry.
+
+---
+
+### 6. The tunables
+
+| Export | Default | Controls |
+|---|---|---|
+| `MaxClamberHeight` | 1.6 | Tallest ledge that can be clambered. The sweep rises past it by `Clearance`, so the name is literal. |
+| `MinClamberHeight` | 0.4 | Floor of the range. Below this it is a step — and this is what stops flat ground registering. |
+| `ClamberReach` | 0.75 | How far forward the landing spot may be. Must exceed the capsule radius to clear the lip. |
+| `SafeMargin` | 0.001 | Sweep collision margin. Raising it causes snags and false positives. |
+| `ClamberSpeed` | 3.0 | Metres per second used to derive duration from climb height. |
+| `MinDuration` / `MaxDuration` | 0.2 / 0.9 | Clamps on that derived duration. |
+| `Clearance` | 0.1 | Arc height over the lip, and the rise overshoot that makes `MaxClamberHeight` literal. |
+| `HeightCurve` / `ForwardCurve` | unset | Optional `Curve` overrides for the motion shape. Must stay non-overlapping. |
+| `CooldownSeconds` | 0.25 | Blackout after a *completed* clamber. Never applies to a failed attempt. |
+| `DebugLog` | off | Prints accept/reject reasons. |
+
+---
+
+### 7. What the tests pin down
+
+`ClamberTests.cs` (`godot --headless --path . res://test_clamber.tscn`, exit 0 on pass) builds each
+case its own slice of world 40m apart with its own controller, waits two physics frames for the
+bodies to register, then asserts accept/reject and — where it accepts — the exact landing height:
+
+| Case | Expected | Pins down |
+|---|---|---|
+| flat ground | reject | The false-positive guard; the down-sweep always finds *something* |
+| 1.0m ledge | accept at exactly y=2.0 | Height is exact, not quantised |
+| ledge at exactly `MaxClamberHeight` | accept at y=2.6 | The `+ Clearance` rise; the export means what it says |
+| 0.2m curb | reject | The step/clamber boundary |
+| 3m wall | reject | Tall walls stay rejected |
+| low ceiling | reject | Up-before-forward ordering |
+| 60° slope | reject | The `FloorMaxAngle` normal check |
+
+The slope case is deliberately thin and low: a large slab gets rejected by the *forward* sweep for
+lack of room, which would pass the test without ever exercising the normal check.
+
+---
+
+### 8. Known limits, deliberately
+
+- **Not a statechart state yet.** `PlayerController` has no state machine wired at all, so the
+  clamber is driven inline. The API is already shaped for the transplant.
+- **Moving ledges.** The destination is a world position captured at detect time. Clamber onto a
+  moving platform and you land where it was, then fall — non-fatal, not handled.
+- **Thin ledges are clamberable.** Rails and pipes support a capsule, so they pass. Rejecting them
+  needs an explicit minimum-depth check.
+- **No visual debug.** Reject-reason logging covers the real question; there is no gizmo drawing
+  the sweeps.
+- **No camera motion.** In first person this is where the polish budget belongs, and none has been
+  spent yet.
+- **Grounded-and-held does not re-arm.** Walking into a ledge while still holding jump from an
+  earlier press will not mantle; release and press again.
+
+---
+
 ## Summary
 
-The execution half is more principled than most tutorials — keeping `MoveAndSlide` authoritative
-throughout is a real advantage and you should protect it. The detection half has a structural
-problem that no amount of tuning fixes: **front-face rays cannot know whether there's anything to
-stand on**, which will produce railing-climbing and slope-climbing bugs that look like tuning
-issues and aren't.
+The original's execution half was more principled than most tutorials — keeping `MoveAndSlide`
+authoritative throughout is a real advantage, and the rewrite preserves it. Its detection half had a
+structural problem that no amount of tuning fixes: **front-face rays cannot know whether there's
+anything to stand on**, which produces railing-climbing and slope-climbing bugs that look like
+tuning issues and aren't.
 
-Highest-value changes, in order:
+The highest-value changes, in the order they were worth doing:
 
-1. **Timeout on `Clamber()`** — the current code can soft-lock a player permanently.
-2. **Cooldown off the failure path** — the "game ignored my input" bug, and the most player-visible.
-3. **Swap detection for an up-forward-down `TestMove` sweep** — deletes five separate bug classes
-   and the entire raycast rig at once, and is the version that scales to step-up/vault/mantle/hang.
-4. **Make it a state in your existing statechart** — removes the duplicate `Clambering` flag and
-   makes abort structural rather than something you have to remember.
-5. **Curves + camera motion** — where the feel actually comes from, once it's correct.
+1. ~~**Timeout on `Clamber()`**~~ — **done.** Solved structurally: progress is time-parameterised,
+   so the manoeuvre always terminates.
+2. ~~**Cooldown off the failure path**~~ — **done.** Detection runs whenever asked; the cooldown
+   arms only after a completed clamber.
+3. ~~**Swap detection for an up-forward-down `TestMove` sweep**~~ — **done.** The raycast rig,
+   `RaycastCollisionResult` and the per-frame LINQ are gone.
+4. **Make it a state in your existing statechart** — still outstanding. `PlayerController` has no
+   state machine wired yet, so this is a separate job; the API is already shaped for it.
+5. **Curves + camera motion** — curves done (`HeightCurve` / `ForwardCurve`, with non-overlapping
+   defaults). Camera motion is where the remaining feel lives, and none has been spent yet.
+
+See **Part 5** for how the rewritten class works.
 
 ---
 
