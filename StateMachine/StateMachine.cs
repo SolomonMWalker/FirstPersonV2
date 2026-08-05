@@ -333,14 +333,15 @@ public partial class StateMachine : Node
         }
     }
 
-    // Default entry: a compound resolves to its DefaultState, a parallel enters every region.
+    // Default entry: a compound resolves to its EntryState (DefaultState, or the child it last had
+    // active if it remembers), a parallel enters every region.
     private static void CollectDefaultEntry(State state, List<State> outList)
     {
         switch (state)
         {
             case CompoundState c:
-                outList.Add(c.DefaultState);
-                CollectDefaultEntry(c.DefaultState, outList);
+                outList.Add(c.EntryState);
+                CollectDefaultEntry(c.EntryState, outList);
                 break;
             case ParallelState p:
                 foreach (var child in p.ChildrenStates)

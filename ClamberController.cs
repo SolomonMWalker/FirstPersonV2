@@ -42,6 +42,12 @@ public partial class ClamberController : Node3D
 
     [Export] public bool DebugLog { get; set; }
 
+    // Reach scales with body height: 1 at full height, 0.75 in a crouch three quarters as tall. Set
+    // from the live capsule by whoever owns it (PlayerController), so a crouched player cannot pull
+    // up onto a ledge that is only clamberable standing. MinClamberHeight deliberately does not
+    // scale -- what counts as a step is a fact about the geometry, not about the body.
+    public float HeightScale { get; set; } = 1f;
+
     public bool IsClambering { get; private set; }
     public Vector3 ClamberTarget => _landing;
 
@@ -88,7 +94,7 @@ public partial class ClamberController : Node3D
         // Up first. Sweeping forward before up tunnels through ceilings.
         // Rise past MaxClamberHeight by Clearance so a ledge of exactly that height still clears
         // its own lip on the forward sweep — the export means "tallest ledge", not "rise".
-        var rise = MaxClamberHeight + Clearance;
+        var rise = MaxClamberHeight * HeightScale + Clearance;
         if (Player.TestMove(xform, Vector3.Up * rise, hit, SafeMargin))
             rise = hit.GetTravel().Length();
         if (rise < MinClamberHeight) return Reject("no headroom to rise");
@@ -125,10 +131,21 @@ public partial class ClamberController : Node3D
         // face. Clearance arcs slightly over the lip and settles back down as we come forward.
         var h = HeightCurve?.Sample(t) ?? Mathf.SmoothStep(0f, 0.5f, t);
         var f = ForwardCurve?.Sample(t) ?? Mathf.SmoothStep(0.5f, 1f, t);
+        // Clearance comes back off faster than the forward motion runs, finishing at t=0.85 rather
+        // than trailing to the very end. Spent against the forward travel it reads as part of the
+        // arc; spent over the whole phase it reads as a drop at the end of an otherwise finished
+        // manoeuvre. Kept independent of ForwardCurve -- this is about unwinding the lip margin,
+        // not about pacing, so a custom curve should not stretch it back out.
+        //
+        // 0.85 is the floor, not a taste value: it puts the feet back at ledge height ~78% through
+        // the forward travel, which for the default ClamberReach is just past the capsule radius,
+        // so the rounded bottom is clear of the lip corner when it touches down. Settling earlier
+        // brings it down while still over the lip and it scrapes.
+        var settle = Mathf.SmoothStep(0.5f, 0.85f, t);
 
         var target = new Vector3(
             Mathf.Lerp(_start.X, _landing.X, f),
-            Mathf.Lerp(_start.Y, _landing.Y + Clearance, h) - Clearance * f,
+            Mathf.Lerp(_start.Y, _landing.Y + Clearance, h) - Clearance * settle,
             Mathf.Lerp(_start.Z, _landing.Z, f));
 
         if (t >= 1f)

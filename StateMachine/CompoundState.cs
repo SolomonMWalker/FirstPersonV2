@@ -12,6 +12,15 @@ public partial class CompoundState : State
 {
     [Export] public State DefaultState;
 
+    // Shallow history (SCXML's <history type="shallow">). Off by default: re-entering resolves to
+    // DefaultState. On, the region resumes whichever child it was in when it last exited, so a
+    // transition that suspends it -- one taken by an ancestor, or by a parallel sibling region --
+    // gives it back unchanged instead of resetting it.
+    [Export] public bool RememberActiveState;
+
+    // Where default entry lands: the remembered child, or the declared default.
+    public State EntryState => RememberActiveState && ActiveState is not null ? ActiveState : DefaultState;
+
     public List<State> ChildrenStates { get; private set; } = [];
     public State ActiveState { get; internal set; }
 

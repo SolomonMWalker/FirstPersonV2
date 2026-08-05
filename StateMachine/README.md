@@ -29,7 +29,7 @@ forty edges. A statechart gives you two tools to avoid that:
 |---|---|
 | `StateMachine` | The driver. Add states under it, point `RootState` at the top state. Not a state itself. |
 | `AtomicState` | A leaf. No children. |
-| `CompoundState` | Exactly **one** child active at a time. `DefaultState` picks which child is entered when the compound is entered without a more specific target (defaults to the first child). |
+| `CompoundState` | Exactly **one** child active at a time. `DefaultState` picks which child is entered when the compound is entered without a more specific target (defaults to the first child). Set `RememberActiveState` for shallow history: it resumes the child it last had active instead. |
 | `ParallelState` | **All** children active at once. Independent regions. |
 | `Transition` | An edge: a target, an optional guard, an optional effect. Created via `State.AddTransition(...)`, not placed in the tree. |
 
@@ -126,7 +126,8 @@ Given a source and a target:
 2. **Exit** every active descendant of that domain, **innermost first**.
 3. **Run the effect.**
 4. **Enter** from the domain down to the target, **outermost first**, then resolve defaults below the
-   target: a compound enters its `DefaultState`, a parallel enters every region.
+   target: a compound enters its `DefaultState` — or, with `RememberActiveState` set, the child it
+   last had active — and a parallel enters every region.
 
 The domain itself never exits or re-enters. Everything below it does.
 

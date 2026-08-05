@@ -31,6 +31,15 @@ public partial class ClamberTests : Node
         Case("ledge at exactly MaxClamberHeight accepts", true, 2.6f,
             s => Box(s, new Vector3(4, 1.6f, 4), new Vector3(0, 0.8f, -2.6f)));
 
+        // Same ledge, crouched: reach scales with body height (1.6 * 0.75 = 1.2), so it is now out
+        // of range. The landing is unchanged where it is still reachable -- a crouched capsule's
+        // feet sit at the same offset from the body origin as a standing one's.
+        Case("ledge at MaxClamberHeight rejects while crouched", false, 0f,
+            s => Box(s, new Vector3(4, 1.6f, 4), new Vector3(0, 0.8f, -2.6f)), crouched: true);
+
+        Case("1.0m ledge still accepts while crouched", true, 2.0f,
+            s => Box(s, new Vector3(4, 1, 4), new Vector3(0, 0.5f, -2.6f)), crouched: true);
+
         Case("0.2m curb rejects as a step", false, 0f,
             s => Box(s, new Vector3(4, 0.2f, 4), new Vector3(0, 0.1f, -2.6f)));
 
@@ -70,7 +79,11 @@ public partial class ClamberTests : Node
         GetTree().Quit(_failures.Count == 0 ? 0 : 1);
     }
 
-    private void Case(string name, bool expectAccept, float expectY, Action<Node3D> geometry)
+    private const float StandHeight = 2.0f;
+    private const float CrouchHeight = 1.5f;   // PlayerController's 0.5m CrouchDrop
+
+    private void Case(string name, bool expectAccept, float expectY, Action<Node3D> geometry,
+        bool crouched = false)
     {
         _x += 40f;
         var slice = new Node3D { Position = new Vector3(_x, 0, 0) };
@@ -80,10 +93,17 @@ public partial class ClamberTests : Node
         geometry(slice);
 
         var body = new CharacterBody3D { Position = new Vector3(0, 1.0f, 0) };  // feet at y=0, faces -Z
-        body.AddChild(new CollisionShape3D { Shape = new CapsuleShape3D { Radius = 0.5f, Height = 2.0f } });
+        // Shaped the way PlayerController.ApplyCrouchHeight does it: shorter capsule, dropped by
+        // half the difference so the feet stay at the same offset from the body origin.
+        var height = crouched ? CrouchHeight : StandHeight;
+        body.AddChild(new CollisionShape3D
+        {
+            Shape = new CapsuleShape3D { Radius = 0.5f, Height = height },
+            Position = new Vector3(0, (height - StandHeight) / 2f, 0),
+        });
         slice.AddChild(body);
 
-        var c = new ClamberController { Player = body, DebugLog = true };
+        var c = new ClamberController { Player = body, DebugLog = true, HeightScale = height / StandHeight };
         body.AddChild(c);
         _cases.Add((name, expectAccept, expectY, c));
     }

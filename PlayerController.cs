@@ -11,9 +11,26 @@ public partial class PlayerController : CharacterBody3D
 	// Sampled once per physics tick; the states read these rather than polling input themselves.
 	public Vector2 MoveInput { get; private set; }
 	public bool JumpPressed { get; private set; }
+	// Latches, not one-frame edges: guards are polled on _Process too, so a flag that goes false on
+	// its own the next physics tick makes edges fire against a stale value. These stay set until a
+	// transition consumes them.
 
-	private Camera3D _camera;
+	// Shift is down and hasn't started a sprint yet. Consumed on entering Sprinting and re-armed
+	// only by releasing shift — otherwise crouching mid-sprint would bounce straight back to sprint.
+	public bool SprintArmed { get; set; }
+
+	// Crouch is a toggle; C flips it, and the crouch->sprint edge clears it.
+	public bool CrouchToggled { get; set; }
+
+	// Extra camera motion (the crouch dip). Mouse-look stays in this class; see CameraController.
+	public CameraController Camera { get; private set; }
+
+	private CollisionShape3D _collider;
+	private CapsuleShape3D _capsule;
+	private float _standHeight;
 	private bool _jumpHeld;
+	private bool _sprintHeld;
+	private bool _crouchHeld;
 
 	// Nearest PlayerController ancestor. State nodes hang several levels below the body, and
 	// hand-written NodePath exports in a .tscn do not reliably resolve into typed node references.
@@ -30,7 +47,15 @@ public partial class PlayerController : CharacterBody3D
 
 	public override void _Ready()
 	{
-		_camera = GetNode<Camera3D>("Camera3D");
+		Camera = GetNode<CameraController>("Camera3D");
+
+		_collider = GetNode<CollisionShape3D>("CollisionShape3D");
+		// Duplicated: a shape declared inline in a .tscn is shared by every instance of that scene,
+		// so resizing it in place would crouch every player at once.
+		_capsule = (CapsuleShape3D)_collider.Shape.Duplicate();
+		_collider.Shape = _capsule;
+		_standHeight = _capsule.Height;
+
 		// Fall back to a child node so clamber works without inspector wiring.
 		Clamber ??= GetNodeOrNull<ClamberController>("ClamberController");
 		// Run after the StateMachine child, so MoveAndSlide applies the velocity the states just
@@ -45,9 +70,9 @@ public partial class PlayerController : CharacterBody3D
 		if (@event is InputEventMouseMotion motion && Input.MouseMode == Input.MouseModeEnum.Captured)
 		{
 			RotateY(-motion.Relative.X * MouseSensitivity);
-			_camera.Rotation = _camera.Rotation with
+			Camera.Rotation = Camera.Rotation with
 			{
-				X = Mathf.Clamp(_camera.Rotation.X - motion.Relative.Y * MouseSensitivity, -1.5f, 1.5f)
+				X = Mathf.Clamp(Camera.Rotation.X - motion.Relative.Y * MouseSensitivity, -1.5f, 1.5f)
 			};
 		}
 
@@ -58,7 +83,20 @@ public partial class PlayerController : CharacterBody3D
 	public override void _PhysicsProcess(double delta)
 	{
 		SampleInput();
+		ApplyCrouchHeight();
 		MoveAndSlide();
+	}
+
+	// The capsule shortens by exactly as much as the eye dropped, and slides down half that so its
+	// bottom -- the feet -- stays put. Shrinking around the centre instead would lift the player off
+	// the floor at the start of every crouch.
+	private void ApplyCrouchHeight()
+	{
+		var drop = Camera.CrouchOffset;
+		_capsule.Height = _standHeight - drop;
+		_collider.Position = _collider.Position with { Y = -drop / 2f };
+		// Clamber reach follows the same height, so the ledges in range shrink with the crouch.
+		if (Clamber is not null) Clamber.HeightScale = _capsule.Height / _standHeight;
 	}
 
 	private void SampleInput()
@@ -71,6 +109,15 @@ public partial class PlayerController : CharacterBody3D
 
 		// ponytail: raw key reads, no InputMap actions. Swap for Input.GetVector
 		// with named actions when you want rebindable controls or gamepad support.
+		var sprint = Input.IsPhysicalKeyPressed(Key.Shift);
+		if (!sprint) SprintArmed = false;
+		else if (!_sprintHeld) SprintArmed = true;
+		_sprintHeld = sprint;
+
+		var crouch = Input.IsPhysicalKeyPressed(Key.C);
+		if (crouch && !_crouchHeld) CrouchToggled = !CrouchToggled;
+		_crouchHeld = crouch;
+
 		MoveInput = new Vector2(
 			(Input.IsPhysicalKeyPressed(Key.D) ? 1 : 0) - (Input.IsPhysicalKeyPressed(Key.A) ? 1 : 0),
 			(Input.IsPhysicalKeyPressed(Key.S) ? 1 : 0) - (Input.IsPhysicalKeyPressed(Key.W) ? 1 : 0));
