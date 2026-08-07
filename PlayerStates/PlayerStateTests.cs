@@ -26,7 +26,9 @@ public partial class PlayerStateTests : Node
     private PlayerController _body;
     private StateMachine _sm;
     private float _ledgeTop, _clamberEndY;
-    private float _standCamY, _standHeight, _crouchCamY, _crouchHeight;
+    private float _standCamY, _standHeight, _crouchDip, _crouchHeight;
+    private float _maxBob, _strafeRoll, _straightRoll;
+    private float _punchMax, _punchMin, _smallDropPunch, _fallSpeedAfterLanding, _rampTopY;
     private string _last = "", _blockedState = "", _freedState = "", _afterClamberState = "";
 
     // The Overhang slab's underside sits 1.6m over the floor: the 1.5m crouched capsule fits under
@@ -41,11 +43,23 @@ public partial class PlayerStateTests : Node
 
     public override void _Ready()
     {
+        // Every frame number below is really a duration -- crouch easing, clamber flight and the
+        // camera smoothing all run on wall-clock seconds. Pinned to 60Hz so the schedule means the
+        // same thing regardless of what the project's physics tick rate is set to.
+        Engine.PhysicsTicksPerSecond = 60;
         AddChild(GD.Load<PackedScene>("res://test_level.tscn").Instantiate());
     }
 
     private static void Press(Key key, bool down) =>
         Input.ParseInputEvent(new InputEventKey { PhysicalKeycode = key, Pressed = down });
+
+    // Park the player over the jump platform at a given height and let go. The platform's top is at
+    // y=5 and the capsule's centre rides 1m above its feet, so y=6 is resting on it.
+    private void Drop(float y)
+    {
+        _body.GlobalPosition = new Vector3(-9, y, 9);
+        _body.Velocity = Vector3.Zero;
+    }
 
     private static void Space(bool down) => Press(Key.Space, down);
 
@@ -77,8 +91,11 @@ public partial class PlayerStateTests : Node
         // Shift released first: crouch must stick rather than bouncing back to sprint.
         if (_frame == 60) { Press(Key.Shift, false); Press(Key.C, true); return; }  // -> Crouching
         if (_frame == 62) { Press(Key.C, false); return; }
-        // Sampled deep into the crouch, once the camera has finished easing down.
-        if (_frame == 98) { _crouchCamY = Cam().Position.Y; _crouchHeight = Capsule().Height; return; }
+        // Walking straight back, so none of the velocity is sideways and the view must stay level.
+        if (_frame == 90) { _straightRoll = Cam().Rotation.Z; return; }
+        // Sampled deep into the crouch, once the camera has finished easing down. CrouchOffset, not
+        // Position.Y: the player is still moving here, so the node carries head bob on top.
+        if (_frame == 98) { _crouchDip = Cam().CrouchOffset; _crouchHeight = Capsule().Height; return; }
         if (_frame == 100) { Press(Key.C, true); return; }                          // -> Walking
         if (_frame == 102) { Press(Key.C, false); return; }
         if (_frame == 110) { Press(Key.S, false); return; }
@@ -106,7 +123,47 @@ public partial class PlayerStateTests : Node
         if (_frame == 360) { _freedState = _sm.GetStateMachineString(); return; }
         if (_frame == 365) { Press(Key.C, true); return; }    // a fresh press does stand up
         if (_frame == 367) { Press(Key.C, false); return; }
-        if (_frame < 390) return;
+
+        // --- camera juice: strafe right on open ground, standing and un-bobbed at the start ---
+        if (_frame == 370) { Press(Key.D, true); return; }
+        if (_frame is > 371 and < 390)
+        {
+            // Bob measured against the crouch height, not against stand height: the stand-up from
+            // frame 365 is still easing here, and that ease is not bob.
+            var eye = _standCamY - Cam().CrouchOffset;
+            _maxBob = Mathf.Max(_maxBob, Mathf.Abs(Cam().Position.Y - eye));
+            return;
+        }
+        if (_frame == 390) { _strafeRoll = Cam().Rotation.Z; Press(Key.D, false); return; }
+
+        // --- landing punch: a 6m drop onto the jump platform, which lands hard enough to clamp ---
+        if (_frame == 395) { Drop(12f); return; }
+        if (_frame is > 395 and < 560)
+        {
+            // Punch measured against LookPitch, not against zero: the camera's X is the sum of the
+            // two, and measuring the absolute would silently be measuring mouse-look.
+            var punch = Cam().Rotation.X - _body.LookPitch;
+            _punchMax = Mathf.Max(_punchMax, punch);
+            _punchMin = Mathf.Min(_punchMin, punch);
+            if (_frame == 559) _fallSpeedAfterLanding = _body.FallSpeed;
+            return;
+        }
+
+        // --- a 0.25m step off, well under LandPunchThreshold, must produce nothing at all ---
+        // Staged this late so the previous punch has fully rung out: the spring's envelope still
+        // carries ~0.4 degrees half a second after landing, which would be read as a false positive.
+        if (_frame == 560) { Drop(6.25f); return; }
+        if (_frame is > 560 and < 600)
+        {
+            _smallDropPunch = Mathf.Max(_smallDropPunch, Mathf.Abs(Cam().Rotation.X - _body.LookPitch));
+            return;
+        }
+
+        // --- the ramp is actually walkable: hold S (which drives +Z) from its foot to the top ---
+        if (_frame == 605) { _body.GlobalPosition = new Vector3(-9, 1.5f, -3); Press(Key.S, true); return; }
+        if (_frame is > 605 and < 760) { _rampTopY = Mathf.Max(_rampTopY, _body.GlobalPosition.Y); return; }
+        if (_frame == 760) { Press(Key.S, false); return; }
+        if (_frame < 770) return;
 
         Contains("Player(Locomoting(AirState(InAir), MovementState(Walking)))", "jump reaches InAir");
         Is(Locomoting, _sm.GetStateMachineString(), "final configuration is back to Locomoting");
@@ -118,10 +175,40 @@ public partial class PlayerStateTests : Node
         // Crouch dips the camera by CrouchDrop and shortens the capsule by the same amount, and
         // both undo themselves on stand-up.
         var drop = Cam().CrouchDrop;
-        Near(_standCamY - drop, _crouchCamY, "crouch lowers the camera");
+        Near(drop, _crouchDip, "crouch lowers the camera");
         Near(_standHeight - drop, _crouchHeight, "crouch shortens the capsule to match");
         Near(_standCamY, Cam().Position.Y, "standing up restores the camera");
         Near(_standHeight, Capsule().Height, "standing up restores the capsule");
+
+        // Head bob rises while walking and settles back out once the player stops. The upper bound
+        // is the guard that matters: bob must never grow past the amplitude it was told to use.
+        True(_maxBob > 0.005f, $"walking bobs the camera (peak {_maxBob:F4}m)");
+        True(_maxBob <= Cam().BobAmount, $"bob stays within BobAmount (peak {_maxBob:F4}m)");
+        // Strafing right rolls the view; walking straight does not roll it at all.
+        True(_strafeRoll < -Mathf.DegToRad(0.5f), $"strafing rolls the view ({Mathf.RadToDeg(_strafeRoll):F2} deg)");
+        True(Mathf.Abs(_straightRoll) < Mathf.DegToRad(0.1f),
+            $"walking straight keeps the view level ({Mathf.RadToDeg(_straightRoll):F2} deg)");
+
+        // Landing punches the view, clamped to MaxPunch, and the spring overshoots back past level
+        // on the way out -- that rebound is what separates a spring from a plain decay, and it is
+        // exactly what a careless "simplify this to a lerp" would silently remove.
+        // Direction matters and is easy to get backwards: Godot counts positive pitch as looking up,
+        // while Quake and Source both count it as looking down, so their constants invert on import.
+        // A landing must drive the view DOWN, which is negative here.
+        var maxPunch = Mathf.DegToRad(Cam().MaxPunch);
+        True(_punchMin < -Mathf.DegToRad(1f), $"landing pitches the view down ({Mathf.RadToDeg(_punchMin):F2} deg)");
+        True(_punchMin >= -maxPunch - 0.001f, $"punch respects MaxPunch ({Mathf.RadToDeg(_punchMin):F2} deg)");
+        // Crossing zero at all is what separates a spring from a plain decay, so the bar is "any
+        // rebound" rather than a magnitude -- how big it gets is a tuning choice, and PunchDamping
+        // near critical shrinks it to almost nothing. Only fails if the spring is gone entirely.
+        True(_punchMax > Mathf.DegToRad(0.005f), $"punch rebounds back past level ({Mathf.RadToDeg(_punchMax):F3} deg)");
+        True(_fallSpeedAfterLanding == 0f, $"FallSpeed is consumed on landing (got {_fallSpeedAfterLanding:F2})");
+        True(_smallDropPunch < Mathf.DegToRad(0.1f),
+            $"a drop under the threshold does not punch ({Mathf.RadToDeg(_smallDropPunch):F3} deg)");
+
+        // The ramp is walkable at 30 degrees: holding S from its foot reaches the platform, whose
+        // top is y=5 and so puts the capsule's centre at y=6.
+        True(_rampTopY > 5.9f, $"walking up the ramp reaches the platform (got y={_rampTopY:F2})");
 
         Has(_blockedState, Crouching, "stand-up under the overhang is refused");
         Has(_freedState, Crouching, "the refused stand-up is dropped, not queued for later");
@@ -133,7 +220,8 @@ public partial class PlayerStateTests : Node
         // four changes, the sprint/crouch/walk trip is three more, and the headroom phase two --
         // plus room for a teleport to blip through InAir. Anything much larger means states are
         // churning; a real guard flap runs to the machine's 64-transition cap.
-        if (_seen.Count > 16)
+        // ... and the two staged drops onto the jump platform are two more round trips each.
+        if (_seen.Count > 24)
             _failures.Add($"configuration churn: {_seen.Count} changes. Saw: {string.Join(" -> ", _seen)}");
 
         if (_failures.Count == 0) GD.Print("player state tests: all passed");
@@ -164,6 +252,11 @@ public partial class PlayerStateTests : Node
     private void Has(string actual, string expected, string what)
     {
         if (!actual.Contains(expected)) _failures.Add($"{what}: expected '{expected}' in '{actual}'");
+    }
+
+    private void True(bool ok, string what)
+    {
+        if (!ok) _failures.Add(what);
     }
 
     private void Near(float expected, float actual, string what)

@@ -27,6 +27,7 @@ project/assembly_name="FirstPersonV2"
 [physics]
 
 3d/physics_engine="Jolt Physics"
+common/physics_ticks_per_second=120
 
 [rendering]
 

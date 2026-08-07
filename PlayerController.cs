@@ -25,6 +25,16 @@ public partial class PlayerController : CharacterBody3D
 	// Extra camera motion (the crouch dip). Mouse-look stays in this class; see CameraController.
 	public CameraController Camera { get; private set; }
 
+	// Where the player is looking, in radians, kept here rather than read back off the camera node.
+	// CameraController composes it with the impact punch — if mouse-look accumulated from the node
+	// instead, it would read back a punched pitch and integrate every landing into the player's aim.
+	public float LookPitch { get; private set; }
+
+	// Fastest downward speed reached during the current fall, in metres per second. Accumulated by
+	// InAirState and consumed by GroundedState on landing: MoveAndSlide has already zeroed Velocity.Y
+	// by the time the landing is detectable, so the impact speed has to be remembered on the way down.
+	public float FallSpeed { get; set; }
+
 	private CollisionShape3D _collider;
 	private CapsuleShape3D _capsule;
 	private float _standHeight;
@@ -70,10 +80,9 @@ public partial class PlayerController : CharacterBody3D
 		if (@event is InputEventMouseMotion motion && Input.MouseMode == Input.MouseModeEnum.Captured)
 		{
 			RotateY(-motion.Relative.X * MouseSensitivity);
-			Camera.Rotation = Camera.Rotation with
-			{
-				X = Mathf.Clamp(Camera.Rotation.X - motion.Relative.Y * MouseSensitivity, -1.5f, 1.5f)
-			};
+			// Body yaw is applied to this node; pitch is only recorded. CameraController is the sole
+			// writer of the camera's rotation, so look, roll and punch compose in one place.
+			LookPitch = Mathf.Clamp(LookPitch - motion.Relative.Y * MouseSensitivity, -1.5f, 1.5f);
 		}
 
 	}

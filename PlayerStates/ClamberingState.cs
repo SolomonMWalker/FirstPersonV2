@@ -18,6 +18,14 @@ public partial class ClamberingState : AtomicState
         AddTransition("Locomoting", () => !_player.Clamber.IsClambering);
     }
 
+    public override void StateEntered()
+    {
+        base.StateEntered();
+        // The mantle caught the fall, so it never lands. Without this the speed built up jumping at
+        // the ledge would still be banked and would punch the view on stepping off the top.
+        _player.FallSpeed = 0f;
+    }
+
     public override void StatePhysicsProcessing(double delta)
     {
         _player.Velocity = _player.Clamber.GetClamberVelocity(delta);

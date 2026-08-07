@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://c3um8q22nk7ch" path="res://PlayerController.cs" id="1_player"]
 [ext_resource type="Script" uid="uid://cev8f37yhaveb" path="res://GameManager.cs" id="2_gamemgr"]
-[ext_resource type="Material" path="res://checker_material.tres" id="3_checker"]
+[ext_resource type="Material" uid="uid://drljhmw7xl0se" path="res://checker_material.tres" id="3_checker"]
 [ext_resource type="Script" uid="uid://qv6hl8f2ylh2" path="res://ClamberController.cs" id="4_clamber"]
 [ext_resource type="Script" uid="uid://csfiuwgihnlal" path="res://StateMachine/StateMachine.cs" id="5_sm"]
 [ext_resource type="Script" uid="uid://crtr3umctqeyl" path="res://StateMachine/CompoundState.cs" id="6_compound"]
@@ -11,10 +11,10 @@
 [ext_resource type="Script" uid="uid://befcn3l4y5klt" path="res://PlayerStates/InAirState.cs" id="9_inair"]
 [ext_resource type="Script" uid="uid://chmr455r1x5su" path="res://PlayerStates/WalkingState.cs" id="10_walking"]
 [ext_resource type="Script" uid="uid://dqcsnvlilj2fd" path="res://PlayerStates/ClamberingState.cs" id="11_clambering"]
-[ext_resource type="Script" path="res://PlayerStates/SprintingState.cs" id="12_sprinting"]
-[ext_resource type="Script" path="res://PlayerStates/CrouchingState.cs" id="13_crouching"]
-[ext_resource type="Script" path="res://StateLabel.cs" id="14_statelabel"]
-[ext_resource type="Script" path="res://CameraController.cs" id="15_camera"]
+[ext_resource type="Script" uid="uid://bug2rkepk6efs" path="res://PlayerStates/SprintingState.cs" id="12_sprinting"]
+[ext_resource type="Script" uid="uid://b6a1040khb1ad" path="res://PlayerStates/CrouchingState.cs" id="13_crouching"]
+[ext_resource type="Script" uid="uid://cxodw34d7i83" path="res://StateLabel.cs" id="14_statelabel"]
+[ext_resource type="Script" uid="uid://dy144vidsxs50" path="res://CameraController.cs" id="15_camera"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_gojnm"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -61,9 +61,20 @@ transform = Transform3D(3, 0, 0, 0, 0.25, 0, 0, 0, 3, 8, 1.725, 0)
 use_collision = true
 material = ExtResource("3_checker")
 
-[node name="CharacterBody3D" type="CharacterBody3D" parent="." unique_id=811290216]
+[node name="JumpPlatform" type="CSGBox3D" parent="." unique_id=1876626997]
+transform = Transform3D(6, 0, 0, 0, 5, 0, 0, 0, 6, -9, 2.5, 9)
+use_collision = true
+material = ExtResource("3_checker")
+
+[node name="Ramp" type="CSGBox3D" parent="." unique_id=1876626998]
+transform = Transform3D(6, 0, 0, 0, 0.4330127, 6, 0, -0.25, 10.392304, -9, 1.7834938, 0.9288478)
+use_collision = true
+material = ExtResource("3_checker")
+
+[node name="CharacterBody3D" type="CharacterBody3D" parent="." unique_id=811290216 node_paths=PackedStringArray("Clamber")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 script = ExtResource("1_player")
+Clamber = NodePath("ClamberController")
 
 [node name="ClamberController" type="Node3D" parent="CharacterBody3D" unique_id=884447449]
 script = ExtResource("4_clamber")
@@ -82,6 +93,7 @@ script = ExtResource("6_compound")
 
 [node name="Grounded" type="Node" parent="CharacterBody3D/StateMachine/Player/Locomoting/AirState" unique_id=1361975320]
 script = ExtResource("8_grounded")
+LandPunch = 0.3
 
 [node name="InAir" type="Node" parent="CharacterBody3D/StateMachine/Player/Locomoting/AirState" unique_id=386152052]
 script = ExtResource("9_inair")
@@ -108,6 +120,11 @@ shape = SubResource("CapsuleShape3D_6cejb")
 [node name="Camera3D" type="Camera3D" parent="CharacterBody3D" unique_id=28509902]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 script = ExtResource("15_camera")
+CrouchSpeed = 3.5
+BobAmount = 0.015
+BobStride = 3.8
+RollAngle = 1.0
+MaxPunch = 4.5
 
 [node name="DebugUi" type="CanvasLayer" parent="." unique_id=1254875272]
 
