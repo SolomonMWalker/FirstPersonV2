@@ -71,10 +71,6 @@ transform = Transform3D(6, 0, 0, 0, 0.4330127, 6, 0, -0.25, 10.392304, -9, 1.783
 use_collision = true
 material = ExtResource("3_checker")
 
-; Step-smoothing test geometry. Walk +Z (S) into either lane from around z=2.
-;
-; Stairs: six 0.15m treads, 0.8m deep, up to a landing at y=0.9. 0.15m is not a design choice --
-; it is the tallest step a 0.5m-radius capsule can roll over in Godot, measured. See ROADMAP.md.
 [node name="Stairs" type="Node3D" parent="." unique_id=1876627000]
 
 [node name="Tread1" type="CSGBox3D" parent="Stairs" unique_id=1876627001]
@@ -112,9 +108,6 @@ transform = Transform3D(3, 0, 0, 0, 4, 0, 0, 0, 3, 8, -1.1, 9.3)
 use_collision = true
 material = ExtResource("3_checker")
 
-; Ruler: four isolated slabs at 0.10 / 0.15 / 0.20 / 0.30m. The first two are walkable and are what
-; the smoothing is for; the last two stop the player dead, which is the traversal gap -- too tall
-; for the capsule, too short for ClamberController (MinClamberHeight = 0.4).
 [node name="StepRuler" type="Node3D" parent="." unique_id=1876627010]
 
 [node name="Step010" type="CSGBox3D" parent="StepRuler" unique_id=1876627011]
@@ -192,6 +185,7 @@ BobAmount = 0.015
 BobStride = 3.8
 RollAngle = 1.0
 MaxPunch = 4.5
+MaxStepLag = 0.7
 
 [node name="DebugUi" type="CanvasLayer" parent="." unique_id=1254875272]
 
