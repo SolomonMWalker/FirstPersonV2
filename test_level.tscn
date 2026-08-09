@@ -71,8 +71,75 @@ transform = Transform3D(6, 0, 0, 0, 0.4330127, 6, 0, -0.25, 10.392304, -9, 1.783
 use_collision = true
 material = ExtResource("3_checker")
 
+; Step-smoothing test geometry. Walk +Z (S) into either lane from around z=2.
+;
+; Stairs: six 0.15m treads, 0.8m deep, up to a landing at y=0.9. 0.15m is not a design choice --
+; it is the tallest step a 0.5m-radius capsule can roll over in Godot, measured. See ROADMAP.md.
+[node name="Stairs" type="Node3D" parent="." unique_id=1876627000]
+
+[node name="Tread1" type="CSGBox3D" parent="Stairs" unique_id=1876627001]
+transform = Transform3D(3, 0, 0, 0, 4, 0, 0, 0, 0.8, 8, -1.85, 3.4)
+use_collision = true
+material = ExtResource("3_checker")
+
+[node name="Tread2" type="CSGBox3D" parent="Stairs" unique_id=1876627002]
+transform = Transform3D(3, 0, 0, 0, 4, 0, 0, 0, 0.8, 8, -1.7, 4.2)
+use_collision = true
+material = ExtResource("3_checker")
+
+[node name="Tread3" type="CSGBox3D" parent="Stairs" unique_id=1876627003]
+transform = Transform3D(3, 0, 0, 0, 4, 0, 0, 0, 0.8, 8, -1.55, 5)
+use_collision = true
+material = ExtResource("3_checker")
+
+[node name="Tread4" type="CSGBox3D" parent="Stairs" unique_id=1876627004]
+transform = Transform3D(3, 0, 0, 0, 4, 0, 0, 0, 0.8, 8, -1.4, 5.8)
+use_collision = true
+material = ExtResource("3_checker")
+
+[node name="Tread5" type="CSGBox3D" parent="Stairs" unique_id=1876627005]
+transform = Transform3D(3, 0, 0, 0, 4, 0, 0, 0, 0.8, 8, -1.25, 6.6)
+use_collision = true
+material = ExtResource("3_checker")
+
+[node name="Tread6" type="CSGBox3D" parent="Stairs" unique_id=1876627006]
+transform = Transform3D(3, 0, 0, 0, 4, 0, 0, 0, 0.8, 8, -1.1, 7.4)
+use_collision = true
+material = ExtResource("3_checker")
+
+[node name="Landing" type="CSGBox3D" parent="Stairs" unique_id=1876627007]
+transform = Transform3D(3, 0, 0, 0, 4, 0, 0, 0, 3, 8, -1.1, 9.3)
+use_collision = true
+material = ExtResource("3_checker")
+
+; Ruler: four isolated slabs at 0.10 / 0.15 / 0.20 / 0.30m. The first two are walkable and are what
+; the smoothing is for; the last two stop the player dead, which is the traversal gap -- too tall
+; for the capsule, too short for ClamberController (MinClamberHeight = 0.4).
+[node name="StepRuler" type="Node3D" parent="." unique_id=1876627010]
+
+[node name="Step010" type="CSGBox3D" parent="StepRuler" unique_id=1876627011]
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 0.6, 1, -1.9, 3)
+use_collision = true
+material = ExtResource("3_checker")
+
+[node name="Step015" type="CSGBox3D" parent="StepRuler" unique_id=1876627012]
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 0.6, 1, -1.85, 5)
+use_collision = true
+material = ExtResource("3_checker")
+
+[node name="Step020" type="CSGBox3D" parent="StepRuler" unique_id=1876627013]
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 0.6, 1, -1.8, 7)
+use_collision = true
+material = ExtResource("3_checker")
+
+[node name="Step030" type="CSGBox3D" parent="StepRuler" unique_id=1876627014]
+transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 0.6, 1, -1.7, 9)
+use_collision = true
+material = ExtResource("3_checker")
+
 [node name="CharacterBody3D" type="CharacterBody3D" parent="." unique_id=811290216 node_paths=PackedStringArray("Clamber")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+floor_snap_length = 0.35
 script = ExtResource("1_player")
 Clamber = NodePath("ClamberController")
 

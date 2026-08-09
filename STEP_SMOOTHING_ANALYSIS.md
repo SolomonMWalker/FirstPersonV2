@@ -4,7 +4,8 @@ Research into how shipped FPS games keep the camera smooth when the body's verti
 — walking over kerbs, rubble, stair treads and other bumps small enough to traverse without a
 dedicated climb — and what that should look like in *this* project.
 
-**Section 1** is the research. **Section 2** is the recommendation. Nothing here is implemented yet.
+**Section 1** is the research. **Section 2** is the recommendation. **Section 3** is what was built, and
+the one measured fact that turned out to contradict §2.5.
 
 ---
 
@@ -269,6 +270,10 @@ worth asserting in a test rather than assuming.
 
 Worth recording because it bounds the constants. Right now there are three height bands:
 
+> **⚠️ Corrected after measurement — see §3.1.** The first row below was an estimate and it is wrong.
+> The capsule rolls over **0.15m and no more**; 0.20m stops the player dead. The gap band is
+> therefore 0.15–0.4m, not 0.3–0.4m, and it is nearly twice as wide as assumed here.
+
 | Height | Handled by | How |
 |---|---|---|
 | Below ~0.2–0.3m | Capsule collider (radius 0.5) | Rounds over it automatically. **This is the band that needs view smoothing.** |
@@ -368,6 +373,100 @@ and three assertions:
 - **The muzzleflash desync Quake documented.** Nothing renders from the eye yet. When a viewmodel or
   hitscan tracer arrives, remember the eye is deliberately lying about its position for ~0.15s after
   every step, and origin those from the body rather than the camera.
+
+---
+
+## 3. As built
+
+Implemented as specified in §2.7, with one addition (§3.2) and one finding that changes what the
+feature is *for* (§3.3).
+
+### Files changed
+
+| File | Change |
+|---|---|
+| `CameraController.cs` | `StepSmoothRate` / `MaxStepLag` exports, `StepSmooth()`, `_stepLag` as a third addend on `Position.Y`, `ProcessPhysicsPriority = 2`, `StepLag` accessor for tests |
+| `test_level.tscn` | `Stairs` (six 0.15m treads to a landing), `StepRuler` (0.10 / 0.15 / 0.20 / 0.30m slabs), `floor_snap_length = 0.35` on the body |
+| `PlayerStates/PlayerStateTests.cs` | Step phase at frames 775–1070, plus a clamber-lag sampler inside the existing clamber phase |
+
+### 3.1 ⚠️ The capsule climbs 0.15m, not 0.3m
+
+§2.5 assumed the capsule rounds over anything below ~0.2–0.3m and that this was the band needing
+smoothing. Measured directly — walk the real player into deep test treads and read the settled
+height:
+
+```
+step 0.10m -> settled 0.101m  CLIMBED
+step 0.15m -> settled 0.151m  CLIMBED
+step 0.20m -> settled 0.000m  blocked
+step 0.25m -> settled 0.000m  blocked
+```
+
+Identical with `floor_block_on_wall` on and off, and identical at both snap lengths tried. **0.15m is
+the ceiling**, which is why the test stairs are built at 0.15m treads — that number is measured, not
+chosen. The first version of this work used 0.2m treads and the player could not climb them at all.
+
+The consequence for §2.5: the untraversable gap runs 0.15m → 0.4m, not 0.3m → 0.4m. `StepRuler` in
+`test_level` walks straight into it — the 0.20 and 0.30 slabs stop the player dead, and neither the
+capsule nor `ClamberController` will take them.
+
+### 3.2 `floor_snap_length = 0.35`
+
+Not in the §2.7 spec, and required. At Godot's default `0.1`, walking *down* anything taller than
+10cm makes the body briefly airborne, the grounded guard correctly refuses to smooth a fall, and
+descent smoothing never fires at all. Raising the snap to match `MaxStepLag` keeps the body glued
+over the drop so there is a step to smooth. Verified not to affect climbing either way (§3.1).
+
+Strictly this is traversal, which §2.5 scoped out. It is one property, and without it half the
+feature is dead code.
+
+### 3.3 ⚠️ Ascent has nothing to smooth — and that is the real finding
+
+Measured on the 0.15m treads, at the shipped constants:
+
+| | Peak lag | Worst single-tick eye motion | Worst single-tick body motion |
+|---|---|---|---|
+| **Ascending** | **0.000 m** | — | 0.042 m |
+| **Descending** | 0.028 m | 0.046 m | 0.069 m |
+
+Ascent produces *no lag whatsoever*, and it is not a bug. Godot has no step-up teleport: the capsule
+**rolls** over a tread across four or so ticks at ≈2.5 m/s — which is exactly `StepSmoothRate` — so
+the eye keeps pace precisely and the lag term never accumulates. Confirmed by dropping
+`StepSmoothRate` to `0.5`, at which the same climb does produce lag. There was never a
+discontinuity to absorb, because Godot's own collision response already spread the rise over
+several frames.
+
+Descent is the half that pops, because floor snap pulls the body down in one tick, and the
+smoothing measurably absorbs it: the eye's worst frame is a third smaller than the body's.
+
+**So: this system is currently a solution to a problem this project only half has.** It becomes
+load-bearing the moment step-up traversal lands (§2.5), because a sweep-and-teleport implementation
+*is* a one-frame discontinuity — the exact thing Quake wrote `oldz` for. Build traversal, and this
+starts earning its keep on the way up as well as down. Until then, expect a subtle effect on
+descent and nothing at all on ascent.
+
+### Tests
+
+Seven assertions in `PlayerStateTests`, frames 775–1070:
+
+- the 0.15m treads are walkable at all (guards §3.1 — a regression here silently turns every
+  assertion below into a test of flat ground)
+- ascent lag stays within `MaxStepLag`
+- descending lags the eye above the body, and within `MaxStepLag`
+- the eye drops less per tick than the body does
+- lag settles on **exactly** zero, so no permanent eye-height error accumulates
+- crouching is not absorbed as a step (Source's 2004 bug)
+- clambering is not absorbed as a step
+
+The `ProcessPhysicsPriority = 2` change predicted in §2.6 did land, and bob and roll now read
+post-`MoveAndSlide` velocity. The existing bob-amplitude assertions passed unchanged.
+
+### One guard the spec did not have
+
+`grounded && _wasGrounded` — grounded on *both* ticks, not just this one. On the frame a fall ends,
+`rise` is the entire last tick of the drop; absorbing it floats the eye **above** the body at
+exactly the moment the landing punch fires. Quake sidesteps this by only ever smoothing upward; the
+two-tick test costs one bool and also permits the downward smoothing Quake never had.
 
 ---
 

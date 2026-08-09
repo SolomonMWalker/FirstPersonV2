@@ -29,6 +29,8 @@ public partial class PlayerStateTests : Node
     private float _standCamY, _standHeight, _crouchDip, _crouchHeight;
     private float _maxBob, _strafeRoll, _straightRoll;
     private float _punchMax, _punchMin, _smallDropPunch, _fallSpeedAfterLanding, _rampTopY;
+    private float _clamberLag, _crouchLag, _restLag, _maxStepLag, _descentLag, _stairTopY;
+    private float _maxCamDrop, _maxBodyDrop, _lastCamY, _lastBodyY;
     private string _last = "", _blockedState = "", _freedState = "", _afterClamberState = "";
 
     // The Overhang slab's underside sits 1.6m over the floor: the 1.5m crouched capsule fits under
@@ -104,6 +106,9 @@ public partial class PlayerStateTests : Node
         // Sprinting into it, because the clamber must not cost the player their movement state.
         if (_frame == 140) { _body.GlobalPosition = new Vector3(0, 1f, -2.8f); Press(Key.W, true); Press(Key.Shift, true); return; }
         if (_frame == 145) { Space(true); return; }
+        // A 1.6m mantle is not a step. Without the IsClambering guard the rise clamps to MaxStepLag
+        // and the eye sinks through the ledge halfway up.
+        if (_frame is > 145 and < 200) { _clamberLag = Mathf.Max(_clamberLag, Mathf.Abs(Cam().StepLag)); return; }
         if (_frame == 200) { _afterClamberState = _sm.GetStateMachineString(); return; }
         if (_frame == 205) { Press(Key.W, false); Press(Key.Shift, false); return; }
         if (_frame == 250) { Space(false); return; }
@@ -163,7 +168,61 @@ public partial class PlayerStateTests : Node
         if (_frame == 605) { _body.GlobalPosition = new Vector3(-9, 1.5f, -3); Press(Key.S, true); return; }
         if (_frame is > 605 and < 760) { _rampTopY = Mathf.Max(_rampTopY, _body.GlobalPosition.Y); return; }
         if (_frame == 760) { Press(Key.S, false); return; }
-        if (_frame < 770) return;
+
+        // --- step smoothing ---
+        // Flat open ground at the foot of the stairs, standing still, everything settled.
+        if (_frame == 775) { _body.GlobalPosition = new Vector3(8, 1f, 2f); _body.Velocity = Vector3.Zero; return; }
+        // Crouch, standing still. The eye drops 0.5m and the body does not move at all, so any step
+        // lag here means the dip is being absorbed as a step -- Source's 2004 bug.
+        if (_frame == 790) { Press(Key.C, true); return; }
+        if (_frame == 792) { Press(Key.C, false); return; }
+        if (_frame is > 792 and < 815) { _crouchLag = Mathf.Max(_crouchLag, Mathf.Abs(Cam().StepLag)); return; }
+        if (_frame == 815) { Press(Key.C, true); return; }    // back up
+        if (_frame == 817) { Press(Key.C, false); return; }
+
+        // Walk up the six 0.15m treads. S drives +Z, which is up the stairs.
+        // Ascent is measured for the bound only, not for lag. Godot has no step-up teleport: the
+        // capsule *rolls* over a tread over four or so ticks at ~2.5 m/s, which is already the
+        // catch-up rate, so the eye keeps pace exactly and no lag ever accumulates. Nothing to
+        // absorb, because nothing popped. Verified by dropping StepSmoothRate to 0.5, at which the
+        // same climb does produce lag. When step-up traversal lands and the body starts teleporting
+        // up treads, this is the assertion that will need to become a `> 0.02` like the descent one.
+        if (_frame == 840) { Press(Key.S, true); return; }
+        if (_frame is > 840 and < 930)
+        {
+            _maxStepLag = Mathf.Max(_maxStepLag, -Cam().StepLag);   // negative going up
+            _stairTopY = Mathf.Max(_stairTopY, _body.GlobalPosition.Y);
+            return;
+        }
+        // Straight back down the same stairs, and this half does pop: floor snap pulls the body down
+        // the full tread in one tick. Descending is what Quake never did and Source added, and it
+        // needs floor_snap_length long enough to keep the body grounded over the drop -- otherwise
+        // the step reads as a fall and the guards correctly refuse to smooth it.
+        if (_frame == 930)
+        {
+            Press(Key.S, false);
+            Press(Key.W, true);
+            _lastCamY = Cam().GlobalPosition.Y;
+            _lastBodyY = _body.GlobalPosition.Y;
+            return;
+        }
+        if (_frame is > 930 and < 1030)
+        {
+            // Global Y on the camera, not local: the whole point is that the body's world-space pop
+            // must not reach the eye in one frame. Local Position.Y would only show the lag term.
+            var camY = Cam().GlobalPosition.Y;
+            var bodyY = _body.GlobalPosition.Y;
+            _maxCamDrop = Mathf.Max(_maxCamDrop, _lastCamY - camY);
+            _maxBodyDrop = Mathf.Max(_maxBodyDrop, _lastBodyY - bodyY);
+            _lastCamY = camY;
+            _lastBodyY = bodyY;
+            _descentLag = Mathf.Max(_descentLag, Cam().StepLag);   // positive going down
+            return;
+        }
+        if (_frame == 1030) { Press(Key.W, false); return; }
+        // Well past the ~0.14s convergence, so the lag must be exactly zero and not merely small.
+        if (_frame == 1060) { _restLag = Cam().StepLag; return; }
+        if (_frame < 1070) return;
 
         Contains("Player(Locomoting(AirState(InAir), MovementState(Walking)))", "jump reaches InAir");
         Is(Locomoting, _sm.GetStateMachineString(), "final configuration is back to Locomoting");
@@ -210,6 +269,22 @@ public partial class PlayerStateTests : Node
         // top is y=5 and so puts the capsule's centre at y=6.
         True(_rampTopY > 5.9f, $"walking up the ramp reaches the platform (got y={_rampTopY:F2})");
 
+        // Step smoothing. The stairs must be climbable at all -- nothing in this project implements
+        // step-up traversal, so the treads live or die on what the capsule rolls over unaided, and
+        // a regression there would silently turn every assertion below into a test of flat ground.
+        True(_stairTopY > 1.85f, $"the 0.15m treads are walkable (reached y={_stairTopY:F2}, landing is 1.9)");
+        True(_maxStepLag <= Cam().MaxStepLag + 0.001f, $"ascent lag respects MaxStepLag ({_maxStepLag:F3}m)");
+        True(_descentLag > 0.02f, $"descending lags the eye above the body ({_descentLag:F3}m)");
+        True(_descentLag <= Cam().MaxStepLag + 0.001f, $"descent lag respects MaxStepLag ({_descentLag:F3}m)");
+        // The measurement that matters: whatever the body did in one tick, the eye did less.
+        True(_maxCamDrop < _maxBodyDrop,
+            $"the eye drops slower than the body ({_maxCamDrop:F4}m vs {_maxBodyDrop:F4}m per tick)");
+        True(_restLag == 0f, $"lag settles on exactly zero, no permanent eye-height error (got {_restLag:F6})");
+        // The two guards that would regress silently, because both fail as "the camera feels a bit
+        // off" rather than as anything that throws.
+        True(_crouchLag < 0.001f, $"crouching is not absorbed as a step (lag {_crouchLag:F4}m)");
+        True(_clamberLag < 0.001f, $"clambering is not absorbed as a step (lag {_clamberLag:F4}m)");
+
         Has(_blockedState, Crouching, "stand-up under the overhang is refused");
         Has(_freedState, Crouching, "the refused stand-up is dropped, not queued for later");
         // That the machine is back to Walking at the end is the final-configuration check above:
@@ -221,7 +296,8 @@ public partial class PlayerStateTests : Node
         // plus room for a teleport to blip through InAir. Anything much larger means states are
         // churning; a real guard flap runs to the machine's 64-transition cap.
         // ... and the two staged drops onto the jump platform are two more round trips each.
-        if (_seen.Count > 24)
+        // ... and the step phase adds a crouch round trip plus room for the stairs to blip InAir.
+        if (_seen.Count > 32)
             _failures.Add($"configuration churn: {_seen.Count} changes. Saw: {string.Join(" -> ", _seen)}");
 
         if (_failures.Count == 0) GD.Print("player state tests: all passed");

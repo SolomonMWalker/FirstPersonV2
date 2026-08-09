@@ -24,6 +24,14 @@ public partial class CameraController : Camera3D
 	[Export] public float PunchDamping = 9f;
 	[Export] public float MaxPunch = 8f;       // degrees, hard clamp so a long fall cannot flip the view
 
+	// Step smoothing. The body's Y jumps in a single tick when the capsule rolls over a kerb or a
+	// stair tread; the eye is held where it was in world space and reeled back in at a constant rate,
+	// turning a one-frame discontinuity into ~0.14s of motion. Quake's `oldz` from V_CalcRefdef,
+	// expressed as a lag rather than an absolute because this node is a child of the body.
+	// Rate 0 disables the channel, same posture as the bob knobs and as Source's `smoothstairs`.
+	[Export] public float StepSmoothRate = 2.5f;  // metres per second the eye catches up
+	[Export] public float MaxStepLag = 0.35f;     // furthest the eye may ever trail the body
+
 	// Set by CrouchingState on enter/exit. The state machine is the source of truth for crouching;
 	// this is just the view of it.
 	public bool Crouched { get; set; }
@@ -45,6 +53,18 @@ public partial class CameraController : Camera3D
 	// Punch displacement and its velocity, both in radians, X = pitch and Y = roll.
 	private Vector2 _punch;
 	private Vector2 _punchVel;
+
+	// How far the eye currently trails the body: negative while catching up from a step UP (the eye
+	// sits below where the body already is), positive after a step down. Added to Position.Y at the
+	// last moment and deliberately never folded into _eyeY -- CrouchOffset is derived from _eyeY and
+	// resizes the collision capsule, so walking over a kerb must not touch the collider.
+	private float _stepLag;
+	private float _lastBodyY;
+	private float _lastEyeY;
+	private bool _wasGrounded;
+
+	// For tests. The guards are the part of this that regresses silently.
+	public float StepLag => _stepLag;
 
 	// One impulse channel for every impact. Landing calls it with pitch; damage adds roll from the
 	// hit direction; weapon recoil, when there is a weapon, calls the same thing. Kept as a single
@@ -71,7 +91,14 @@ public partial class CameraController : Camera3D
 	{
 		_player = PlayerController.Of(this);
 		_standX = Position.X;
-		_standY = _eyeY = Position.Y;
+		_standY = _eyeY = _lastEyeY = Position.Y;
+		_lastBodyY = _player.GlobalPosition.Y;
+		// After PlayerController's MoveAndSlide, which runs at priority 1. Step smoothing has to read
+		// GlobalPosition once the body has already moved, or every step is detected a tick late and
+		// the one frame that actually shows the pop is the frame rendered unsmoothed.
+		// Side effect, deliberate: bob and roll now read post-slide velocity, so walking into a wall
+		// stops the bob instead of bobbing on a velocity the slide threw away.
+		ProcessPhysicsPriority = 2;
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -102,12 +129,14 @@ public partial class CameraController : Camera3D
 		var wanted = grounded ? BobAmount * Mathf.Min(speed / _player.Speed, 1f) : 0f;
 		_bobAmp = Mathf.Lerp(_bobAmp, wanted, chase);
 
+		StepSmooth(d, grounded);
+
 		// Vertical at twice the lateral rate: two footfalls per stride, tracing the figure-8 that
 		// makes this read as walking. A single sine on Y alone reads as floating.
 		Position = Position with
 		{
 			X = _standX + Mathf.Sin(_bobPhase) * _bobAmp * BobSway,
-			Y = _eyeY + Mathf.Sin(_bobPhase * 2f) * _bobAmp,
+			Y = _eyeY + Mathf.Sin(_bobPhase * 2f) * _bobAmp + _stepLag,
 		};
 
 		// Quake's V_CalcRoll: how much of the velocity points sideways, ramped to a clamp. Driven by
@@ -124,6 +153,46 @@ public partial class CameraController : Camera3D
 		// The one place the camera's rotation is written. Look pitch comes from PlayerController,
 		// which only records it, so the punch can never be integrated back into the player's aim.
 		Rotation = new Vector3(_player.LookPitch + _punch.X, 0f, _roll + _punch.Y);
+	}
+
+	// Quake's stair block, ported. Every guard here maps to one in the original or in Source's
+	// SmoothViewOnStairs, and each prevents a specific visible bug rather than being defensive.
+	private void StepSmooth(float d, bool grounded)
+	{
+		// The body's world Y, tracked across ticks. Quake reads ent->origin[2] directly because its
+		// view lives in world space; this camera is a child of the body, so a step moves its global
+		// Y while its local Position.Y does not change at all. Hence a lag, not an absolute — and a
+		// lag of zero is the correct resting state, so nothing needs initialising against the parent.
+		var bodyY = _player.GlobalPosition.Y;
+		var rise = bodyY - _lastBodyY;
+		_lastBodyY = bodyY;
+
+		// Source's m_flOldPlayerViewOffsetZ guard. A crouch is a deliberate eye movement, not a step
+		// to be absorbed — without this, pressing C would make the camera sit still.
+		var eyeMoved = !Mathf.IsEqualApprox(_eyeY, _lastEyeY);
+		_lastEyeY = _eyeY;
+
+		// Grounded on BOTH ticks, not just this one. On the frame a fall ends, `rise` is the whole
+		// last tick of the drop, and absorbing that floats the eye ABOVE the body at exactly the
+		// moment the landing punch fires. Quake dodges this by only ever smoothing upward; testing
+		// two ticks instead also lets a step DOWN smooth, which Quake never did and Source added.
+		var smoothing = grounded && _wasGrounded && !eyeMoved && StepSmoothRate > 0f
+		                && _player.Clamber is not { IsClambering: true };
+		_wasGrounded = grounded;
+
+		// Quake's `else oldz = origin[2]`. Any guard failing clears the lag outright, so stale lag
+		// from before a jump can never reappear on landing.
+		if (!smoothing)
+		{
+			_stepLag = 0f;
+			return;
+		}
+
+		// Hold the eye where it was, clamped so a teleport or a respawn cannot drag it underground,
+		// then reel it in. MoveToward and not exponential decay: a residual lag is a permanent
+		// eye-height error, and there is nothing anywhere that would clear it.
+		_stepLag = Mathf.Clamp(_stepLag - rise, -MaxStepLag, MaxStepLag);
+		_stepLag = Mathf.MoveToward(_stepLag, 0f, StepSmoothRate * d);
 	}
 
 	// Source's damped torsional spring: a restoring force proportional to displacement, damping that
