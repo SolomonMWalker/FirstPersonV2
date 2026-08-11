@@ -16,6 +16,11 @@
 [ext_resource type="Script" uid="uid://cxodw34d7i83" path="res://StateLabel.cs" id="14_statelabel"]
 [ext_resource type="Script" uid="uid://dy144vidsxs50" path="res://CameraController.cs" id="15_camera"]
 [ext_resource type="Script" path="res://PlayerStates/CoyoteState.cs" id="16_coyote"]
+[ext_resource type="Script" path="res://Components/HealthComponent.cs" id="17_health"]
+[ext_resource type="Script" path="res://Components/ShieldComponent.cs" id="18_shield"]
+[ext_resource type="Script" path="res://Components/TurretComponent.cs" id="19_turret"]
+[ext_resource type="PackedScene" path="res://projectile.tscn" id="20_projectile"]
+[ext_resource type="Script" path="res://Hud.cs" id="21_hud"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_gojnm"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -28,6 +33,15 @@ sky_material = SubResource("ProceduralSkyMaterial_gojnm")
 background_mode = 2
 sky = SubResource("Sky_1c2mv")
 glow_enabled = true
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_barbg"]
+bg_color = Color(0, 0, 0, 0.55)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health"]
+bg_color = Color(0.85, 0.15, 0.15, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_shield"]
+bg_color = Color(0.2, 0.55, 1, 1)
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_6cejb"]
 
@@ -132,11 +146,41 @@ transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 0.6, 1, -1.7, 9)
 use_collision = true
 material = ExtResource("3_checker")
 
+[node name="Enemy" type="Node3D" parent="."]
+transform = Transform3D(0.78087, 0, -0.6247, 0, 1, 0, 0.6247, 0, 0.78087, -4, 0, 5)
+
+[node name="Body" type="CSGBox3D" parent="Enemy"]
+transform = Transform3D(1, 0, 0, 0, 1.2, 0, 0, 0, 1, 0, 0.6, 0)
+use_collision = true
+material = ExtResource("3_checker")
+
+[node name="Barrel" type="CSGBox3D" parent="Enemy"]
+transform = Transform3D(0.3, 0, 0, 0, 0.3, 0, 0, 0, 1.4, 0, 1.35, -0.7)
+material = ExtResource("3_checker")
+
+[node name="Components" type="Node3D" parent="Enemy"]
+
+[node name="TurretComponent" type="Node3D" parent="Enemy/Components"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.35, -1.6)
+script = ExtResource("19_turret")
+Projectile = ExtResource("20_projectile")
+Interval = 2.0
+
 [node name="CharacterBody3D" type="CharacterBody3D" parent="." unique_id=811290216 node_paths=PackedStringArray("Clamber")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 floor_snap_length = 0.35
 script = ExtResource("1_player")
 Clamber = NodePath("ClamberController")
+
+[node name="Components" type="Node3D" parent="CharacterBody3D"]
+
+[node name="HealthComponent" type="Node3D" parent="CharacterBody3D/Components"]
+script = ExtResource("17_health")
+Max = 100.0
+
+[node name="ShieldComponent" type="Node3D" parent="CharacterBody3D/Components"]
+script = ExtResource("18_shield")
+Max = 70.0
 
 [node name="ClamberController" type="Node3D" parent="CharacterBody3D" unique_id=884447449]
 script = ExtResource("4_clamber")
@@ -191,6 +235,33 @@ BobStride = 3.8
 RollAngle = 1.0
 MaxPunch = 4.5
 MaxStepLag = 0.7
+
+[node name="Hud" type="CanvasLayer" parent="CharacterBody3D"]
+script = ExtResource("21_hud")
+
+[node name="Bars" type="VBoxContainer" parent="CharacterBody3D/Hud"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -74.0
+offset_right = 264.0
+offset_bottom = -24.0
+theme_override_constants/separation = 6
+
+[node name="Shield" type="ProgressBar" parent="CharacterBody3D/Hud/Bars"]
+custom_minimum_size = Vector2(240, 22)
+theme_override_styles/background = SubResource("StyleBoxFlat_barbg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_shield")
+max_value = 70.0
+value = 70.0
+show_percentage = false
+
+[node name="Health" type="ProgressBar" parent="CharacterBody3D/Hud/Bars"]
+custom_minimum_size = Vector2(240, 22)
+theme_override_styles/background = SubResource("StyleBoxFlat_barbg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_health")
+value = 100.0
+show_percentage = false
 
 [node name="DebugUi" type="CanvasLayer" parent="." unique_id=1254875272]
 

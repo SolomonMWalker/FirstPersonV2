@@ -46,7 +46,8 @@ Small, boring, and every later phase trips over them. Do these first.
 
 ### Combat spine
 
-- [ ] **Health + damage.** One `Health` node (current, max, `TakeDamage(amount, fromPosition)`, `Died` signal). Put it on the player *and* the enemy — same component, no interface, no hierarchy.
+- [x] ~~**Health + damage.**~~ **Built** — as the first piece of a component system: a `Components` Node3D on each GameObject, one node per capability under it, looked up by type via `Component.Get<T>` with null meaning "can't be damaged". `HealthComponent` has `Max`/`Current`/`Alive`, `TakeDamage(amount, fromPosition)`, and `Damaged`/`Died` signals; it's on the player in `test_level`, and goes on the enemy unchanged the moment there is one. See `Components/README.md`; `test_health.tscn` covers it headless.
+- [x] ~~**Shields.**~~ **Built** — `ShieldComponent`, Halo rules: absorbs damage whole (no bleed-through on the breaking hit), a recharge cooldown that any damage restarts, and two delay/rate pairs so a break costs a long wait and then refills fast all the way to full. It reaches health by installing itself into a `HealthComponent.AbsorbDamage` hook rather than by health knowing shields exist — the pattern for any future component that modifies another, documented in `Components/README.md`. On the player in `test_level` at 70; `test_shield.tscn` covers it headless. Not a roadmap item originally, but it changes the shape of every combat encounter, so it belonged before the weapon rather than after.
 - [ ] **Wire the damage punch.** `AddDamagePunch` already exists and takes a player→attacker vector. Player `Health.TakeDamage` calls it. That's your first real payoff on the impact research and it's ~2 lines.
 - [ ] **Weapon: hitscan first.** `PhysicsRayQueryParameter3D` from the camera, one `Weapon` node with damage / fire rate / spread / ammo as exports. Hitscan before projectiles — projectiles add lead, travel time, and pooling for no learning.
 - [ ] **Weapon state as a parallel region.** Your statechart already has `MovementState` and `AirState` running in parallel. A `WeaponState` region (Idle → Firing → Reloading → Empty) drops in beside them and gets you weapon/movement interaction (no reload while clambering, sprint-to-fire delay) for free. This is the single best use of the machine you already built.
@@ -54,6 +55,7 @@ Small, boring, and every later phase trips over them. Do these first.
 
 ### Something to shoot
 
+- [x] ~~**A dummy to shoot at you.**~~ **Built** — `TurretComponent` + `projectile.tscn`: a static box with a barrel in `test_level` that spits a damaging projectile down one fixed line every 2s. Not an enemy and not on the way to being one; it's the rig that makes health and shields tunable by playing instead of by reading test output. It's undamageable purely by having no `HealthComponent`, and `Projectile` damages whatever it hits by asking for one — so it will work against the real enemy below with no changes. Covered end to end by `test_turret.tscn`.
 - [ ] **Enemy: `NavigationRegion3D` + `NavigationAgent3D`.** Bake a navmesh over the greybox. Standard.
 - [ ] **Enemy brain: reuse your state machine.** Idle → Patrol → Chase → Attack → Dead. Your `StateMachine` is engine-generic — do not write a second AI-specific one.
 - [ ] **Enemy attack.** Even a hitscan with a telegraph delay. Enough to make the player move.
@@ -65,7 +67,7 @@ Small, boring, and every later phase trips over them. Do these first.
 - [ ] Hitmarker — the single highest value-per-line element in shooter feedback.
 - [ ] Muzzle flash + fire sound.
 - [ ] Impact decal + impact sound, different for world vs. enemy.
-- [ ] Health readout.
+- [x] ~~Health readout.~~ **Built** — `Hud.cs`, two `ProgressBar`s bottom-left of `test_level`: blue shield over red health. It finds its subject with `PlayerController.Of` and polls `Current` each frame rather than chasing signals (the shield's recharge is a ramp, so a bar has to poll regardless), and hides either bar whose component is absent.
 
 **Phase 1 exit test:** can you play it for 60 seconds without narrating what's supposed to be happening?
 
