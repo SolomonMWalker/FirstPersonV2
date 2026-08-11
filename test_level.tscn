@@ -18,12 +18,13 @@
 [ext_resource type="Script" uid="uid://o2oq24bvt3sq" path="res://PlayerStates/CoyoteState.cs" id="16_coyote"]
 [ext_resource type="Script" uid="uid://pcmx2yw6a3xl" path="res://Components/HealthComponent.cs" id="17_health"]
 [ext_resource type="Script" uid="uid://dba7v6cpjos4i" path="res://Components/ShieldComponent.cs" id="18_shield"]
-[ext_resource type="Script" uid="uid://bn6doe65ku4li" path="res://Components/TurretComponent.cs" id="19_turret"]
+[ext_resource type="Script" uid="uid://d1v1fu1gpv2ac" path="res://Components/GunComponent.cs" id="19_gun"]
 [ext_resource type="PackedScene" path="res://projectile.tscn" id="20_projectile"]
 [ext_resource type="Script" uid="uid://dxcnxu3ovj4px" path="res://Hud.cs" id="21_hud"]
 [ext_resource type="PackedScene" path="res://health_pickup.tscn" id="22_pickup"]
-[ext_resource type="Script" path="res://Components/InteractableComponent.cs" id="23_interactable"]
-[ext_resource type="Script" path="res://Components/InteractorComponent.cs" id="24_interactor"]
+[ext_resource type="Script" uid="uid://c8qygbih11n05" path="res://Components/InteractableComponent.cs" id="23_interactable"]
+[ext_resource type="Script" uid="uid://c8hp0ng63nhg" path="res://Components/InteractorComponent.cs" id="24_interactor"]
+[ext_resource type="PackedScene" path="res://enemy.tscn" id="25_enemy"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_gojnm"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -37,7 +38,22 @@ background_mode = 2
 sky = SubResource("Sky_1c2mv")
 glow_enabled = true
 
+[sub_resource type="NavigationMesh" id="NavigationMesh_level"]
+vertices = PackedVector3Array(-6.352001, 0.8499999, -2.0464516, -5.602001, 0.3499999, -2.0464516, -5.102001, 0.3499999, -2.7964516, -11.602001, 0.8499999, -2.0464516, -11.602001, 1.8499999, -0.29645157, -6.352001, 1.8499999, -0.29645157, -33.352, 0.3499999, -0.79645157, -12.602001, 0.3499999, -0.54645157, -12.602001, 0.3499999, -2.0464516, -5.352001, 0.3499999, -13.046452, -3.8520012, 0.3499999, -30.046452, -33.352, 0.3499999, -30.046452, -3.6020012, 0.3499999, -13.296452, 3.6479988, 0.3499999, -13.296452, 3.8979988, 0.3499999, -30.046452, 5.397999, 0.3499999, -13.046452, 33.398, 0.3499999, -11.046452, 33.398, 0.3499999, -30.046452, 5.397999, 0.3499999, -10.796452, -4.352001, 2.1, -12.296452, -4.352001, 2.1, -3.7964516, 4.397999, 2.1, -3.7964516, 4.397999, 2.1, -12.296452, 5.397999, 0.3499999, -3.2964516, 6.397999, 0.3499999, -2.0464516, 9.647999, 0.3499999, -2.0464516, 33.398, 0.3499999, -2.2964516, 5.147999, 0.3499999, -2.7964516, 5.897999, 0.3499999, -1.7964516, -2.6020012, 0.3499999, 4.4535484, -2.6020012, 0.3499999, 5.4535484, 4.147999, 0.3499999, 8.203548, 4.647999, 0.3499999, 7.4535484, 5.897999, 0.3499999, 7.2035484, 5.897999, 0.3499999, 4.9535484, 9.147999, 0.8499999, 4.9535484, 10.147999, 0.3499999, 4.9535484, 10.147999, 0.3499999, 1.9535484, 5.897999, 0.3499999, 1.9535484, 6.897999, 0.8499999, 4.9535484, -10.602001, 0.3499999, 5.4535484, -5.352001, 0.3499999, 5.7035484, -5.352001, 0.3499999, 5.4535484, -5.352001, 0.3499999, 4.4535484, -5.602001, 0.3499999, 2.7035484, -10.602001, 0.3499999, 2.7035484, -3.6020012, 0.3499999, 3.7035484, -4.602001, 0.3499999, 3.7035484, -3.6020012, 0.3499999, 6.2035484, 6.897999, 1.3499999, 10.453548, 9.147999, 1.3499999, 10.453548, 10.147999, 0.3499999, 11.203548, 9.647999, 0.3499999, 11.453548, 33.398, 0.3499999, 11.703548, 10.147999, 0.3499999, -1.7964516, 6.897999, 2.35, -1.0464516, 6.897999, 2.35, 1.2035484, 9.147999, 2.35, 1.2035484, 9.147999, 2.35, -1.0464516, -33.352, 0.3499999, 1.2035484, -12.602001, 0.3499999, 0.95354843, -11.602001, 5.35, 11.703548, -6.352001, 5.35, 11.703548, -6.352001, 5.35, 6.3702164, -11.602001, 5.35, 6.3702164, -8.35194, 4.35, 3.9334831, -12.352001, 0.3499999, 5.4535484, -12.352001, 0.3499999, 2.7035484, -12.602001, 0.3499999, 7.2035484, -33.352, 0.3499999, 6.9535484, -4.602001, 0.3499999, 6.2035484, 6.147999, 0.3499999, 11.453548, 5.897999, 0.3499999, 9.703548, 4.897999, 0.3499999, 9.703548, 4.147999, 0.3499999, 8.953548, -5.352001, 0.3499999, 12.453548, -7.102001, 0.3499999, 12.703548, -6.852001, 0.3499999, 29.953548, 8.147999, 0.3499999, 29.953548, 8.147999, 0.3499999, 11.453548, -11.352001, 0.3499999, 6.7035484, -11.352001, 0.3499999, 11.453548, -6.602001, 0.3499999, 11.453548, -6.602001, 0.3499999, 6.7035484, -33.352, 0.3499999, 11.203548, -12.602001, 0.3499999, 10.953548, -11.102001, 0.3499999, 29.953548, -10.852001, 0.3499999, 12.703548, -12.602001, 0.3499999, 12.453548, -33.352, 0.3499999, 29.953548, 33.398, 0.3499999, 29.953548)
+polygons = [PackedInt32Array(2, 1, 0), PackedInt32Array(0, 5, 3), PackedInt32Array(3, 5, 4), PackedInt32Array(8, 7, 6), PackedInt32Array(2, 0, 3), PackedInt32Array(3, 8, 2), PackedInt32Array(2, 8, 9), PackedInt32Array(9, 8, 10), PackedInt32Array(10, 8, 6), PackedInt32Array(10, 6, 11), PackedInt32Array(10, 12, 9), PackedInt32Array(12, 10, 13), PackedInt32Array(13, 10, 14), PackedInt32Array(13, 14, 15), PackedInt32Array(15, 14, 17), PackedInt32Array(15, 17, 16), PackedInt32Array(16, 18, 15), PackedInt32Array(22, 21, 19), PackedInt32Array(19, 21, 20), PackedInt32Array(24, 23, 25), PackedInt32Array(25, 23, 18), PackedInt32Array(25, 18, 26), PackedInt32Array(26, 18, 16), PackedInt32Array(28, 27, 24), PackedInt32Array(24, 27, 23), PackedInt32Array(31, 30, 29), PackedInt32Array(34, 33, 32), PackedInt32Array(37, 36, 35), PackedInt32Array(32, 31, 34), PackedInt32Array(34, 31, 38), PackedInt32Array(39, 38, 35), PackedInt32Array(35, 38, 37), PackedInt32Array(27, 28, 38), PackedInt32Array(42, 41, 40), PackedInt32Array(43, 42, 44), PackedInt32Array(44, 42, 45), PackedInt32Array(45, 42, 40), PackedInt32Array(47, 44, 46), PackedInt32Array(46, 44, 1), PackedInt32Array(46, 1, 2), PackedInt32Array(31, 48, 30), PackedInt32Array(46, 2, 29), PackedInt32Array(29, 2, 27), PackedInt32Array(29, 27, 38), PackedInt32Array(29, 38, 31), PackedInt32Array(47, 43, 44), PackedInt32Array(38, 39, 34), PackedInt32Array(35, 50, 39), PackedInt32Array(39, 50, 49), PackedInt32Array(53, 52, 51), PackedInt32Array(54, 25, 26), PackedInt32Array(37, 54, 26), PackedInt32Array(53, 51, 36), PackedInt32Array(37, 26, 36), PackedInt32Array(36, 26, 53), PackedInt32Array(58, 57, 55), PackedInt32Array(55, 57, 56), PackedInt32Array(60, 59, 7), PackedInt32Array(7, 59, 6), PackedInt32Array(61, 64, 62), PackedInt32Array(62, 64, 63), PackedInt32Array(63, 65, 5), PackedInt32Array(5, 65, 4), PackedInt32Array(4, 65, 64), PackedInt32Array(64, 65, 63), PackedInt32Array(67, 45, 66), PackedInt32Array(66, 45, 40), PackedInt32Array(66, 68, 67), PackedInt32Array(67, 68, 60), PackedInt32Array(60, 68, 69), PackedInt32Array(60, 69, 59), PackedInt32Array(41, 42, 70), PackedInt32Array(73, 72, 71), PackedInt32Array(73, 71, 74), PackedInt32Array(74, 71, 48), PackedInt32Array(48, 71, 70), PackedInt32Array(70, 71, 75), PackedInt32Array(70, 75, 41), PackedInt32Array(75, 71, 76), PackedInt32Array(76, 71, 79), PackedInt32Array(76, 79, 77), PackedInt32Array(77, 79, 78), PackedInt32Array(48, 31, 74), PackedInt32Array(83, 82, 80), PackedInt32Array(80, 82, 81), PackedInt32Array(85, 84, 68), PackedInt32Array(68, 84, 69), PackedInt32Array(87, 86, 88), PackedInt32Array(88, 86, 89), PackedInt32Array(88, 89, 84), PackedInt32Array(84, 85, 88), PackedInt32Array(79, 52, 78), PackedInt32Array(78, 52, 53), PackedInt32Array(78, 53, 90), PackedInt32Array(87, 76, 86), PackedInt32Array(86, 76, 77)]
+geometry_parsed_geometry_type = 1
+geometry_source_geometry_mode = 1
+geometry_source_group_name = &"navmesh"
+agent_height = 2.0
+agent_max_climb = 0.5
+
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_6cejb"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_switch"]
+albedo_color = Color(0.15, 0.45, 0.85, 1)
+emission_enabled = true
+emission = Color(0.2, 0.5, 1, 1)
+emission_energy_multiplier = 0.8
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_barbg"]
 bg_color = Color(0, 0, 0, 0.55)
@@ -65,32 +81,35 @@ environment = SubResource("Environment_f7g2b")
 transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
 shadow_enabled = true
 
-[node name="CSGBox3D" type="CSGBox3D" parent="." unique_id=1876626995]
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=1553361373]
+navigation_mesh = SubResource("NavigationMesh_level")
+
+[node name="CSGBox3D" type="CSGBox3D" parent="." unique_id=1876626995 groups=["navmesh"]]
 transform = Transform3D(67.704, 0, 0, 0, 1, 0, 0, 0, 61.092903, 0, -0.5, 0)
 use_collision = true
 material = ExtResource("3_checker")
 
-[node name="CSGBox3D2" type="CSGBox3D" parent="." unique_id=1551242398]
+[node name="CSGBox3D2" type="CSGBox3D" parent="." unique_id=1551242398 groups=["navmesh"]]
 transform = Transform3D(9.3, 0, 0, 0, 1, 0, 0, 0, 9.35, 0, 1.1, -8)
 use_collision = true
 material = ExtResource("3_checker")
 
-[node name="Overhang" type="CSGBox3D" parent="." unique_id=1876626996]
+[node name="Overhang" type="CSGBox3D" parent="." unique_id=1876626996 groups=["navmesh"]]
 transform = Transform3D(3, 0, 0, 0, 0.25, 0, 0, 0, 3, 8, 1.725, 0)
 use_collision = true
 material = ExtResource("3_checker")
 
-[node name="JumpPlatform" type="CSGBox3D" parent="." unique_id=1876626997]
+[node name="JumpPlatform" type="CSGBox3D" parent="." unique_id=1876626997 groups=["navmesh"]]
 transform = Transform3D(6, 0, 0, 0, 5, 0, 0, 0, 6, -9, 2.5, 9)
 use_collision = true
 material = ExtResource("3_checker")
 
-[node name="Ramp" type="CSGBox3D" parent="." unique_id=1876626998]
+[node name="Ramp" type="CSGBox3D" parent="." unique_id=1876626998 groups=["navmesh"]]
 transform = Transform3D(6, 0, 0, 0, 0.4330127, 6, 0, -0.25, 10.392304, -9, 1.7834938, 0.9288478)
 use_collision = true
 material = ExtResource("3_checker")
 
-[node name="Stairs" type="Node3D" parent="." unique_id=1876627000]
+[node name="Stairs" type="Node3D" parent="." unique_id=1876627000 groups=["navmesh"]]
 
 [node name="Tread1" type="CSGBox3D" parent="Stairs" unique_id=1876627001]
 transform = Transform3D(3, 0, 0, 0, 4, 0, 0, 0, 0.8, 8, -1.85, 3.4)
@@ -127,7 +146,7 @@ transform = Transform3D(3, 0, 0, 0, 4, 0, 0, 0, 3, 8, -1.1, 9.3)
 use_collision = true
 material = ExtResource("3_checker")
 
-[node name="StepRuler" type="Node3D" parent="." unique_id=1876627010]
+[node name="StepRuler" type="Node3D" parent="." unique_id=1876627010 groups=["navmesh"]]
 
 [node name="Step010" type="CSGBox3D" parent="StepRuler" unique_id=1876627011]
 transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 0.6, 1, -1.9, 3)
@@ -149,10 +168,29 @@ transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 0.6, 1, -1.7, 9)
 use_collision = true
 material = ExtResource("3_checker")
 
-[node name="HealthPickup" parent="." instance=ExtResource("22_pickup")]
+[node name="HealthPickup" parent="." unique_id=1322726308 instance=ExtResource("22_pickup")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.6, 2)
 
-[node name="Enemy" type="Node3D" parent="." unique_id=424248350]
+[node name="EnemySwitch" type="Node3D" parent="." groups=["navmesh"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 0, 3)
+
+[node name="Body" type="CSGBox3D" parent="EnemySwitch"]
+transform = Transform3D(1.6, 0, 0, 0, 1.6, 0, 0, 0, 1.6, 0, 0.8, 0)
+use_collision = true
+material = SubResource("StandardMaterial3D_switch")
+
+[node name="Components" type="Node3D" parent="EnemySwitch"]
+
+[node name="InteractableComponent" type="Node3D" parent="EnemySwitch/Components"]
+script = ExtResource("23_interactable")
+Verb = "turn the enemy on"
+
+[node name="Walker" parent="." unique_id=1946032714 instance=ExtResource("25_enemy") node_paths=PackedStringArray("Switch")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 0, -14)
+Active = false
+Switch = NodePath("../EnemySwitch/Components/InteractableComponent")
+
+[node name="Enemy" type="Node3D" parent="." unique_id=424248350 groups=["navmesh"]]
 transform = Transform3D(0.78087, 0, -0.6247, 0, 1, 0, 0.6247, 0, 0.78087, -4, 0, 5)
 
 [node name="Body" type="CSGBox3D" parent="Enemy" unique_id=689794598]
@@ -166,36 +204,36 @@ material = ExtResource("3_checker")
 
 [node name="Components" type="Node3D" parent="Enemy" unique_id=473369329]
 
-[node name="TurretComponent" type="Node3D" parent="Enemy/Components" unique_id=1163654583]
+[node name="GunComponent" type="Node3D" parent="Enemy/Components" unique_id=1163654583]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.35, -1.6)
-script = ExtResource("19_turret")
+script = ExtResource("19_gun")
 Projectile = ExtResource("20_projectile")
 
-[node name="Enemy2" type="Node3D" parent="."]
+[node name="Enemy2" type="Node3D" parent="." unique_id=367918568 groups=["navmesh"]]
 transform = Transform3D(0.8398, 0, 0.5434, 0, 1, 0, -0.5434, 0, 0.8398, 5.5, 0, 8.5)
 
-[node name="Body" type="CSGBox3D" parent="Enemy2"]
+[node name="Body" type="CSGBox3D" parent="Enemy2" unique_id=1352009171]
 transform = Transform3D(1, 0, 0, 0, 2, 0, 0, 0, 1, 0, 1, 0)
 use_collision = true
 material = ExtResource("3_checker")
 
-[node name="Barrel" type="CSGBox3D" parent="Enemy2"]
+[node name="Barrel" type="CSGBox3D" parent="Enemy2" unique_id=1658558910]
 transform = Transform3D(0.3, 0, 0, 0, 0.3, 0, 0, 0, 1.4, 0, 1.5, -0.7)
 material = ExtResource("3_checker")
 
-[node name="Components" type="Node3D" parent="Enemy2"]
+[node name="Components" type="Node3D" parent="Enemy2" unique_id=1505902929]
 
-[node name="TurretComponent" type="Node3D" parent="Enemy2/Components"]
+[node name="GunComponent" type="Node3D" parent="Enemy2/Components" unique_id=1779149716]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -1.6)
-script = ExtResource("19_turret")
+script = ExtResource("19_gun")
 Projectile = ExtResource("20_projectile")
 Firing = false
 
-[node name="InteractableComponent" type="Node3D" parent="Enemy2/Components"]
+[node name="InteractableComponent" type="Node3D" parent="Enemy2/Components" unique_id=601342222]
 script = ExtResource("23_interactable")
 Verb = "turn the turret on"
 
-[node name="CharacterBody3D" type="CharacterBody3D" parent="." unique_id=811290216 node_paths=PackedStringArray("Clamber")]
+[node name="CharacterBody3D" type="CharacterBody3D" parent="." unique_id=811290216 node_paths=PackedStringArray("Clamber") groups=["player"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 floor_snap_length = 0.35
 script = ExtResource("1_player")
@@ -209,7 +247,7 @@ script = ExtResource("17_health")
 [node name="ShieldComponent" type="Node3D" parent="CharacterBody3D/Components" unique_id=26603379]
 script = ExtResource("18_shield")
 
-[node name="InteractorComponent" type="Node3D" parent="CharacterBody3D/Components"]
+[node name="InteractorComponent" type="Node3D" parent="CharacterBody3D/Components" unique_id=2132936968]
 script = ExtResource("24_interactor")
 
 [node name="ClamberController" type="Node3D" parent="CharacterBody3D" unique_id=884447449]
@@ -296,7 +334,9 @@ theme_override_styles/fill = SubResource("StyleBoxFlat_health")
 value = 100.0
 show_percentage = false
 
-[node name="Prompt" type="Label" parent="CharacterBody3D/Hud"]
+[node name="Prompt" type="Label" parent="CharacterBody3D/Hud" unique_id=1295887661]
+visible = false
+anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
@@ -308,7 +348,6 @@ offset_bottom = 78.0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 6
 theme_override_font_sizes/font_size = 20
-visible = false
 text = "Press E to interact"
 horizontal_alignment = 1
 

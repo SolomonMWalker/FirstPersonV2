@@ -239,15 +239,20 @@ somewhere else in the tree or copying its transform every frame.
 Behaviour attaches the usual way — the specific subscribes to the generic, never the reverse:
 
 ```csharp
-// TurretComponent._Ready
+// GunComponent._Ready
 _switch = Get<InteractableComponent>(GameObject);
 if (_switch is not null) { _switch.Interacted += Toggle; UpdateVerb(); }
 ```
 
 `Verb` is mutable on purpose. A switch has to read "turn the turret on" or "turn the turret off"
-depending on which way it is currently thrown, and only the sibling that owns the behaviour knows
+depending on which way it is currently thrown, and only the thing that owns the behaviour knows
 which — so `Toggle` rewrites it. The prompt describes what pressing the key will *do*, not what the
 object currently is.
+
+**The subscriber does not have to be a sibling.** A console across the room is the ordinary case, and
+`test_level`'s blue cube is one: `EnemyController` takes an `[Export] InteractableComponent Switch`
+wired by NodePath to the cube next to the enemy, and toggles its own `Active` off that. The
+interactable still knows nothing — it announces, and whatever cares subscribes, near or far.
 
 `Hud` renders it: it polls `_interactor.Target` alongside the bars and shows `Press {key} to {Verb}`.
 The key comes from `InputMap.ActionGetEvents("interact")`, not a literal, so the prompt cannot start
@@ -255,15 +260,23 @@ lying the day there is a rebinding screen.
 
 ---
 
-## Turret
+## Gun
 
-`TurretComponent` spits `projectile.tscn` down its own -Z every `Interval` seconds while `Firing`.
-It is a fixed hazard, not an enemy: it does not track, aim, lead, or check line of sight, and it has
-no idea the player exists. Where it points is set once in the scene by rotating the object it sits on.
+`GunComponent` spits `projectile.tscn` down its own -Z every `Interval` seconds while `Firing`. It
+does not track, aim, lead, or check line of sight — where it points is wherever the object carrying
+it faces, and that is the carrier's problem.
 
-`test_level` has two. The first is always on (`Firing` defaults true and it carries no interactable).
-The second starts off and is wired to a switch — see Interaction above — and its body is 2m rather
-than 1.2m so it meets the player's 1.5m eye line; a short box would have to be aimed at from above.
+**`Firing` is the seam, and it is why two very different things share this one component.** A turret
+bolts it to something that never moves and leaves `Firing` on, so shots go down one fixed lane
+forever. The enemy bolts it to a body that yaws to face you and lets its `Attack` state switch
+`Firing` on and off — the same fixed -Z becomes an aimed weapon, for nothing. And because the
+countdown only runs while `Firing` is true, every switch-on costs a full `Interval` before the first
+shot, which is exactly the telegraph delay an enemy wants.
+
+`test_level` has two turrets. The first is always on (`Firing` defaults true and it carries no
+interactable). The second starts off and is wired to a switch — see Interaction above — and its body
+is 2m rather than 1.2m so it meets the player's 1.5m eye line; a short box would have to be aimed at
+from above.
 
 That is deliberate for what it's for. Tuning health and shields wants damage arriving on a schedule
 you can predict and step out of, not an opponent — and "walk out of the line of fire" needs no code
@@ -296,9 +309,14 @@ broken, both delays, both rates, the timer reset mid-recharge, the latch clearin
 a corpse does not regenerate. It drives time by calling `_PhysicsProcess` directly with a fixed
 delta instead of waiting real frames, which keeps it deterministic and synchronous.
 
-`TurretComponentTests.cs` runs the real `test_level` and waits: it proves the whole chain is actually
+`GunComponentTests.cs` runs the real `test_level` and waits: it proves the whole chain is actually
 connected in the scene — turret fires, projectile collides for real, it finds a `HealthComponent`,
 and the damage routes through the shield's hook — and that the enemy has no health of its own.
+
+`EnemyTests.cs` runs `test_level` end to end for the enemy: the navmesh has polygons, the enemy sleeps
+out of range, wakes and measurably closes the distance, enters Attack and lands a shot on the player's
+shield, then dies and is removed. It switches both turrets off first, or their fire is a second
+unrelated source of damage in the middle of every assertion.
 
 `InteractableComponentTests.cs` also runs `test_level`, because the ray is the part that can silently
 miss. It aims the player at the second turret, checks the target resolves **from a hit on the child
@@ -310,8 +328,9 @@ out of range.
 "E:\Godot\Godot_v4.7-stable_mono_win64\Godot_v4.7-stable_mono_win64_console.exe" \
     --headless --path . res://test_health.tscn
     --headless --path . res://test_shield.tscn
-    --headless --path . res://test_turret.tscn
+    --headless --path . res://test_gun.tscn
     --headless --path . res://test_interact.tscn
+    --headless --path . res://test_enemy.tscn
 ```
 
 Exit 0 is a pass.

@@ -3,7 +3,7 @@ using Godot;
 
 namespace FirstPerson;
 
-// Run headless:  godot --headless --path . res://test_turret.tscn
+// Run headless:  godot --headless --path . res://test_gun.tscn
 // Exits 0 on pass, 1 on failure.
 //
 // Drives the real test_level and just waits, because the whole point is the chain nothing else
@@ -14,7 +14,7 @@ namespace FirstPerson;
 // The player is left standing still at its spawn, which is what the barrel is aimed at in the scene
 // -- the turret fires down a fixed line and hits whatever is standing on it. The muzzle is ~4.8m
 // away and the shot travels at 14 m/s from Interval (2s), so it lands around frame 139 at 60Hz.
-public partial class TurretComponentTests : Node
+public partial class GunComponentTests : Node
 {
     private readonly List<string> _failures = [];
     private int _frame;
@@ -49,7 +49,7 @@ public partial class TurretComponentTests : Node
             // Invulnerability is the absence of a capability, not a flag on one.
             True(Component.Get<HealthComponent>(enemy) is null,
                 "the turret carries a HealthComponent; it is supposed to be undamageable");
-            True(Component.Get<TurretComponent>(enemy) is not null, "the enemy has no TurretComponent");
+            True(Component.Get<GunComponent>(enemy) is not null, "the turret has no GunComponent");
             return;
         }
 
@@ -86,7 +86,7 @@ public partial class TurretComponentTests : Node
 
         if (_frame < 190) return;
 
-        if (_failures.Count == 0) GD.Print("turret component tests: all passed");
+        if (_failures.Count == 0) GD.Print("gun component tests: all passed");
         else foreach (var f in _failures) GD.PrintErr(f);
         GetTree().Quit(_failures.Count == 0 ? 0 : 1);
     }

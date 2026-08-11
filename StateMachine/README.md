@@ -301,6 +301,30 @@ When a parent condition must always win, make the child guards exclude it:
 AddTransition("Walking", () => !Player.SprintHeld && Player.IsOnFloor());
 ```
 
+### Hoisting a terminal state: both traps at once
+
+The enemy brain (`EnemyStates/`) is the second machine in this project and it hit both. `Brain` is a
+compound containing `Idle`, `Chase`, `Attack` and `Dead`, and death is true from anywhere, so the
+edge to `Dead` is written once on the parent instead of three times on the children:
+
+```csharp
+_dead = GetNode<State>("Dead");
+AddTransition(_dead, () => !_enemy.Alive && !_dead.Enabled);
+```
+
+Both halves of that guard exist because something broke without them.
+
+- **`!_enemy.Alive` is repeated on every child guard** (`AddTransition("Attack", () => Enemy.Alive
+  && ...)`). Deepest-source-wins means `Chase → Attack` beats the parent's `→ Dead` forever, so a
+  corpse ping-pongs between Chase and Attack and never dies. This is the remedy above, applied.
+- **`!_dead.Enabled` stops the parent edge firing at its own descendant.** A compound's edges are
+  evaluated while *any* descendant is active, and `!Alive` stays true after arriving — so the machine
+  exits and re-enters `Dead` every frame. That re-runs `StateEntered`, which reset the corpse's
+  removal timer, and the body lay there permanently one frame away from disappearing. It never
+  tripped the loop cap, because one transition per frame is not a loop.
+
+The rule that falls out: **a hoisted edge to a terminal state must exclude the terminal state.**
+
 ---
 
 ## Rules
@@ -312,6 +336,8 @@ AddTransition("Walking", () => !Player.SprintHeld && Player.IsOnFloor());
 - **Entry logic goes in `StateEntered`,** never in `Enable()` or `StateProcessing`.
 - **A compound state must have at least one child** and its `DefaultState` must be one of them.
 - **Don't name two states the same** unless you always address them by path.
+- **A hoisted edge to a terminal state must exclude that state** in its guard, or it re-enters it
+  every frame. See "Hoisting a terminal state" above.
 
 ---
 

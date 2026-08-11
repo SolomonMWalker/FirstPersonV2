@@ -1,26 +1,34 @@
 using Godot;
 
-// Spits a projectile down its own -Z every Interval seconds, forever. A test dummy, not an enemy:
-// it does not track, aim, lead, or check line of sight, and it has no idea the player exists. Where
-// it points is set once in the scene by rotating the object it sits on.
+// Spits a projectile down its own -Z every Interval seconds while Firing. It does not track, aim,
+// lead, or check line of sight, and it has no idea the player exists -- where it points is wherever
+// the object carrying it is facing, and that is the caller's problem, not this component's.
 //
-// That makes it a fixed hazard rather than an opponent, which is what you want while tuning health
-// and shields: the damage arrives on a schedule you can predict, and walking out of the line of fire
-// stops it completely. Anything cleverer belongs to a real enemy, not to a rig for testing numbers.
+// Two very different things use it, which is why it is not called TurretComponent any more. A turret
+// bolts it to something that never moves and leaves Firing on, so the shot goes down one fixed lane
+// forever. An enemy bolts it to a body that yaws to face you and lets its Attack state switch Firing
+// on and off, and the same fixed -Z becomes an aimed weapon for free.
+//
+// Firing is that seam. Because the countdown only runs while it is true, switching on always costs a
+// full Interval before the first shot -- which is exactly the telegraph delay an enemy wants.
 //
 // The object carrying this is invulnerable purely by not having a HealthComponent, which is the
 // component system's whole point: "can't be shot" is the absence of a capability, not a flag.
 //
 // This node's own position and rotation are the muzzle -- put it just past the end of the barrel.
 [GlobalClass]
-public partial class TurretComponent : Component
+public partial class GunComponent : Component
 {
 	[Export] public PackedScene Projectile;
 	[Export] public float Interval = 2f;
 
-	// Authored per turret. A sibling InteractableComponent, if there is one, becomes the switch --
-	// but a turret without one is simply always on, which is what the default covers.
+	// Authored per object. A sibling InteractableComponent, if there is one, becomes a switch; so does
+	// a state machine that writes this directly. An object with neither is simply always on.
 	[Export] public bool Firing = true;
+
+	// Names this gun in the interact prompt: "turn the turret on", "turn the searchlight off". Unused
+	// when there is no sibling interactable, which is the case on anything that shoots by itself.
+	[Export] public string SwitchLabel = "turret";
 
 	private float _cooldown;
 	private InteractableComponent _switch;
@@ -32,13 +40,13 @@ public partial class TurretComponent : Component
 		// reads as a bug rather than as an enemy.
 		_cooldown = Interval;
 
-		// Loudly, and once. An unset scene makes the turret do nothing at all, which from the far end
-		// of the room is indistinguishable from every other reason a shot might not arrive.
-		if (Projectile is null) GD.PushError($"{Name}: no Projectile scene set; this turret will never fire.");
+		// Loudly, and once. An unset scene makes the gun do nothing at all, which from the far end of
+		// the room is indistinguishable from every other reason a shot might not arrive.
+		if (Projectile is null) GD.PushError($"{Name}: no Projectile scene set; this gun will never fire.");
 
 		// The specific behaviour attaches itself to the generic capability, never the reverse --
 		// same direction as ShieldComponent installing itself into HealthComponent's hook.
-		// InteractableComponent has no idea turrets exist.
+		// InteractableComponent has no idea guns exist.
 		_switch = Get<InteractableComponent>(GameObject);
 		if (_switch is null) return;
 		_switch.Interacted += Toggle;
@@ -49,13 +57,13 @@ public partial class TurretComponent : Component
 	{
 		Firing = !Firing;
 		// Fresh countdown, so switching on does not fire instantly off a cooldown that has been
-		// draining the whole time the turret was off.
+		// draining the whole time the gun was off.
 		_cooldown = Interval;
 		UpdateVerb();
 	}
 
-	// The prompt has to describe what pressing E will DO, not what the turret currently is.
-	private void UpdateVerb() => _switch.Verb = Firing ? "turn the turret off" : "turn the turret on";
+	// The prompt has to describe what pressing E will DO, not what the object currently is.
+	private void UpdateVerb() => _switch.Verb = Firing ? $"turn the {SwitchLabel} off" : $"turn the {SwitchLabel} on";
 
 	public override void _PhysicsProcess(double delta)
 	{

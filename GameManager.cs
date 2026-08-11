@@ -71,6 +71,9 @@ public partial class GameManager : Node
 	// _UnhandledInput.
 	public override void _PhysicsProcess(double delta)
 	{
+		// Synchronously, and exactly once. Re-baking on every load costs a moment at startup and buys
+		// a navmesh that can never be stale against a greybox that is still being edited -- there is
+		// no bake step to forget after moving a wall.
 		// Death takes the pause key away. Otherwise Escape would stack the pause menu on top of the
 		// death screen and hand the mouse back and forth between them, and unpausing out of that
 		// leaves an unclickable death screen with the cursor captured.

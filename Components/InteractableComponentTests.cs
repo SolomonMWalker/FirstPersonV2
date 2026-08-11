@@ -21,7 +21,7 @@ public partial class InteractableComponentTests : Node
     private Node3D _turretObject;
     private InteractorComponent _interactor;
     private InteractableComponent _switch;
-    private TurretComponent _turret;
+    private GunComponent _turret;
     private Label _prompt;
 
     public override void _Ready()
@@ -53,12 +53,12 @@ public partial class InteractableComponentTests : Node
             _turretObject = GetNode<Node3D>("LevelSkeleton/Enemy2");
             _interactor = Component.Get<InteractorComponent>(_player);
             _switch = Component.Get<InteractableComponent>(_turretObject);
-            _turret = Component.Get<TurretComponent>(_turretObject);
+            _turret = Component.Get<GunComponent>(_turretObject);
             _prompt = GetNode<Label>("LevelSkeleton/CharacterBody3D/Hud/Prompt");
 
             True(_interactor is not null, "the player has no InteractorComponent");
             True(_switch is not null, "the second turret has no InteractableComponent");
-            True(_turret is not null, "the second turret has no TurretComponent");
+            True(_turret is not null, "the second turret has no GunComponent");
             True(!_turret.Firing, "the second turret is supposed to start switched off");
             True(_switch.Verb == "turn the turret on", $"initial verb reads '{_switch.Verb}'");
             True(!_prompt.Visible, "the prompt starts visible with nothing targeted");
