@@ -20,6 +20,10 @@ public partial class TurretComponentTests : Node
     private int _frame;
     private ShieldComponent _shield;
     private HealthComponent _health;
+    private CameraController _camera;
+    // The punch is a spring, and it has decayed back to nothing well before the assertions run --
+    // so the peak is sampled every frame rather than read once at the end.
+    private Vector2 _peakPunch;
 
     public override void _Ready()
     {
@@ -38,6 +42,7 @@ public partial class TurretComponentTests : Node
 
             _shield = Component.Get<ShieldComponent>(player);
             _health = Component.Get<HealthComponent>(player);
+            _camera = player.Camera;
             True(_shield is not null, "player has no ShieldComponent");
             True(_health is not null, "player has no HealthComponent");
 
@@ -47,6 +52,8 @@ public partial class TurretComponentTests : Node
             True(Component.Get<TurretComponent>(enemy) is not null, "the enemy has no TurretComponent");
             return;
         }
+
+        if (_camera is not null && _camera.Punch.Length() > _peakPunch.Length()) _peakPunch = _camera.Punch;
 
         // 3s in: one shot has landed, and nothing has recharged yet (RechargeDelay is 3s from the hit).
         if (_frame == 180)
@@ -64,6 +71,16 @@ public partial class TurretComponentTests : Node
             if (_shield is not null)
                 True(Mathf.IsEqualApprox((float)bar.Value, _shield.Current),
                     $"the HUD shield bar reads {bar.Value}, the component reads {_shield.Current}");
+
+            // The kick is directional, and the whole point is that you can tell where a hit came
+            // from without a HUD element. The player faces -Z and never turns; the turret sits
+            // behind and to its left, so the view must pitch UP and roll toward the near side. A
+            // punch of zero means the shield ate the hit without telling the camera.
+            True(_peakPunch.Length() > 0.001f, "taking a hit produced no view punch at all");
+            True(_peakPunch.X > 0f,
+                $"the hit came from behind, so the view should pitch up; peak punch was {_peakPunch}");
+            True(_peakPunch.Y > 0f,
+                $"the hit came from the left, so the view should roll with it; peak punch was {_peakPunch}");
             return;
         }
 

@@ -11,6 +11,7 @@ public partial class GameManagerTests : Node
     private System.Collections.Generic.List<string> _failures = [];
     private int _frame;
     private CanvasLayer _menu;
+    private CanvasLayer _death;
 
     public override void _Ready()
     {
@@ -88,6 +89,44 @@ public partial class GameManagerTests : Node
             var settings = GetNode<Control>("LevelSkeleton/PauseMenu/Center/SettingsPanel");
             True(buttons.Visible, "re-pausing resets to the main list");
             True(!settings.Visible, "re-pausing leaves the settings panel closed");
+
+            // Back to normal play before the death scenario, or "death did not pause" would be
+            // asserted against a tree that was already paused for another reason.
+            Escape(true);
+            return;
+        }
+        if (_frame == 59) { Escape(false); return; }
+
+        // --- death: the screen appears, and the world deliberately keeps running behind it ---
+        if (_frame == 66)
+        {
+            _death = GetNode<CanvasLayer>("LevelSkeleton/DeathScreen");
+            True(!GetTree().Paused, "unpaused again before dying");
+            True(!_death.Visible, "death screen starts hidden");
+
+            // Two hits, not one: the shield absorbs the first whole however big it is, so the
+            // killing blow has to land on a shield that is already down.
+            var health = Component.Get<HealthComponent>(GetNode<Node>("LevelSkeleton/CharacterBody3D"));
+            health.TakeDamage(9999f);
+            health.TakeDamage(9999f);
+            True(!health.Alive, "player survived two 9999 hits");
+            return;
+        }
+        if (_frame == 70)
+        {
+            True(_death.Visible, "dying does not show the death screen");
+            True(!GetTree().Paused, "the death screen paused the game; it is supposed to leave it running");
+            True(!_menu.Visible, "the pause menu is showing over the death screen");
+            // Escape must be inert now -- otherwise it stacks the pause menu on top and the two
+            // fight over the mouse.
+            Escape(true);
+            return;
+        }
+        if (_frame == 71) { Escape(false); return; }
+        if (_frame == 78)
+        {
+            True(!GetTree().Paused, "Escape still pauses after death");
+            True(_death.Visible, "the death screen went away on its own");
 
             if (_failures.Count == 0) GD.Print("game manager tests: all passed");
             else foreach (var f in _failures) GD.PrintErr(f);

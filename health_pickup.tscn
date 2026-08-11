@@ -1,0 +1,25 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://HealthPickup.cs" id="1_pickup"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_pickup"]
+size = Vector3(1, 1, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pickup"]
+albedo_color = Color(0.15, 0.85, 0.3, 1)
+emission_enabled = true
+emission = Color(0.2, 1, 0.35, 1)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_pickup"]
+material = SubResource("StandardMaterial3D_pickup")
+size = Vector3(0.5, 0.5, 0.5)
+
+[node name="HealthPickup" type="Area3D"]
+script = ExtResource("1_pickup")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_pickup")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_pickup")

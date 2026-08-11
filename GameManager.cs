@@ -4,8 +4,10 @@ using Godot;
 public partial class GameManager : Node
 {
 	private CanvasLayer _pauseMenu;
+	private CanvasLayer _deathScreen;
 	private Control _mainButtons;
 	private Control _settingsPanel;
+	private bool _dead;
 	private PlayerController _player;
 	private CameraController _camera;
 	private GameSettings _settings;
@@ -26,6 +28,17 @@ public partial class GameManager : Node
 		// scene tree than CharacterBody3D, so this runs before PlayerController._Ready populates it.
 		_player = GetNode<PlayerController>("../../CharacterBody3D");
 		_camera = GetNode<CameraController>("../../CharacterBody3D/Camera3D");
+
+		// Reuses Restart and Quit as-is: dying and giving up mid-level want exactly the same two
+		// things to happen, and a second copy of either would be a second thing to keep in step.
+		_deathScreen = GetNode<CanvasLayer>("../../DeathScreen");
+		GetNode<Button>("../../DeathScreen/Center/Buttons/Restart").Pressed += Restart;
+		GetNode<Button>("../../DeathScreen/Center/Buttons/Quit").Pressed += () => GetTree().Quit();
+
+		// Subscribing before HealthComponent._Ready has run is fine -- the node exists from the
+		// moment the scene is instantiated, and Died cannot fire until something deals damage.
+		var health = Component.Get<HealthComponent>(_player);
+		if (health is not null) health.Died += OnPlayerDied;
 
 		_settings = GameSettings.Load();
 		_settings.ApplyTo(_player, _camera);
@@ -58,8 +71,23 @@ public partial class GameManager : Node
 	// _UnhandledInput.
 	public override void _PhysicsProcess(double delta)
 	{
+		// Death takes the pause key away. Otherwise Escape would stack the pause menu on top of the
+		// death screen and hand the mouse back and forth between them, and unpausing out of that
+		// leaves an unclickable death screen with the cursor captured.
+		if (_dead) return;
+
 		if (Input.IsActionJustPressed("pause"))
 			SetPaused(!GetTree().Paused);
+	}
+
+	// Deliberately does not touch GetTree().Paused: the world keeps running behind the screen, which
+	// is the whole difference between this and the pause menu. Only the cursor comes back, because
+	// the buttons need something to click them with.
+	private void OnPlayerDied()
+	{
+		_dead = true;
+		_deathScreen.Visible = true;
+		Input.MouseMode = Input.MouseModeEnum.Visible;
 	}
 
 	private void SetPaused(bool paused)

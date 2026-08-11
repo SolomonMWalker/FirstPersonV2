@@ -50,4 +50,12 @@ public partial class HealthComponent : Component
 		EmitSignal(SignalName.Damaged, amount, fromPosition);
 		if (!Alive) EmitSignal(SignalName.Died);
 	}
+
+	// Never resurrects: a health pack walked over by a corpse has to do nothing, or death stops
+	// being final for the price of standing in the right spot. Coming back needs its own verb.
+	public void Heal(float amount)
+	{
+		if (amount <= 0f || !Alive) return;
+		Current = Mathf.Min(Current + amount, Max);
+	}
 }

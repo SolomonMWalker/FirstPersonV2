@@ -24,6 +24,14 @@ public partial class CameraController : Camera3D
 	[Export] public float PunchDamping = 9f;
 	[Export] public float MaxPunch = 8f;       // degrees, hard clamp so a long fall cannot flip the view
 
+	// Quake's v_kickpitch / v_kickroll. Either at 0 disables its channel, same posture as the bob
+	// knobs -- a directional kick on every hit is exactly the sort of thing that needs an off switch.
+	[Export] public float DamageKickPitch = 0.6f;
+	[Export] public float DamageKickRoll = 0.6f;
+	// Quake's floor under `count`. A scratch still has to produce a readable kick: feedback that
+	// vanishes for small hits reads as an input being dropped, not as a small hit.
+	[Export] public float MinDamageKick = 10f;
+
 	// Step smoothing. The body's Y jumps in a single tick when the capsule rolls over a kerb or a
 	// stair tread; the eye is held where it was in world space and reeled back in at a constant rate,
 	// turning a one-frame discontinuity into ~0.14s of motion. Quake's `oldz` from V_CalcRefdef,
@@ -65,6 +73,8 @@ public partial class CameraController : Camera3D
 
 	// For tests. The guards are the part of this that regresses silently.
 	public float StepLag => _stepLag;
+	// Radians, X = pitch and Y = roll, same as _punch.
+	public Vector2 Punch => _punch;
 
 	// One impulse channel for every impact. Landing calls it with pitch; damage adds roll from the
 	// hit direction; weapon recoil, when there is a weapon, calls the same thing. Kept as a single
@@ -87,12 +97,36 @@ public partial class CameraController : Camera3D
 		AddPunch(-flat.Dot(-_player.GlobalBasis.Z) * pitchScale, -flat.Dot(_player.GlobalBasis.X) * rollScale);
 	}
 
+	// Subscribed to both of the player's damage signals. Exactly one of them fires per hit -- the
+	// shield only announces damage it actually soaked, health only damage that got through it -- so
+	// this cannot double-punch, and a hit the shield ate still kicks the view. Being shot has to feel
+	// like being shot whether or not it cost you hit points.
+	private void OnDamaged(float amount, Vector3 fromPosition)
+	{
+		// Vector3.Zero is HealthComponent's documented "damage with no direction" -- a fall, poison.
+		// It is a sentinel and not a place: subtracting the player's position from it would aim a
+		// perfectly confident kick at the world origin.
+		if (fromPosition == Vector3.Zero) return;
+
+		// Quake's `count`: half the damage dealt, with a floor. See IMPACT_JUICE_ANALYSIS.md §1.1.
+		var count = Mathf.Max(amount * 0.5f, MinDamageKick);
+		AddDamagePunch(fromPosition - _player.GlobalPosition, count * DamageKickPitch, count * DamageKickRoll);
+	}
+
 	public override void _Ready()
 	{
 		_player = PlayerController.Of(this);
 		_standX = Position.X;
 		_standY = _eyeY = _lastEyeY = Position.Y;
 		_lastBodyY = _player.GlobalPosition.Y;
+
+		// The camera is a view of the player, so it subscribes itself rather than being wired up by
+		// something else. Either component being absent is fine and means no kick from that source.
+		var health = Component.Get<HealthComponent>(_player);
+		if (health is not null) health.Damaged += OnDamaged;
+		var shield = Component.Get<ShieldComponent>(_player);
+		if (shield is not null) shield.Damaged += OnDamaged;
+
 		// After PlayerController's MoveAndSlide, which runs at priority 1. Step smoothing has to read
 		// GlobalPosition once the body has already moved, or every step is detected a tick late and
 		// the one frame that actually shows the pop is the frame rendered unsmoothed.

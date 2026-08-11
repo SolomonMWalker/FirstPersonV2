@@ -52,6 +52,24 @@ public partial class HealthComponentTests : Node
         health.TakeDamage(999f);
         if (died != 1) failures.Add($"Died fired {died} times; damage after death must be ignored");
 
+        // ...and it does not get back up for a health pack either.
+        health.Heal(25f);
+        if (!Mathf.IsEqualApprox(health.Current, 0f)) failures.Add($"healing resurrected the dead: {health.Current}");
+        if (health.Alive) failures.Add("healing a corpse brought it back to life");
+
+        // Healing on a live one: tops up, clamps at Max, and ignores non-positive amounts rather
+        // than quietly running TakeDamage backwards.
+        var live = new HealthComponent { Name = "Live", Max = 50f };
+        container.AddChild(live);
+        live.TakeDamage(30f);
+        live.Heal(10f);
+        if (!Mathf.IsEqualApprox(live.Current, 30f)) failures.Add($"expected Current=30 after healing 10, got {live.Current}");
+        live.Heal(0f);
+        live.Heal(-10f);
+        if (!Mathf.IsEqualApprox(live.Current, 30f)) failures.Add($"non-positive heal changed Current to {live.Current}");
+        live.Heal(999f);
+        if (!Mathf.IsEqualApprox(live.Current, 50f)) failures.Add($"overheal did not clamp to Max: {live.Current}");
+
         if (failures.Count == 0) GD.Print("health component tests: all passed");
         else foreach (var f in failures) GD.PrintErr(f);
         GetTree().Quit(failures.Count == 0 ? 0 : 1);

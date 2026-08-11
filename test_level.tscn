@@ -15,12 +15,13 @@
 [ext_resource type="Script" uid="uid://b6a1040khb1ad" path="res://PlayerStates/CrouchingState.cs" id="13_crouching"]
 [ext_resource type="Script" uid="uid://cxodw34d7i83" path="res://StateLabel.cs" id="14_statelabel"]
 [ext_resource type="Script" uid="uid://dy144vidsxs50" path="res://CameraController.cs" id="15_camera"]
-[ext_resource type="Script" path="res://PlayerStates/CoyoteState.cs" id="16_coyote"]
-[ext_resource type="Script" path="res://Components/HealthComponent.cs" id="17_health"]
-[ext_resource type="Script" path="res://Components/ShieldComponent.cs" id="18_shield"]
-[ext_resource type="Script" path="res://Components/TurretComponent.cs" id="19_turret"]
+[ext_resource type="Script" uid="uid://o2oq24bvt3sq" path="res://PlayerStates/CoyoteState.cs" id="16_coyote"]
+[ext_resource type="Script" uid="uid://pcmx2yw6a3xl" path="res://Components/HealthComponent.cs" id="17_health"]
+[ext_resource type="Script" uid="uid://dba7v6cpjos4i" path="res://Components/ShieldComponent.cs" id="18_shield"]
+[ext_resource type="Script" uid="uid://bn6doe65ku4li" path="res://Components/TurretComponent.cs" id="19_turret"]
 [ext_resource type="PackedScene" path="res://projectile.tscn" id="20_projectile"]
-[ext_resource type="Script" path="res://Hud.cs" id="21_hud"]
+[ext_resource type="Script" uid="uid://dxcnxu3ovj4px" path="res://Hud.cs" id="21_hud"]
+[ext_resource type="PackedScene" path="res://health_pickup.tscn" id="22_pickup"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_gojnm"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -34,16 +35,16 @@ background_mode = 2
 sky = SubResource("Sky_1c2mv")
 glow_enabled = true
 
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_6cejb"]
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_barbg"]
 bg_color = Color(0, 0, 0, 0.55)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health"]
-bg_color = Color(0.85, 0.15, 0.15, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_shield"]
 bg_color = Color(0.2, 0.55, 1, 1)
 
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_6cejb"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health"]
+bg_color = Color(0.85, 0.15, 0.15, 1)
 
 [node name="LevelSkeleton" type="Node" unique_id=24507664]
 
@@ -63,7 +64,7 @@ transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545
 shadow_enabled = true
 
 [node name="CSGBox3D" type="CSGBox3D" parent="." unique_id=1876626995]
-transform = Transform3D(26.040003, 0, 0, 0, 1, 0, 0, 0, 25.245, 0, -0.5, 0)
+transform = Transform3D(67.704, 0, 0, 0, 1, 0, 0, 0, 61.092903, 0, -0.5, 0)
 use_collision = true
 material = ExtResource("3_checker")
 
@@ -146,25 +147,27 @@ transform = Transform3D(4, 0, 0, 0, 4, 0, 0, 0, 0.6, 1, -1.7, 9)
 use_collision = true
 material = ExtResource("3_checker")
 
-[node name="Enemy" type="Node3D" parent="."]
+[node name="HealthPickup" parent="." instance=ExtResource("22_pickup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.6, 2)
+
+[node name="Enemy" type="Node3D" parent="." unique_id=424248350]
 transform = Transform3D(0.78087, 0, -0.6247, 0, 1, 0, 0.6247, 0, 0.78087, -4, 0, 5)
 
-[node name="Body" type="CSGBox3D" parent="Enemy"]
+[node name="Body" type="CSGBox3D" parent="Enemy" unique_id=689794598]
 transform = Transform3D(1, 0, 0, 0, 1.2, 0, 0, 0, 1, 0, 0.6, 0)
 use_collision = true
 material = ExtResource("3_checker")
 
-[node name="Barrel" type="CSGBox3D" parent="Enemy"]
+[node name="Barrel" type="CSGBox3D" parent="Enemy" unique_id=1768045726]
 transform = Transform3D(0.3, 0, 0, 0, 0.3, 0, 0, 0, 1.4, 0, 1.35, -0.7)
 material = ExtResource("3_checker")
 
-[node name="Components" type="Node3D" parent="Enemy"]
+[node name="Components" type="Node3D" parent="Enemy" unique_id=473369329]
 
-[node name="TurretComponent" type="Node3D" parent="Enemy/Components"]
+[node name="TurretComponent" type="Node3D" parent="Enemy/Components" unique_id=1163654583]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.35, -1.6)
 script = ExtResource("19_turret")
 Projectile = ExtResource("20_projectile")
-Interval = 2.0
 
 [node name="CharacterBody3D" type="CharacterBody3D" parent="." unique_id=811290216 node_paths=PackedStringArray("Clamber")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
@@ -172,15 +175,13 @@ floor_snap_length = 0.35
 script = ExtResource("1_player")
 Clamber = NodePath("ClamberController")
 
-[node name="Components" type="Node3D" parent="CharacterBody3D"]
+[node name="Components" type="Node3D" parent="CharacterBody3D" unique_id=24777451]
 
-[node name="HealthComponent" type="Node3D" parent="CharacterBody3D/Components"]
+[node name="HealthComponent" type="Node3D" parent="CharacterBody3D/Components" unique_id=1626343775]
 script = ExtResource("17_health")
-Max = 100.0
 
-[node name="ShieldComponent" type="Node3D" parent="CharacterBody3D/Components"]
+[node name="ShieldComponent" type="Node3D" parent="CharacterBody3D/Components" unique_id=26603379]
 script = ExtResource("18_shield")
-Max = 70.0
 
 [node name="ClamberController" type="Node3D" parent="CharacterBody3D" unique_id=884447449]
 script = ExtResource("4_clamber")
@@ -204,7 +205,7 @@ LandPunch = 0.3
 [node name="InAir" type="Node" parent="CharacterBody3D/StateMachine/Player/Locomoting/AirState" unique_id=386152052]
 script = ExtResource("9_inair")
 
-[node name="Coyote" type="Node" parent="CharacterBody3D/StateMachine/Player/Locomoting/AirState"]
+[node name="Coyote" type="Node" parent="CharacterBody3D/StateMachine/Player/Locomoting/AirState" unique_id=431032186]
 script = ExtResource("16_coyote")
 
 [node name="MovementState" type="Node" parent="CharacterBody3D/StateMachine/Player/Locomoting" unique_id=1411624696]
@@ -236,10 +237,11 @@ RollAngle = 1.0
 MaxPunch = 4.5
 MaxStepLag = 0.7
 
-[node name="Hud" type="CanvasLayer" parent="CharacterBody3D"]
+[node name="Hud" type="CanvasLayer" parent="CharacterBody3D" unique_id=188339471]
 script = ExtResource("21_hud")
 
-[node name="Bars" type="VBoxContainer" parent="CharacterBody3D/Hud"]
+[node name="Bars" type="VBoxContainer" parent="CharacterBody3D/Hud" unique_id=877768719]
+anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 24.0
@@ -248,16 +250,18 @@ offset_right = 264.0
 offset_bottom = -24.0
 theme_override_constants/separation = 6
 
-[node name="Shield" type="ProgressBar" parent="CharacterBody3D/Hud/Bars"]
+[node name="Shield" type="ProgressBar" parent="CharacterBody3D/Hud/Bars" unique_id=1950191274]
 custom_minimum_size = Vector2(240, 22)
+layout_mode = 2
 theme_override_styles/background = SubResource("StyleBoxFlat_barbg")
 theme_override_styles/fill = SubResource("StyleBoxFlat_shield")
 max_value = 70.0
 value = 70.0
 show_percentage = false
 
-[node name="Health" type="ProgressBar" parent="CharacterBody3D/Hud/Bars"]
+[node name="Health" type="ProgressBar" parent="CharacterBody3D/Hud/Bars" unique_id=123606221]
 custom_minimum_size = Vector2(240, 22)
+layout_mode = 2
 theme_override_styles/background = SubResource("StyleBoxFlat_barbg")
 theme_override_styles/fill = SubResource("StyleBoxFlat_health")
 value = 100.0
@@ -275,115 +279,179 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 6
 script = ExtResource("14_statelabel")
 
-[node name="PauseMenu" type="CanvasLayer" parent="."]
-layer = 10
+[node name="PauseMenu" type="CanvasLayer" parent="." unique_id=1466352895]
 process_mode = 3
+layer = 10
 visible = false
 
-[node name="Tint" type="ColorRect" parent="PauseMenu"]
+[node name="Tint" type="ColorRect" parent="PauseMenu" unique_id=410068556]
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(0, 0, 0, 0.6)
 
-[node name="Center" type="CenterContainer" parent="PauseMenu"]
+[node name="Center" type="CenterContainer" parent="PauseMenu" unique_id=1514241570]
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="Buttons" type="VBoxContainer" parent="PauseMenu/Center"]
+[node name="Buttons" type="VBoxContainer" parent="PauseMenu/Center" unique_id=531324970]
+layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="Continue" type="Button" parent="PauseMenu/Center/Buttons"]
+[node name="Continue" type="Button" parent="PauseMenu/Center/Buttons" unique_id=2000815797]
 custom_minimum_size = Vector2(220, 44)
+layout_mode = 2
 text = "Continue"
 
-[node name="Settings" type="Button" parent="PauseMenu/Center/Buttons"]
+[node name="Settings" type="Button" parent="PauseMenu/Center/Buttons" unique_id=353432016]
 custom_minimum_size = Vector2(220, 44)
+layout_mode = 2
 text = "Settings"
 
-[node name="Restart" type="Button" parent="PauseMenu/Center/Buttons"]
+[node name="Restart" type="Button" parent="PauseMenu/Center/Buttons" unique_id=162179806]
 custom_minimum_size = Vector2(220, 44)
+layout_mode = 2
 text = "Restart Level"
 
-[node name="Quit" type="Button" parent="PauseMenu/Center/Buttons"]
+[node name="Quit" type="Button" parent="PauseMenu/Center/Buttons" unique_id=1957042598]
 custom_minimum_size = Vector2(220, 44)
+layout_mode = 2
 text = "Quit"
 
-[node name="SettingsPanel" type="VBoxContainer" parent="PauseMenu/Center"]
+[node name="SettingsPanel" type="VBoxContainer" parent="PauseMenu/Center" unique_id=1637790896]
 visible = false
+layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Title" type="Label" parent="PauseMenu/Center/SettingsPanel"]
+[node name="Title" type="Label" parent="PauseMenu/Center/SettingsPanel" unique_id=851595011]
+layout_mode = 2
 text = "Settings"
 horizontal_alignment = 1
 
-[node name="Sensitivity" type="HBoxContainer" parent="PauseMenu/Center/SettingsPanel"]
+[node name="Sensitivity" type="HBoxContainer" parent="PauseMenu/Center/SettingsPanel" unique_id=124687339]
+layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Label" type="Label" parent="PauseMenu/Center/SettingsPanel/Sensitivity"]
+[node name="Label" type="Label" parent="PauseMenu/Center/SettingsPanel/Sensitivity" unique_id=1804712196]
 custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
 text = "Mouse Sensitivity"
 
-[node name="Slider" type="HSlider" parent="PauseMenu/Center/SettingsPanel/Sensitivity"]
+[node name="Slider" type="HSlider" parent="PauseMenu/Center/SettingsPanel/Sensitivity" unique_id=690091144]
 custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
 min_value = 0.001
 max_value = 0.01
 step = 0.0005
+value = 0.001
 
-[node name="Value" type="Label" parent="PauseMenu/Center/SettingsPanel/Sensitivity"]
+[node name="Value" type="Label" parent="PauseMenu/Center/SettingsPanel/Sensitivity" unique_id=2125526744]
 custom_minimum_size = Vector2(56, 0)
+layout_mode = 2
 horizontal_alignment = 2
 
-[node name="Fov" type="HBoxContainer" parent="PauseMenu/Center/SettingsPanel"]
+[node name="Fov" type="HBoxContainer" parent="PauseMenu/Center/SettingsPanel" unique_id=740774229]
+layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Label" type="Label" parent="PauseMenu/Center/SettingsPanel/Fov"]
+[node name="Label" type="Label" parent="PauseMenu/Center/SettingsPanel/Fov" unique_id=1160580702]
 custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
 text = "Field of View"
 
-[node name="Slider" type="HSlider" parent="PauseMenu/Center/SettingsPanel/Fov"]
+[node name="Slider" type="HSlider" parent="PauseMenu/Center/SettingsPanel/Fov" unique_id=1413089973]
 custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
 min_value = 60.0
 max_value = 110.0
-step = 1.0
+value = 60.0
 
-[node name="Value" type="Label" parent="PauseMenu/Center/SettingsPanel/Fov"]
+[node name="Value" type="Label" parent="PauseMenu/Center/SettingsPanel/Fov" unique_id=596030446]
 custom_minimum_size = Vector2(56, 0)
+layout_mode = 2
 horizontal_alignment = 2
 
-[node name="Bob" type="HBoxContainer" parent="PauseMenu/Center/SettingsPanel"]
+[node name="Bob" type="HBoxContainer" parent="PauseMenu/Center/SettingsPanel" unique_id=1358867746]
+layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Label" type="Label" parent="PauseMenu/Center/SettingsPanel/Bob"]
+[node name="Label" type="Label" parent="PauseMenu/Center/SettingsPanel/Bob" unique_id=772928885]
 custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
 text = "Head Bob"
 
-[node name="Slider" type="HSlider" parent="PauseMenu/Center/SettingsPanel/Bob"]
+[node name="Slider" type="HSlider" parent="PauseMenu/Center/SettingsPanel/Bob" unique_id=1697271896]
 custom_minimum_size = Vector2(180, 0)
-min_value = 0.0
+layout_mode = 2
 max_value = 0.09
 step = 0.005
 
-[node name="Value" type="Label" parent="PauseMenu/Center/SettingsPanel/Bob"]
+[node name="Value" type="Label" parent="PauseMenu/Center/SettingsPanel/Bob" unique_id=971197844]
 custom_minimum_size = Vector2(56, 0)
+layout_mode = 2
 horizontal_alignment = 2
 
-[node name="Roll" type="HBoxContainer" parent="PauseMenu/Center/SettingsPanel"]
+[node name="Roll" type="HBoxContainer" parent="PauseMenu/Center/SettingsPanel" unique_id=1500642472]
+layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Label" type="Label" parent="PauseMenu/Center/SettingsPanel/Roll"]
+[node name="Label" type="Label" parent="PauseMenu/Center/SettingsPanel/Roll" unique_id=423731606]
 custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
 text = "View Roll"
 
-[node name="Slider" type="HSlider" parent="PauseMenu/Center/SettingsPanel/Roll"]
+[node name="Slider" type="HSlider" parent="PauseMenu/Center/SettingsPanel/Roll" unique_id=395654687]
 custom_minimum_size = Vector2(180, 0)
-min_value = 0.0
+layout_mode = 2
 max_value = 5.0
 step = 0.5
 
-[node name="Value" type="Label" parent="PauseMenu/Center/SettingsPanel/Roll"]
+[node name="Value" type="Label" parent="PauseMenu/Center/SettingsPanel/Roll" unique_id=144325472]
 custom_minimum_size = Vector2(56, 0)
+layout_mode = 2
 horizontal_alignment = 2
 
-[node name="Back" type="Button" parent="PauseMenu/Center/SettingsPanel"]
+[node name="Back" type="Button" parent="PauseMenu/Center/SettingsPanel" unique_id=457057885]
 custom_minimum_size = Vector2(220, 40)
+layout_mode = 2
 text = "Back"
+
+[node name="DeathScreen" type="CanvasLayer" parent="." unique_id=1836509312]
+process_mode = 3
+layer = 11
+visible = false
+
+[node name="Tint" type="ColorRect" parent="DeathScreen" unique_id=950468096]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.18, 0, 0, 0.55)
+
+[node name="Center" type="CenterContainer" parent="DeathScreen" unique_id=763743828]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Buttons" type="VBoxContainer" parent="DeathScreen/Center" unique_id=593086192]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="Title" type="Label" parent="DeathScreen/Center/Buttons" unique_id=1658095440]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.15, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 64
+text = "YOU DIED"
+horizontal_alignment = 1
+
+[node name="Restart" type="Button" parent="DeathScreen/Center/Buttons" unique_id=21191773]
+custom_minimum_size = Vector2(220, 44)
+layout_mode = 2
+text = "Restart"
+
+[node name="Quit" type="Button" parent="DeathScreen/Center/Buttons" unique_id=1318081766]
+custom_minimum_size = Vector2(220, 44)
+layout_mode = 2
+text = "Quit"
