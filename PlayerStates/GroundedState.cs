@@ -20,9 +20,13 @@ public partial class GroundedState : AtomicState
     public override void _Ready()
     {
         _player = PlayerController.Of(this);
-        // The only edge out. Its guard is the exact complement of InAir's, so the pair can never
-        // flap: at any instant exactly one of them passes.
-        AddTransition("InAir", () => !_player.IsOnFloor());
+        // Order matters: a jump-caused departure goes straight to InAir -- JumpedThisAirborne is
+        // already true by the time !IsOnFloor() passes, one tick after Jump() sets it (see Jump's
+        // comment). Only an unjumped fall falls through to the second guard and gets the Coyote
+        // grace window. This is also what keeps the pair from ever flapping: at any instant at
+        // most one of the two guards passes.
+        AddTransition("InAir", () => !_player.IsOnFloor() && _player.JumpedThisAirborne);
+        AddTransition("Coyote", () => !_player.IsOnFloor());
     }
 
     // Landing. FallSpeed is cleared unconditionally, whether or not it was big enough to punch, so a
@@ -36,6 +40,9 @@ public partial class GroundedState : AtomicState
         // looking up. Source's constant is positive only because its pitch axis runs the other way.
         if (speed > LandPunchThreshold)
             _player.Camera.AddPunch(-(speed - LandPunchThreshold) * LandPunch, 0f);
+        // Every landing starts the next airborne trip clean, whether it came back from InAir or
+        // from an unused/expired Coyote window.
+        _player.JumpedThisAirborne = false;
     }
 
     // Jump is applied here rather than as a transition effect. Guards are polled on _Process too,

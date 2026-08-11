@@ -2,30 +2,48 @@ using Godot;
 
 namespace FirstPerson.Helpers;
 
-// Clamber/mantle for a CharacterBody3D.
+// Clamber/mantle, and the smaller step-up that fills the dead band under it, for a
+// CharacterBody3D.
 //
 // Detection sweeps the player's OWN collider up, forward, then down — the Godot stair-step idiom
 // with a large step height. Because the sweep uses the real shape, a sweep that completes proves
 // the landing spot is reachable, clear and standable, so there is no separate headroom, room-fit
-// or ledge-thickness check to get wrong.
+// or ledge-thickness check to get wrong. Clamber and step-up share this exact sweep, differing
+// only in height range, forward reach and direction -- see TrySweep.
 //
-// Execution is parameterised by elapsed time, not by position, so the manoeuvre always terminates.
-// Motion goes through the caller's MoveAndSlide as a velocity rather than a GlobalPosition lerp,
-// so collision stays authoritative and the player can never end up inside geometry.
+// Execution differs between the two, though. Clamber is parameterised by elapsed time, not by
+// position, so the manoeuvre always terminates, and moves the player through the caller's
+// MoveAndSlide as a velocity rather than a GlobalPosition lerp, so collision stays authoritative.
+// Step-up has no animation to run: it is a single instant lift applied before that tick's
+// MoveAndSlide, small enough that CameraController.StepSmooth absorbs the pop the same way it
+// already does for a stair tread.
 //
 // Statechart-ready seam: TryStartClamber() is the transition guard, GetClamberVelocity() is
-// StatePhysicsProcessing, !IsClambering is the transition out.
+// StatePhysicsProcessing, !IsClambering is the transition out. TryStepUp() has no seam to offer --
+// it never leaves Locomoting, which is the point of it.
 public partial class ClamberController : Node3D
 {
     [Export] public CharacterBody3D Player { get; set; }
 
     [ExportGroup("Detection")]
     [Export] public float MaxClamberHeight { get; set; } = 1.6f;
-    // Below this it is a step, not a clamber — leave short obstacles to stair-stepping.
+    // Below this it is a step, not a clamber -- TryStepUp owns everything under it instead.
     [Export] public float MinClamberHeight { get; set; } = 0.4f;
     [Export] public float ClamberReach { get; set; } = 0.75f;
     // Above ~0.01 the sweeps snag and report false positives.
     [Export] public float SafeMargin { get; set; } = 0.001f;
+
+    [ExportGroup("Step-up")]
+    // Floor for what counts as a step at all, not a tuned match for wherever Godot's own capsule
+    // stops rolling over things unaided -- that point moves with speed and geometry, and TryStepUp
+    // only ever runs on a tick the capsule is already blocked (see the gate in TryStepUp), so a
+    // height MoveAndSlide would have climbed on its own just gets rejected here as "too low" and
+    // costs three cheap sweeps for nothing. This is purely a floor against registering a texture
+    // seam or a hairline CSG gap as a step.
+    [Export] public float MinStepHeight { get; set; } = 0.03f;
+    // Just past the capsule radius: this only has to reach the obstacle already touching the
+    // player, never out to something a stride away.
+    [Export] public float StepReach { get; set; } = 0.6f;
 
     [ExportGroup("Execution")]
     [Export] public float ClamberSpeed { get; set; } = 3.0f;
@@ -74,7 +92,8 @@ public partial class ClamberController : Node3D
     public bool TryStartClamber()
     {
         if (IsClambering || _cooldown > 0f) return false;
-        if (!TryFindLanding(out var landing)) return false;
+        if (!TrySweep(-Player.GlobalBasis.Z, ClamberReach, MinClamberHeight, MaxClamberHeight * HeightScale,
+                out var landing)) return false;
 
         _start = Player.GlobalPosition;
         _landing = landing;
@@ -85,38 +104,74 @@ public partial class ClamberController : Node3D
         return true;
     }
 
-    private bool TryFindLanding(out Vector3 landing)
+    // Called once per physics tick, before the caller's MoveAndSlide. Lifts the player straight
+    // onto a step in one move if their own velocity is already blocked by one this tick; otherwise
+    // does nothing and costs one cheap probe. Not gated by cooldown -- unlike clamber this has no
+    // animation to protect from re-triggering, it just stops firing the instant nothing is ahead.
+    public bool TryStepUp(double delta)
+    {
+        if (IsClambering || !Player.IsOnFloor()) return false;
+
+        var horizontal = Player.Velocity with { Y = 0 };
+        if (horizontal.LengthSquared() < 0.0001f) return false;
+        var direction = horizontal.Normalized();
+
+        // The gate the whole performance case rests on: a plain forward probe, no vertical offset,
+        // costing one TestMove. Only when THIS is blocked do the three real sweeps below run, so
+        // open-ground walking -- the overwhelming majority of ticks -- never pays for them.
+        if (!Player.TestMove(Player.GlobalTransform, direction * 0.05f, null, SafeMargin)) return false;
+
+        if (!TrySweep(direction, StepReach, MinStepHeight, MinClamberHeight, out var landing)) return false;
+
+        // Only the lift is applied here -- horizontal motion is left to the MoveAndSlide the caller
+        // is about to run with the velocity already sampled this tick. Applying the sweep's forward
+        // offset too would double up with that and overshoot.
+        Player.GlobalPosition = Player.GlobalPosition with { Y = landing.Y };
+        return true;
+    }
+
+    // Shared by clamber and step-up. Sweeps the player's own capsule up, then along `direction` by
+    // `reach`, then down, and reports where it lands if the whole path is clear and standable.
+    // `minRise`/`maxRise` bound what counts as a valid landing -- clamber and step-up pass
+    // complementary ranges that meet exactly at MinClamberHeight, so neither has a gap or overlap
+    // with the other.
+    private bool TrySweep(Vector3 direction, float reach, float minRise, float maxRise, out Vector3 landing)
     {
         landing = Vector3.Zero;
         var xform = Player.GlobalTransform;
         var hit = new KinematicCollision3D();
 
         // Up first. Sweeping forward before up tunnels through ceilings.
-        // Rise past MaxClamberHeight by Clearance so a ledge of exactly that height still clears
-        // its own lip on the forward sweep — the export means "tallest ledge", not "rise".
-        var rise = MaxClamberHeight * HeightScale + Clearance;
+        // Rise past maxRise by Clearance so an obstacle of exactly that height still clears its own
+        // lip on the forward sweep -- maxRise means "tallest obstacle", not "how far to rise".
+        var rise = maxRise + Clearance;
         if (Player.TestMove(xform, Vector3.Up * rise, hit, SafeMargin))
             rise = hit.GetTravel().Length();
-        if (rise < MinClamberHeight) return Reject("no headroom to rise");
+        if (rise < minRise) return Reject("no headroom to rise");
         xform.Origin += Vector3.Up * rise;
 
-        // Forward. Blocked means the wall is taller than MaxClamberHeight.
-        var forward = -Player.GlobalBasis.Z * ClamberReach;
+        // Forward. Blocked means the obstacle is taller than maxRise.
+        var forward = direction * reach;
         if (Player.TestMove(xform, forward, null, SafeMargin)) return Reject("no room in front");
         xform.Origin += forward;
 
         // Down. Nothing to land on means a gap, not a ledge. Note a capsule *rests on* thin
-        // geometry rather than passing over it, so railings stay clamberable — rejecting those
-        // needs an explicit minimum-depth check, not this sweep.
+        // geometry rather than passing over it, so railings and single steps stay steppable;
+        // rejecting those needs an explicit minimum-depth check, not this sweep.
         if (!Player.TestMove(xform, Vector3.Down * (rise + 0.05f), hit, SafeMargin))
             return Reject("nothing to stand on");
         if (hit.GetNormal().AngleTo(Vector3.Up) > Player.FloorMaxAngle) return Reject("surface too steep");
 
         landing = xform.Origin + Vector3.Down * hit.GetTravel().Length();
-        if (landing.Y - Player.GlobalPosition.Y < MinClamberHeight) return Reject("too low, that is a step");
+        var actualRise = landing.Y - Player.GlobalPosition.Y;
+        if (actualRise < minRise) return Reject("too low, that is a step");
+        // Guards the boundary from the other side too: without this, a landing a hair over
+        // MinClamberHeight could still get taken as a step because the up-sweep's own Clearance
+        // margin let it rise that far unblocked.
+        if (actualRise > maxRise + 0.001f) return Reject("too high");
         if (DebugLog)
             GD.Print($"[Clamber] accepted: from {Player.GlobalPosition} rise {rise:F3} " +
-                     $"downTravel {hit.GetTravel().Length():F3} landing {landing}");
+                     $"landing {landing}");
         return true;
     }
 

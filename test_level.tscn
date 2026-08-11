@@ -15,6 +15,7 @@
 [ext_resource type="Script" uid="uid://b6a1040khb1ad" path="res://PlayerStates/CrouchingState.cs" id="13_crouching"]
 [ext_resource type="Script" uid="uid://cxodw34d7i83" path="res://StateLabel.cs" id="14_statelabel"]
 [ext_resource type="Script" uid="uid://dy144vidsxs50" path="res://CameraController.cs" id="15_camera"]
+[ext_resource type="Script" path="res://PlayerStates/CoyoteState.cs" id="16_coyote"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_gojnm"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -35,6 +36,7 @@ glow_enabled = true
 [node name="Managers" type="Node" parent="." unique_id=607727740]
 
 [node name="GameManager" type="Node" parent="Managers" unique_id=880660696]
+process_mode = 3
 script = ExtResource("2_gamemgr")
 
 [node name="EnvAndLighting" type="Node" parent="." unique_id=575912973]
@@ -158,6 +160,9 @@ LandPunch = 0.3
 [node name="InAir" type="Node" parent="CharacterBody3D/StateMachine/Player/Locomoting/AirState" unique_id=386152052]
 script = ExtResource("9_inair")
 
+[node name="Coyote" type="Node" parent="CharacterBody3D/StateMachine/Player/Locomoting/AirState"]
+script = ExtResource("16_coyote")
+
 [node name="MovementState" type="Node" parent="CharacterBody3D/StateMachine/Player/Locomoting" unique_id=1411624696]
 script = ExtResource("6_compound")
 RememberActiveState = true
@@ -198,3 +203,116 @@ theme_override_colors/font_color = Color(1, 1, 0.2, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 6
 script = ExtResource("14_statelabel")
+
+[node name="PauseMenu" type="CanvasLayer" parent="."]
+layer = 10
+process_mode = 3
+visible = false
+
+[node name="Tint" type="ColorRect" parent="PauseMenu"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.6)
+
+[node name="Center" type="CenterContainer" parent="PauseMenu"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Buttons" type="VBoxContainer" parent="PauseMenu/Center"]
+theme_override_constants/separation = 12
+
+[node name="Continue" type="Button" parent="PauseMenu/Center/Buttons"]
+custom_minimum_size = Vector2(220, 44)
+text = "Continue"
+
+[node name="Settings" type="Button" parent="PauseMenu/Center/Buttons"]
+custom_minimum_size = Vector2(220, 44)
+text = "Settings"
+
+[node name="Restart" type="Button" parent="PauseMenu/Center/Buttons"]
+custom_minimum_size = Vector2(220, 44)
+text = "Restart Level"
+
+[node name="Quit" type="Button" parent="PauseMenu/Center/Buttons"]
+custom_minimum_size = Vector2(220, 44)
+text = "Quit"
+
+[node name="SettingsPanel" type="VBoxContainer" parent="PauseMenu/Center"]
+visible = false
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="PauseMenu/Center/SettingsPanel"]
+text = "Settings"
+horizontal_alignment = 1
+
+[node name="Sensitivity" type="HBoxContainer" parent="PauseMenu/Center/SettingsPanel"]
+theme_override_constants/separation = 8
+
+[node name="Label" type="Label" parent="PauseMenu/Center/SettingsPanel/Sensitivity"]
+custom_minimum_size = Vector2(160, 0)
+text = "Mouse Sensitivity"
+
+[node name="Slider" type="HSlider" parent="PauseMenu/Center/SettingsPanel/Sensitivity"]
+custom_minimum_size = Vector2(180, 0)
+min_value = 0.001
+max_value = 0.01
+step = 0.0005
+
+[node name="Value" type="Label" parent="PauseMenu/Center/SettingsPanel/Sensitivity"]
+custom_minimum_size = Vector2(56, 0)
+horizontal_alignment = 2
+
+[node name="Fov" type="HBoxContainer" parent="PauseMenu/Center/SettingsPanel"]
+theme_override_constants/separation = 8
+
+[node name="Label" type="Label" parent="PauseMenu/Center/SettingsPanel/Fov"]
+custom_minimum_size = Vector2(160, 0)
+text = "Field of View"
+
+[node name="Slider" type="HSlider" parent="PauseMenu/Center/SettingsPanel/Fov"]
+custom_minimum_size = Vector2(180, 0)
+min_value = 60.0
+max_value = 110.0
+step = 1.0
+
+[node name="Value" type="Label" parent="PauseMenu/Center/SettingsPanel/Fov"]
+custom_minimum_size = Vector2(56, 0)
+horizontal_alignment = 2
+
+[node name="Bob" type="HBoxContainer" parent="PauseMenu/Center/SettingsPanel"]
+theme_override_constants/separation = 8
+
+[node name="Label" type="Label" parent="PauseMenu/Center/SettingsPanel/Bob"]
+custom_minimum_size = Vector2(160, 0)
+text = "Head Bob"
+
+[node name="Slider" type="HSlider" parent="PauseMenu/Center/SettingsPanel/Bob"]
+custom_minimum_size = Vector2(180, 0)
+min_value = 0.0
+max_value = 0.09
+step = 0.005
+
+[node name="Value" type="Label" parent="PauseMenu/Center/SettingsPanel/Bob"]
+custom_minimum_size = Vector2(56, 0)
+horizontal_alignment = 2
+
+[node name="Roll" type="HBoxContainer" parent="PauseMenu/Center/SettingsPanel"]
+theme_override_constants/separation = 8
+
+[node name="Label" type="Label" parent="PauseMenu/Center/SettingsPanel/Roll"]
+custom_minimum_size = Vector2(160, 0)
+text = "View Roll"
+
+[node name="Slider" type="HSlider" parent="PauseMenu/Center/SettingsPanel/Roll"]
+custom_minimum_size = Vector2(180, 0)
+min_value = 0.0
+max_value = 5.0
+step = 0.5
+
+[node name="Value" type="Label" parent="PauseMenu/Center/SettingsPanel/Roll"]
+custom_minimum_size = Vector2(56, 0)
+horizontal_alignment = 2
+
+[node name="Back" type="Button" parent="PauseMenu/Center/SettingsPanel"]
+custom_minimum_size = Vector2(220, 40)
+text = "Back"

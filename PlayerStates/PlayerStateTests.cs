@@ -30,6 +30,7 @@ public partial class PlayerStateTests : Node
     private float _maxBob, _strafeRoll, _straightRoll;
     private float _punchMax, _punchMin, _smallDropPunch, _fallSpeedAfterLanding, _rampTopY;
     private float _clamberLag, _crouchLag, _restLag, _maxStepLag, _descentLag, _stairTopY;
+    private float _stepRulerEndZ;
     private float _maxCamDrop, _maxBodyDrop, _lastCamY, _lastBodyY;
     private string _last = "", _blockedState = "", _freedState = "", _afterClamberState = "";
 
@@ -222,7 +223,17 @@ public partial class PlayerStateTests : Node
         if (_frame == 1030) { Press(Key.W, false); return; }
         // Well past the ~0.14s convergence, so the lag must be exactly zero and not merely small.
         if (_frame == 1060) { _restLag = Cam().StepLag; return; }
-        if (_frame < 1070) return;
+
+        // --- step-up traversal: walk the StepRuler lane, four slabs at 0.10/0.15/0.20/0.30m ---
+        // Godot's own capsule rolls over the first two unaided (same as the stair treads above);
+        // 0.20m and 0.30m sit in the dead band ClamberController.TryStepUp exists to close. Before
+        // that method existed this walk stalled at the third slab, exactly as ROADMAP.md measured.
+        if (_frame == 1070) { _body.GlobalPosition = new Vector3(1, 1f, 1f); Press(Key.S, true); return; }
+        if (_frame is > 1070 and < 1195) return;
+        // Stopped well clear of Step030's far edge (z=9.3) but well short of the floor's own edge
+        // (z~12.6) -- walking past that would fall off the level and make this a test of gravity.
+        if (_frame == 1195) { Press(Key.S, false); _stepRulerEndZ = _body.GlobalPosition.Z; return; }
+        if (_frame < 1235) return;
 
         Contains("Player(Locomoting(AirState(InAir), MovementState(Walking)))", "jump reaches InAir");
         Is(Locomoting, _sm.GetStateMachineString(), "final configuration is back to Locomoting");
@@ -269,9 +280,10 @@ public partial class PlayerStateTests : Node
         // top is y=5 and so puts the capsule's centre at y=6.
         True(_rampTopY > 5.9f, $"walking up the ramp reaches the platform (got y={_rampTopY:F2})");
 
-        // Step smoothing. The stairs must be climbable at all -- nothing in this project implements
-        // step-up traversal, so the treads live or die on what the capsule rolls over unaided, and
-        // a regression there would silently turn every assertion below into a test of flat ground.
+        // Step smoothing. The 0.15m stair treads roll over unaided, with nothing for
+        // ClamberController.TryStepUp to do -- see the StepRuler check below for the taller slabs
+        // that do need it. A regression here would silently turn every assertion below into a test
+        // of flat ground.
         True(_stairTopY > 1.85f, $"the 0.15m treads are walkable (reached y={_stairTopY:F2}, landing is 1.9)");
         True(_maxStepLag <= Cam().MaxStepLag + 0.001f, $"ascent lag respects MaxStepLag ({_maxStepLag:F3}m)");
         True(_descentLag > 0.02f, $"descending lags the eye above the body ({_descentLag:F3}m)");
@@ -284,6 +296,12 @@ public partial class PlayerStateTests : Node
         // off" rather than as anything that throws.
         True(_crouchLag < 0.001f, $"crouching is not absorbed as a step (lag {_crouchLag:F4}m)");
         True(_clamberLag < 0.001f, $"clambering is not absorbed as a step (lag {_clamberLag:F4}m)");
+
+        // Step-up traversal. The StepRuler slabs sit at z=3/5/7/9 and are 0.6m deep, so clearing all
+        // four and walking off the far edge of the last one puts the player past z=9.6. Before
+        // TryStepUp existed this walk stalled at the third slab (0.20m) -- the dead band the whole
+        // feature exists to close.
+        True(_stepRulerEndZ > 9.5f, $"walking the StepRuler lane clears all four slabs (reached z={_stepRulerEndZ:F2})");
 
         Has(_blockedState, Crouching, "stand-up under the overhang is refused");
         Has(_freedState, Crouching, "the refused stand-up is dropped, not queued for later");

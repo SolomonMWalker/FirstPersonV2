@@ -35,12 +35,15 @@ public partial class PlayerController : CharacterBody3D
 	// by the time the landing is detectable, so the impact speed has to be remembered on the way down.
 	public float FallSpeed { get; set; }
 
+	// Set by Jump(), reset by GroundedState on landing. Lets GroundedState tell a jump-caused
+	// departure from the floor apart from an unjumped one -- CoyoteState's grace window only
+	// exists on the second kind, and this is what makes it structurally unreachable after a real
+	// jump (no double jump).
+	public bool JumpedThisAirborne { get; set; }
+
 	private CollisionShape3D _collider;
 	private CapsuleShape3D _capsule;
 	private float _standHeight;
-	private bool _jumpHeld;
-	private bool _sprintHeld;
-	private bool _crouchHeld;
 
 	// Nearest PlayerController ancestor. State nodes hang several levels below the body, and
 	// hand-written NodePath exports in a .tscn do not reliably resolve into typed node references.
@@ -87,12 +90,20 @@ public partial class PlayerController : CharacterBody3D
 
 	}
 
-	public void Jump() => Velocity = Velocity with { Y = JumpVelocity };
+	public void Jump()
+	{
+		Velocity = Velocity with { Y = JumpVelocity };
+		JumpedThisAirborne = true;
+	}
 
 	public override void _PhysicsProcess(double delta)
 	{
 		SampleInput();
 		ApplyCrouchHeight();
+		// Before MoveAndSlide, not after: this lifts the body above a step so the horizontal
+		// velocity already sampled this tick glides onto it, rather than reacting to a move that
+		// already happened.
+		Clamber?.TryStepUp(delta);
 		MoveAndSlide();
 	}
 
@@ -110,31 +121,21 @@ public partial class PlayerController : CharacterBody3D
 
 	private void SampleInput()
 	{
-		var jump = Input.IsPhysicalKeyPressed(Key.Space);
-		// ponytail: edge detected by polling, so a tap shorter than one physics frame (~16ms)
-		// is lost. Swap for an InputMap action and Input.IsActionJustPressed if that ever bites.
-		JumpPressed = jump && !_jumpHeld;
-		_jumpHeld = jump;
+		JumpPressed = Input.IsActionJustPressed("jump");
+		var jumpHeld = Input.IsActionPressed("jump");
 
-		// ponytail: raw key reads, no InputMap actions. Swap for Input.GetVector
-		// with named actions when you want rebindable controls or gamepad support.
-		var sprint = Input.IsPhysicalKeyPressed(Key.Shift);
+		var sprint = Input.IsActionPressed("sprint");
 		if (!sprint) SprintArmed = false;
-		else if (!_sprintHeld) SprintArmed = true;
-		_sprintHeld = sprint;
+		else if (Input.IsActionJustPressed("sprint")) SprintArmed = true;
 
-		var crouch = Input.IsPhysicalKeyPressed(Key.C);
-		if (crouch && !_crouchHeld) CrouchToggled = !CrouchToggled;
-		_crouchHeld = crouch;
+		if (Input.IsActionJustPressed("crouch")) CrouchToggled = !CrouchToggled;
 
-		MoveInput = new Vector2(
-			(Input.IsPhysicalKeyPressed(Key.D) ? 1 : 0) - (Input.IsPhysicalKeyPressed(Key.A) ? 1 : 0),
-			(Input.IsPhysicalKeyPressed(Key.S) ? 1 : 0) - (Input.IsPhysicalKeyPressed(Key.W) ? 1 : 0));
+		MoveInput = Input.GetVector("move_left", "move_right", "move_forward", "move_back");
 
 		// Started here, not in a transition guard: guards must be side-effect free and
 		// TryStartClamber commits. A fresh press always tries; while airborne a held key keeps
 		// trying, so you can jump into a ledge and mantle the moment it comes in reach.
-		if (Clamber is { IsClambering: false } && (JumpPressed || (jump && !IsOnFloor())))
+		if (Clamber is { IsClambering: false } && (JumpPressed || (jumpHeld && !IsOnFloor())))
 			Clamber.TryStartClamber();
 	}
 }
