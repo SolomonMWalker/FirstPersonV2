@@ -21,6 +21,17 @@ public abstract partial class Component : Node3D
 	// Ask an object whether it has a capability. Null is a normal answer, not an error -- a wall has
 	// no HealthComponent and that is exactly how "you cannot damage a wall" is expressed. Lookup is by
 	// type and not by node name, so renaming a component node in the editor breaks nothing.
-	public static T Get<T>(Node gameObject) where T : Component =>
-		gameObject?.GetNodeOrNull("Components")?.GetChildren().OfType<T>().FirstOrDefault();
+	//
+	// Walks up, because the physics engine hands back the collider it hit and that is often a child
+	// of the GameObject rather than the GameObject itself -- a turret's body, an enemy's hitbox. The
+	// walk stops at the FIRST node carrying a Components child: that node is the GameObject, and one
+	// that has components but not this one has to answer null rather than inherit its parent's.
+	public static T Get<T>(Node node) where T : Component
+	{
+		for (var n = node; n is not null; n = n.GetParent())
+			if (n.GetNodeOrNull("Components") is { } components)
+				return components.GetChildren().OfType<T>().FirstOrDefault();
+
+		return null;
+	}
 }

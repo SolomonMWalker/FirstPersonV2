@@ -75,7 +75,7 @@ public partial class ExampleComponent : Component
 | Member | Meaning |
 |---|---|
 | `GameObject` | The node this component describes — the parent of the `Components` container. |
-| `Component.Get<T>(node)` | The `T` on that node's `Components`, or **null** if it hasn't got one. |
+| `Component.Get<T>(node)` | The `T` on that node's GameObject, or **null**. Walks up from `node` to the first ancestor carrying a `Components` child, so you can pass a collider the physics engine handed you — a turret's body, an enemy's hitbox — and get the object that owns it. The walk stops at that first GameObject: one that has components but not this one answers null rather than inheriting its parent's. |
 
 A component ticks itself with `_Process`/`_PhysicsProcess` if it needs to, and most don't.
 
@@ -208,11 +208,62 @@ during a pause for free.
 
 ---
 
+## Interaction
+
+Two components and no wiring between them. `InteractableComponent` marks an object as usable and
+announces `Interacted`; `InteractorComponent` on the player finds one and presses it.
+
+```csharp
+// InteractableComponent -- knows nothing about what it is attached to
+[Export] public string Verb = "interact";   // completes "Press E to ___", mutable at runtime
+[Export] public bool Enabled = true;
+[Signal] Interacted();
+
+// InteractorComponent -- on the player
+[Export] public float Range = 3f;
+public InteractableComponent Target { get; }   // under the crosshair right now, or null
+```
+
+**There is no interact volume.** `InteractorComponent` raycasts from the camera and asks whatever it
+hit for an `InteractableComponent`, exactly as `Projectile` asks for a `HealthComponent`. So an
+object becomes interactable by carrying the component and having a collider — which anything solid
+enough to walk up to already has. That buys three things an `Area3D` per interactable would not:
+range is one export instead of a hand-authored volume on every object, line of sight is free (the ray
+stops at the wall in front of the thing), and the *nearest* thing you are looking at wins with no
+tie-breaking between overlapping volumes.
+
+The ray is a manual `IntersectRay` rather than a `RayCast3D` node because it has to follow the
+camera, and a component under `Components` cannot inherit the camera's rotation without living
+somewhere else in the tree or copying its transform every frame.
+
+Behaviour attaches the usual way — the specific subscribes to the generic, never the reverse:
+
+```csharp
+// TurretComponent._Ready
+_switch = Get<InteractableComponent>(GameObject);
+if (_switch is not null) { _switch.Interacted += Toggle; UpdateVerb(); }
+```
+
+`Verb` is mutable on purpose. A switch has to read "turn the turret on" or "turn the turret off"
+depending on which way it is currently thrown, and only the sibling that owns the behaviour knows
+which — so `Toggle` rewrites it. The prompt describes what pressing the key will *do*, not what the
+object currently is.
+
+`Hud` renders it: it polls `_interactor.Target` alongside the bars and shows `Press {key} to {Verb}`.
+The key comes from `InputMap.ActionGetEvents("interact")`, not a literal, so the prompt cannot start
+lying the day there is a rebinding screen.
+
+---
+
 ## Turret
 
-`TurretComponent` spits `projectile.tscn` down its own -Z every `Interval` seconds, forever. It is a
-fixed hazard, not an enemy: it does not track, aim, lead, or check line of sight, and it has no idea
-the player exists. Where it points is set once in the scene by rotating the object it sits on.
+`TurretComponent` spits `projectile.tscn` down its own -Z every `Interval` seconds while `Firing`.
+It is a fixed hazard, not an enemy: it does not track, aim, lead, or check line of sight, and it has
+no idea the player exists. Where it points is set once in the scene by rotating the object it sits on.
+
+`test_level` has two. The first is always on (`Firing` defaults true and it carries no interactable).
+The second starts off and is wired to a switch — see Interaction above — and its body is 2m rather
+than 1.2m so it meets the player's 1.5m eye line; a short box would have to be aimed at from above.
 
 That is deliberate for what it's for. Tuning health and shields wants damage arriving on a schedule
 you can predict and step out of, not an opponent — and "walk out of the line of fire" needs no code
@@ -245,16 +296,22 @@ broken, both delays, both rates, the timer reset mid-recharge, the latch clearin
 a corpse does not regenerate. It drives time by calling `_PhysicsProcess` directly with a fixed
 delta instead of waiting real frames, which keeps it deterministic and synchronous.
 
-`TurretComponentTests.cs` is the only one that runs the real `test_level` and waits: it proves the
-whole chain is actually connected in the scene — turret fires, projectile collides for real, it
-finds a `HealthComponent`, and the damage routes through the shield's hook — and that the enemy has
-no health of its own.
+`TurretComponentTests.cs` runs the real `test_level` and waits: it proves the whole chain is actually
+connected in the scene — turret fires, projectile collides for real, it finds a `HealthComponent`,
+and the damage routes through the shield's hook — and that the enemy has no health of its own.
+
+`InteractableComponentTests.cs` also runs `test_level`, because the ray is the part that can silently
+miss. It aims the player at the second turret, checks the target resolves **from a hit on the child
+`Body` collider** (the ancestor walk, end to end), checks the prompt text, toggles the turret on and
+off with injected `E` presses, and checks the target goes null when looking away and when standing
+out of range.
 
 ```
 "E:\Godot\Godot_v4.7-stable_mono_win64\Godot_v4.7-stable_mono_win64_console.exe" \
     --headless --path . res://test_health.tscn
     --headless --path . res://test_shield.tscn
     --headless --path . res://test_turret.tscn
+    --headless --path . res://test_interact.tscn
 ```
 
 Exit 0 is a pass.

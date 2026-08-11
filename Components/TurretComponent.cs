@@ -18,7 +18,12 @@ public partial class TurretComponent : Component
 	[Export] public PackedScene Projectile;
 	[Export] public float Interval = 2f;
 
+	// Authored per turret. A sibling InteractableComponent, if there is one, becomes the switch --
+	// but a turret without one is simply always on, which is what the default covers.
+	[Export] public bool Firing = true;
+
 	private float _cooldown;
+	private InteractableComponent _switch;
 
 	public override void _Ready()
 	{
@@ -30,10 +35,32 @@ public partial class TurretComponent : Component
 		// Loudly, and once. An unset scene makes the turret do nothing at all, which from the far end
 		// of the room is indistinguishable from every other reason a shot might not arrive.
 		if (Projectile is null) GD.PushError($"{Name}: no Projectile scene set; this turret will never fire.");
+
+		// The specific behaviour attaches itself to the generic capability, never the reverse --
+		// same direction as ShieldComponent installing itself into HealthComponent's hook.
+		// InteractableComponent has no idea turrets exist.
+		_switch = Get<InteractableComponent>(GameObject);
+		if (_switch is null) return;
+		_switch.Interacted += Toggle;
+		UpdateVerb();
 	}
+
+	private void Toggle()
+	{
+		Firing = !Firing;
+		// Fresh countdown, so switching on does not fire instantly off a cooldown that has been
+		// draining the whole time the turret was off.
+		_cooldown = Interval;
+		UpdateVerb();
+	}
+
+	// The prompt has to describe what pressing E will DO, not what the turret currently is.
+	private void UpdateVerb() => _switch.Verb = Firing ? "turn the turret off" : "turn the turret on";
 
 	public override void _PhysicsProcess(double delta)
 	{
+		if (!Firing) return;
+
 		_cooldown -= (float)delta;
 		if (_cooldown > 0f) return;
 		_cooldown = Interval;

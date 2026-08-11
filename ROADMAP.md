@@ -55,7 +55,7 @@ Small, boring, and every later phase trips over them. Do these first.
 
 ### Something to shoot
 
-- [x] ~~**A dummy to shoot at you.**~~ **Built** — `TurretComponent` + `projectile.tscn`: a static box with a barrel in `test_level` that spits a damaging projectile down one fixed line every 2s. Not an enemy and not on the way to being one; it's the rig that makes health and shields tunable by playing instead of by reading test output. It's undamageable purely by having no `HealthComponent`, and `Projectile` damages whatever it hits by asking for one — so it will work against the real enemy below with no changes. Covered end to end by `test_turret.tscn`.
+- [x] ~~**A dummy to shoot at you.**~~ **Built** — `TurretComponent` + `projectile.tscn`: a static box with a barrel in `test_level` that spits a damaging projectile down one fixed line every 2s. Not an enemy and not on the way to being one; it's the rig that makes health and shields tunable by playing instead of by reading test output. It's undamageable purely by having no `HealthComponent`, and `Projectile` damages whatever it hits by asking for one — so it will work against the real enemy below with no changes. Covered end to end by `test_turret.tscn`. A second one at (5.5, 0, 8.5) starts switched off and toggles on and off through the interaction system (Phase 3), which makes the level's damage source controllable while tuning anything else.
 - [ ] **Enemy: `NavigationRegion3D` + `NavigationAgent3D`.** Bake a navmesh over the greybox. Standard.
 - [ ] **Enemy brain: reuse your state machine.** Idle → Patrol → Chase → Attack → Dead. Your `StateMachine` is engine-generic — do not write a second AI-specific one.
 - [ ] **Enemy attack.** Even a hitscan with a telegraph delay. Enough to make the player move.
@@ -95,7 +95,7 @@ Now the tuning work pays off, because there's something to tune against.
 - [ ] **Enemy variety.** Ranged / melee / heavy. Two enemy types create more gameplay than ten weapon stats.
 - [ ] **Main menu, pause menu, options.** Options must expose sensitivity, FOV, bob/roll, and volume — the accessibility floor.
 - [ ] **Save/checkpoint.** Only when levels are long enough that losing progress hurts.
-- [ ] **Interaction verb.** Doors, buttons. One `RayCast3D` from the camera and an `IInteractable`-free duck-typed `Interact()` method. Walk-over pickups are already done — `HealthPickup.cs` heals a flat `Amount` to anything with a `HealthComponent` and respawns after `RespawnDelay`, no interaction verb needed — so this is only for the things that need a button press.
+- [x] ~~**Interaction verb.**~~ **Built** — `InteractableComponent` (a `Verb`, an `Enabled` flag, an `Interacted` signal) plus `InteractorComponent` on the player, which raycasts from the camera and publishes what's under the crosshair. No interface and no interact volume: the ray hits the object's own collider and `Component.Get` walks up to the GameObject that owns it, so an object becomes interactable by carrying the component. `E` is a new `interact` InputMap action; `Hud` shows "Press E to \<verb\>" with the key read from the InputMap rather than hardcoded. Walk-over pickups stayed as they were — `HealthPickup` needs no verb. `test_interact.tscn` covers it.
 - [ ] **Objectives / progression / whatever the game is actually about.**
 
 ---
