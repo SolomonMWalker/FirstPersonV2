@@ -10,3 +10,7 @@ obj/
 
 # Rider / IDE
 .idea/
+
+# Blender backups/autosaves (numbered .blend1, .blend2, ... and the @ autosave)
+*.blend[0-9]*
+*.blend@

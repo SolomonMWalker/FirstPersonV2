@@ -11,6 +11,9 @@ public partial class HitscanComponent : Component
 	[Signal] public delegate void ShotLandedEventHandler(DamageResult result);
 
 	[Export] public float Damage = 20f;     // hit points per shot, dealt to anything with a HealthComponent
+	// Dealt alongside Damage to anything with a StaggerComponent -- a wall or a shielded turret has
+	// nowhere for this to go and simply ignores it, same as Damage does with no HealthComponent.
+	[Export] public float StaggerDamage = 10f;
 	// Seconds between shots -- the fire rate, and the only thing gating held fire. It does NOT delay
 	// the first pull: the countdown starts at zero and runs whether or not the trigger is down, so a
 	// click always fires immediately unless one landed less than Interval ago.
@@ -110,11 +113,26 @@ public partial class HitscanComponent : Component
 		// own body every time, same trap Projectile.Shooter exists to dodge for GunComponent.
 		query.Exclude = [_player.GetRid()];
 
+		// Layer 1: everything that has always been shot straight (walls, the placeholder capsule
+		// enemies). Layer 2: the fine per-bone hitboxes an object like Grunt hangs off its physical
+		// skeleton (see grunt.tscn). Deliberately NOT layer 3+ -- that is reserved for a movement-only
+		// collider (Grunt's own capsule is one), which fully encloses those finer hitboxes and would
+		// shadow every one of them if the ray could see it too.
+		query.CollisionMask = 0b011;
+
 		var hit = GetWorld3D().DirectSpaceState.IntersectRay(query);
 		if (hit.Count == 0) return;
 
-		var result = Component.Get<HealthComponent>(hit["collider"].As<Node>())
-			?.TakeDamage(Damage, (Vector3)hit["position"]) ?? DamageResult.None;
+		var target = hit["collider"].As<Node>();
+		var position = (Vector3)hit["position"];
+
+		// Staggered targets take a heavier hit -- read before TakeStagger, which can end the Staggered
+		// state this same shot triggers, and this shot's own damage should not benefit from that.
+		var stagger = Component.Get<StaggerComponent>(target);
+		var damage = stagger is { IsStaggered: true } ? Damage * stagger.DamageMultiplier : Damage;
+
+		var result = Component.Get<HealthComponent>(target)?.TakeDamage(damage, position) ?? DamageResult.None;
+		stagger?.TakeStagger(StaggerDamage, position);
 		if (result != DamageResult.None) EmitSignal(SignalName.ShotLanded, (int)result);
 	}
 }

@@ -19,6 +19,7 @@ radial_segments = 12
 rings = 6
 
 [node name="Projectile" type="Area3D"]
+collision_mask = 3
 script = ExtResource("1_projectile")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]

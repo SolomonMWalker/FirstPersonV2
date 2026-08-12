@@ -26,6 +26,12 @@ public partial class EnemyController : CharacterBody3D
 	// combat log to confirm a shot landed.
 	[Export] public float FlashDuration = 0.1f;
 
+	// Optional. The simple capsule enemy has its render mesh as a direct child named "MeshInstance3D"
+	// and never needs this; a skinned character (Grunt) has its mesh nested under its Skeleton3D
+	// instead, so it sets this to point at the real one. Same "specific carrier configures the generic
+	// behaviour" shape as GunComponent.MuzzleOverride.
+	[Export] public MeshInstance3D FlashMesh;
+
 	// Switched off, an enemy never wakes however close you get, and one already awake goes back to
 	// Idle. Defaults on, so an enemy you just drop into a level behaves; the ones that should start
 	// dormant say so in the scene.
@@ -88,7 +94,7 @@ public partial class EnemyController : CharacterBody3D
 		// The body flashes itself rather than being wired up by something else, same reasoning as
 		// CameraController subscribing to the player's own Damaged: the thing owning the visual is
 		// what should own the subscription.
-		_mesh = GetNode<MeshInstance3D>("MeshInstance3D");
+		_mesh = FlashMesh ?? GetNode<MeshInstance3D>("MeshInstance3D");
 		if (Health is not null) Health.Damaged += OnDamaged;
 
 		// After the StateMachine child, so MoveAndSlide applies the velocity the states just wrote.

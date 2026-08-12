@@ -16,6 +16,9 @@ public partial class Projectile : Area3D
 	// fires. The player's weapon is HitscanComponent and has no travel time at all.
 	[Export] public float Speed = 14f;     // metres per second along its own -Z
 	[Export] public float Damage = 20f;    // hit points, dealt to whatever it hits that has a HealthComponent
+	// Dealt alongside Damage to whatever it hits that has a StaggerComponent -- see HitscanComponent's
+	// own StaggerDamage for why the two travel together.
+	[Export] public float StaggerDamage = 10f;
 	[Export] public float Lifetime = 5f;   // seconds before it gives up, so strays don't accumulate
 
 	// Set by GunComponent right after spawning, not authored in a scene. The one thing this needs
@@ -54,7 +57,11 @@ public partial class Projectile : Area3D
 
 		// No HealthComponent is the normal case, not a failure: that's a wall, and hitting a wall is
 		// how taking cover works without anything here having to know what cover is.
-		var result = Component.Get<HealthComponent>(body)?.TakeDamage(Damage, GlobalPosition) ?? DamageResult.None;
+		var stagger = Component.Get<StaggerComponent>(body);
+		var damage = stagger is { IsStaggered: true } ? Damage * stagger.DamageMultiplier : Damage;
+
+		var result = Component.Get<HealthComponent>(body)?.TakeDamage(damage, GlobalPosition) ?? DamageResult.None;
+		stagger?.TakeStagger(StaggerDamage, GlobalPosition);
 		if (result != DamageResult.None) EmitSignal(SignalName.Landed, (int)result);
 		QueueFree();
 	}
