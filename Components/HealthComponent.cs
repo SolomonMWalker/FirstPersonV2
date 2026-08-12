@@ -21,6 +21,8 @@ public partial class HealthComponent : Component
 	[Signal] public delegate void DamagedEventHandler(float amount, Vector3 fromPosition);
 	[Signal] public delegate void DiedEventHandler();
 
+	// Hit points, and the value Current starts at. Authored per object -- this same component is the
+	// player's 100 and an enemy's whatever, with no subclass between them.
 	[Export] public float Max = 100f;
 
 	public float Current { get; private set; }

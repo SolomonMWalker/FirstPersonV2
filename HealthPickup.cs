@@ -11,6 +11,8 @@ public partial class HealthPickup : Area3D
 	// refills is the whole design question; a percentage would silently retune itself every time
 	// that bar changed size.
 	[Export] public float Amount = 50f;
+	// Seconds before it comes back after being taken. It hides rather than freeing itself, so the
+	// node path stays valid across the whole cycle.
 	[Export] public float RespawnDelay = 5f;
 
 	// Decoration, and not optional decoration: a pickup that sits perfectly still reads as scenery,

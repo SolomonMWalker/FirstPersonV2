@@ -13,6 +13,8 @@ public class ChangeStateEventArgs(string stateName) : EventArgs
 [GlobalClass]
 public partial class StateMachine : Node
 {
+    // The top of the chart. Everything below it is found by walking children, so this is the only
+    // wiring the machine needs -- usually the single State child of this node.
     [Export] public State RootState { get; set; }
     public List<State> States { get; private set; } = [];
 

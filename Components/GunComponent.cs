@@ -23,7 +23,13 @@ public partial class GunComponent : Component
 	// here rather than to every transient projectile this gun spawns.
 	[Signal] public delegate void ShotLandedEventHandler(DamageResult result);
 
+	// What to spawn per shot, normally projectile.tscn. Required -- unset is an error in _Ready
+	// rather than a silent no-op, because a gun that never fires looks the same from across the room
+	// as every other reason a shot might not arrive.
 	[Export] public PackedScene Projectile;
+	// Seconds between shots. Unlike HitscanComponent's, this countdown runs only while Firing, so
+	// switching the gun on always costs a full Interval first -- that delay is the telegraph an
+	// enemy wants, and it is the reason the player's weapon is a different component.
 	[Export] public float Interval = 2f;
 
 	// Optional. When set, shots spawn from this node's transform instead of the component's own --

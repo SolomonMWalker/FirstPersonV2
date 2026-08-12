@@ -12,8 +12,10 @@ public partial class Projectile : Area3D
 	// HealthComponent's Damaged only fires for the "reached hit points" case.
 	[Signal] public delegate void LandedEventHandler(DamageResult result);
 
-	[Export] public float Speed = 14f;
-	[Export] public float Damage = 20f;
+	// Slow on purpose: this is the dodgeable, telegraphed kind of shot, the one an enemy or a turret
+	// fires. The player's weapon is HitscanComponent and has no travel time at all.
+	[Export] public float Speed = 14f;     // metres per second along its own -Z
+	[Export] public float Damage = 20f;    // hit points, dealt to whatever it hits that has a HealthComponent
 	[Export] public float Lifetime = 5f;   // seconds before it gives up, so strays don't accumulate
 
 	// Set by GunComponent right after spawning, not authored in a scene. The one thing this needs

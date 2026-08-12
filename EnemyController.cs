@@ -9,10 +9,12 @@ using Godot;
 // asks for. That split is what keeps "add a Patrol state" from meaning "edit the enemy".
 public partial class EnemyController : CharacterBody3D
 {
-	[Export] public float Speed = 3.5f;
+	[Export] public float Speed = 3.5f;   // metres per second while chasing
 
-	// Wakes at SightRange, gives up at the larger LoseRange. Two numbers rather than one because a
-	// single threshold makes the enemy stutter in and out of Chase while you stand exactly on it.
+	// All three in metres, measured to the player. Wakes at SightRange, gives up at the larger
+	// LoseRange -- two numbers rather than one because a single threshold makes the enemy stutter in
+	// and out of Chase while you stand exactly on it. AttackRange must stay well inside SightRange or
+	// the enemy plants and shoots the moment it wakes and the chase never happens at all.
 	[Export] public float SightRange = 20f;
 	[Export] public float LoseRange = 26f;
 	[Export] public float AttackRange = 12f;
@@ -33,6 +35,7 @@ public partial class EnemyController : CharacterBody3D
 	// whole point. Interacting with it toggles Active. The specific behaviour attaches itself to the
 	// generic capability, the same direction as everything else in Components/.
 	[Export] public InteractableComponent Switch;
+	// Names this enemy in the switch's interact prompt: "turn the enemy on/off". Unused with no Switch.
 	[Export] public string SwitchLabel = "the enemy";
 
 	// The player. By group, so nothing has to be wired per scene and it survives the player being

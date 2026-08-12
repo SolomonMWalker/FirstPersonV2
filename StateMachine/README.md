@@ -4,7 +4,7 @@ A hierarchical state machine (a *statechart*) built on Godot nodes. States are n
 tree, so the tree **is** the diagram: nesting is hierarchy, and a `StateMachine` node drives whatever
 sits under it.
 
-It follows [W3C SCXML](https://www.w3.org/TR/scxml/) semantics for the parts that matter — exit and
+It follows [W3C SCXML](https://www.w3.org/TR/scxml/) semantics for the parts that matter â€” exit and
 entry sets computed from the least common ancestor, exit innermost-first, entry outermost-first,
 deepest-source-wins transition priority.
 
@@ -19,7 +19,7 @@ forty edges. A statechart gives you two tools to avoid that:
   inside it, so "if you leave the floor, you're airborne" is written **once** instead of once per
   ground state.
 - **Parallel states** run independent regions at the same time. Movement and stamina become `n + m`
-  states instead of `n × m`.
+  states instead of `n Ã— m`.
 
 ---
 
@@ -37,22 +37,22 @@ A typical tree:
 
 ```
 StateMachine              <- RootState points at "Player"
-└── Player                (ParallelState)
-    ├── Movement          (CompoundState, default: Grounded)
-    │   ├── Grounded      (CompoundState, default: Idle)
-    │   │   ├── Idle      (AtomicState)
-    │   │   ├── Walking   (AtomicState)
-    │   │   └── Sprinting (AtomicState)
-    │   └── Airborne      (CompoundState, default: Falling)
-    │       ├── Rising    (AtomicState)
-    │       └── Falling   (AtomicState)
-    └── Stamina           (CompoundState, default: Rested)
-        ├── Rested        (AtomicState)
-        └── Winded        (AtomicState)
+â””â”€â”€ Player                (ParallelState)
+    â”œâ”€â”€ Movement          (CompoundState, default: Grounded)
+    â”‚   â”œâ”€â”€ Grounded      (CompoundState, default: Idle)
+    â”‚   â”‚   â”œâ”€â”€ Idle      (AtomicState)
+    â”‚   â”‚   â”œâ”€â”€ Walking   (AtomicState)
+    â”‚   â”‚   â””â”€â”€ Sprinting (AtomicState)
+    â”‚   â””â”€â”€ Airborne      (CompoundState, default: Falling)
+    â”‚       â”œâ”€â”€ Rising    (AtomicState)
+    â”‚       â””â”€â”€ Falling   (AtomicState)
+    â””â”€â”€ Stamina           (CompoundState, default: Rested)
+        â”œâ”€â”€ Rested        (AtomicState)
+        â””â”€â”€ Winded        (AtomicState)
 ```
 
 Because `Player` is parallel, `Movement` and `Stamina` are **both** always active. The machine's
-current configuration is a *set* of states, not one state — here always one leaf from each region.
+current configuration is a *set* of states, not one state â€” here always one leaf from each region.
 
 ---
 
@@ -67,7 +67,7 @@ public override void StateProcessing(double delta)        { /* per render frame 
 public override void StatePhysicsProcessing(double delta) { /* per physics frame */ }
 ```
 
-`StateEntered`/`StateExited` fire **exactly once** per entry and exit, for every state on the path —
+`StateEntered`/`StateExited` fire **exactly once** per entry and exit, for every state on the path â€”
 compounds and parallels included, not just leaves.
 
 Processing is delivered by the `StateMachine` from its own `_Process`/`_PhysicsProcess`, walking only
@@ -75,7 +75,7 @@ the active configuration. State nodes do **not** define `_Process` themselves, s
 nothing.
 
 `Enabled` tells you whether a state is currently active. `Enable()`/`Disable()` are plain flag
-setters the machine calls — **they are not hooks, do not override them, do not call them yourself.**
+setters the machine calls â€” **they are not hooks, do not override them, do not call them yourself.**
 
 ---
 
@@ -90,14 +90,14 @@ AddTransition("Movement/Airborne/Rising");   // by path, relative to RootState
 AddTransition("Winded");                     // by bare name, if unambiguous
 ```
 
-- **guard** — `Func<bool>`, polled while the source is active. Omit for an unconditional edge.
-- **effect** — `Action`, fired as the edge is taken. Runs *after* the source exits and *before* the
+- **guard** â€” `Func<bool>`, polled while the source is active. Omit for an unconditional edge.
+- **effect** â€” `Action`, fired as the edge is taken. Runs *after* the source exits and *before* the
   target enters.
 
 Both are optional. Targets can also be resolved after startup, but you lose the startup check.
 
 Prefer a `State` reference: it is rename-safe and needs no lookup. Use a **path** whenever a bare name
-is ambiguous — Godot only enforces unique names among siblings, so two leaves called `Idle` under
+is ambiguous â€” Godot only enforces unique names among siblings, so two leaves called `Idle` under
 different parents are legal, and the bare name will refuse to resolve.
 
 ### Priority
@@ -113,7 +113,7 @@ For one-off changes from inside a state:
 OnStateChangeRequired(new ChangeStateEventArgs("Movement/Airborne/Falling"));
 ```
 
-This enqueues; it does not change state inline. Prefer declarative transitions — they keep the graph
+This enqueues; it does not change state inline. Prefer declarative transitions â€” they keep the graph
 readable from the outside.
 
 ---
@@ -126,13 +126,13 @@ Given a source and a target:
 2. **Exit** every active descendant of that domain, **innermost first**.
 3. **Run the effect.**
 4. **Enter** from the domain down to the target, **outermost first**, then resolve defaults below the
-   target: a compound enters its `DefaultState` — or, with `RememberActiveState` set, the child it
-   last had active — and a parallel enters every region.
+   target: a compound enters its `DefaultState` â€” or, with `RememberActiveState` set, the child it
+   last had active â€” and a parallel enters every region.
 
 The domain itself never exits or re-enters. Everything below it does.
 
 Because the domain uses *proper* ancestors, a transition from a state to itself exits and re-enters it
-— which is how you restart an animation or re-roll a timer.
+â€” which is how you restart an animation or re-roll a timer.
 
 ### Microsteps
 
@@ -162,7 +162,7 @@ public void Jump();          // applies jump velocity
 
 ### Movement region
 
-`Grounded` owns the transitions that are true for *all* of its children — this is the hoisting that
+`Grounded` owns the transitions that are true for *all* of its children â€” this is the hoisting that
 hierarchy exists for. Written on each of `Idle`/`Walking`/`Sprinting` it would be three copies.
 
 ```csharp
@@ -181,7 +181,7 @@ public partial class GroundedState : CompoundState
 }
 ```
 
-Note the two targets. `Rising` is explicit — a jump means rising specifically. `Airborne` is the
+Note the two targets. `Rising` is explicit â€” a jump means rising specifically. `Airborne` is the
 compound, so walking off a ledge lands in its `DefaultState` (`Falling`) without naming it.
 
 ```csharp
@@ -234,7 +234,7 @@ public partial class RisingState : AtomicState
 }
 ```
 
-`Falling` needs no outgoing transition at all — landing is `Airborne`'s job, one level up.
+`Falling` needs no outgoing transition at all â€” landing is `Airborne`'s job, one level up.
 
 ### Stamina region
 
@@ -256,7 +256,7 @@ public partial class WindedState : AtomicState
 }
 ```
 
-The two regions only meet through `Player.Stamina` — a plain field, not a state reference. That is the
+The two regions only meet through `Player.Stamina` â€” a plain field, not a state reference. That is the
 point: adding a third region later costs nothing to the other two.
 
 ### Trace: walking, then jump
@@ -267,7 +267,7 @@ Configuration before: `Player`, `Movement`, `Grounded`, `Walking`, `Stamina`, `R
 
 | Step | Result |
 |---|---|
-| Domain | `LCA(Grounded, Rising)` → `Movement` |
+| Domain | `LCA(Grounded, Rising)` â†’ `Movement` |
 | Exit (innermost first) | `Walking`, `Grounded` |
 | Effect | `Player.Jump()` |
 | Entry (outermost first) | `Airborne`, `Rising` |
@@ -285,7 +285,7 @@ Three things to notice:
 - **`Walking` exited even though the transition was declared on `Grounded`.** The exit set is
   everything active below the domain, not just the source.
 
-Now let go of jump. `Rising` → `Falling` when velocity turns over — a shallow transition, domain
+Now let go of jump. `Rising` â†’ `Falling` when velocity turns over â€” a shallow transition, domain
 `Airborne`, so `Airborne` stays entered. On landing, `Airborne`'s transition to `Grounded` fires and
 `Grounded` default-enters `Idle`.
 
@@ -315,10 +315,10 @@ AddTransition(_dead, () => !_enemy.Alive && !_dead.Enabled);
 Both halves of that guard exist because something broke without them.
 
 - **`!_enemy.Alive` is repeated on every child guard** (`AddTransition("Attack", () => Enemy.Alive
-  && ...)`). Deepest-source-wins means `Chase → Attack` beats the parent's `→ Dead` forever, so a
+  && ...)`). Deepest-source-wins means `Chase â†’ Attack` beats the parent's `â†’ Dead` forever, so a
   corpse ping-pongs between Chase and Attack and never dies. This is the remedy above, applied.
 - **`!_dead.Enabled` stops the parent edge firing at its own descendant.** A compound's edges are
-  evaluated while *any* descendant is active, and `!Alive` stays true after arriving — so the machine
+  evaluated while *any* descendant is active, and `!Alive` stays true after arriving â€” so the machine
   exits and re-enters `Dead` every frame. That re-runs `StateEntered`, which reset the corpse's
   removal timer, and the body lay there permanently one frame away from disappearing. It never
   tripped the loop cap, because one transition per frame is not a loop.
@@ -348,8 +348,8 @@ priority, self-transitions, name collisions, and the loop cap.
 
 ```
 "C:\Godot\Godot_v4.7-stable_mono_win64\Godot_v4.7-stable_mono_win64_console.exe" \
-    --headless --path . res://test_state_machine.tscn
+    --headless --path . res://Tests/test_state_machine.tscn
 ```
 
-Exit 0 is a pass. One `ERROR: StateMachine exceeded 64 transitions` line is expected — that is the
+Exit 0 is a pass. One `ERROR: StateMachine exceeded 64 transitions` line is expected â€” that is the
 loop-cap test asserting the guard fires.

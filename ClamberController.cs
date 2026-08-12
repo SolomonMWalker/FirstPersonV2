@@ -23,14 +23,19 @@ namespace FirstPerson.Helpers;
 // it never leaves Locomoting, which is the point of it.
 public partial class ClamberController : Node3D
 {
+    // The body this drives. Optional -- PlayerController wires itself in if left unset.
     [Export] public CharacterBody3D Player { get; set; }
 
     [ExportGroup("Detection")]
+    // Metres. The tallest ledge that can be mantled at all; above it the sweep finds nothing and the
+    // player just walks into the wall.
     [Export] public float MaxClamberHeight { get; set; } = 1.6f;
-    // Below this it is a step, not a clamber -- TryStepUp owns everything under it instead.
+    // Below this it is a step, not a clamber -- TryStepUp owns everything under it instead. The two
+    // ranges meet exactly here, so changing this moves the boundary for both.
     [Export] public float MinClamberHeight { get; set; } = 0.4f;
+    // Metres ahead of the player the sweep looks for a ledge, scaled by crouch (see ReachScale).
     [Export] public float ClamberReach { get; set; } = 0.75f;
-    // Above ~0.01 the sweeps snag and report false positives.
+    // Godot's shape-sweep skin width, in metres. Above ~0.01 the sweeps snag and report false positives.
     [Export] public float SafeMargin { get; set; } = 0.001f;
 
     [ExportGroup("Step-up")]
@@ -46,18 +51,24 @@ public partial class ClamberController : Node3D
     [Export] public float StepReach { get; set; } = 0.6f;
 
     [ExportGroup("Execution")]
-    [Export] public float ClamberSpeed { get; set; } = 3.0f;
+    [Export] public float ClamberSpeed { get; set; } = 3.0f;   // metres per second through the mantle
+    // Seconds, floor and ceiling on how long one mantle may take. The floor stops a low ledge from
+    // being an instant teleport; the ceiling is the bail-out that ends a clamber which is not
+    // progressing, so a mantle can never strand the player mid-air.
     [Export] public float MinDuration { get; set; } = 0.2f;
     [Export] public float MaxDuration { get; set; } = 0.9f;
     // How far over the lip the rise arcs before coming forward, so the capsule's rounded
     // bottom does not catch on the edge.
     [Export] public float Clearance { get; set; } = 0.1f;
-    // Optional. Unset falls back to a lead-in/trail-out ease; see GetClamberVelocity.
+    // Optional velocity shaping over the mantle, sampled 0..1 across its duration. Unset falls back
+    // to a lead-in/trail-out ease; see GetClamberVelocity.
     [Export] public Curve HeightCurve { get; set; }
     [Export] public Curve ForwardCurve { get; set; }
-    // Blackout after a completed clamber only — never after a failed detection.
+    // Seconds of blackout after a completed clamber only — never after a failed detection, or a wall
+    // you failed to mantle would refuse to be tried again for a quarter second.
     [Export] public float CooldownSeconds { get; set; } = 0.25f;
 
+    // Prints every detection decision to the console. Development only; leave it off in a build.
     [Export] public bool DebugLog { get; set; }
 
     // Reach scales with body height: 1 at full height, 0.75 in a crouch three quarters as tall. Set

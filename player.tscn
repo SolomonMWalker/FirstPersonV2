@@ -17,14 +17,28 @@
 [ext_resource type="Script" uid="uid://dqcsnvlilj2fd" path="res://PlayerStates/ClamberingState.cs" id="15_634y6"]
 [ext_resource type="Script" uid="uid://dy144vidsxs50" path="res://CameraController.cs" id="16_efrwb"]
 [ext_resource type="Script" uid="uid://dxcnxu3ovj4px" path="res://Hud.cs" id="17_hiqhm"]
-[ext_resource type="Script" path="res://Crosshair.cs" id="18_crosshair"]
-[ext_resource type="Script" path="res://Components/HitscanComponent.cs" id="19_hitscan"]
-[ext_resource type="Script" path="res://ViewmodelCamera.cs" id="21_viewmodelcam"]
+[ext_resource type="Script" uid="uid://bnxmgwsygo6lq" path="res://Crosshair.cs" id="18_crosshair"]
+[ext_resource type="Script" uid="uid://dyfrycfslj1g4" path="res://Components/HitscanComponent.cs" id="19_hitscan"]
+[ext_resource type="Script" uid="uid://43na8phpjsu2" path="res://ViewmodelCamera.cs" id="21_viewmodelcam"]
+[ext_resource type="AudioStream" uid="uid://de47poyf024a2" path="res://Audio/revolver_shot.wav" id="22_revolver"]
+[ext_resource type="Script" uid="uid://w8sa3xwm1vgv" path="res://ViewmodelSway.cs" id="23_vmsway"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_6cejb"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_6cejb"]
 size = Vector3(0.05, 0.05, 0.3)
+
+[sub_resource type="Gradient" id="Gradient_flash"]
+offsets = PackedFloat32Array(0, 0.3, 1)
+colors = PackedColorArray(1, 0.98, 0.85, 1, 1, 0.72, 0.32, 0.85, 1, 0.45, 0.1, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_flash"]
+gradient = SubResource("Gradient_flash")
+width = 128
+height = 128
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_barbg"]
 bg_color = Color(0, 0, 0, 0.55)
@@ -51,10 +65,13 @@ script = ExtResource("3_pylmc")
 [node name="InteractorComponent" type="Node3D" parent="Components" unique_id=1461581337]
 script = ExtResource("4_pbfsw")
 
-[node name="HitscanComponent" type="Node3D" parent="Components"]
+[node name="HitscanComponent" type="Node3D" parent="Components" unique_id=87305000 node_paths=PackedStringArray("FireSound", "MuzzleFlash")]
 script = ExtResource("19_hitscan")
-Interval = 0.2
-Firing = false
+FireSound = NodePath("FireSound")
+MuzzleFlash = NodePath("../../Camera3D/TestGun/Muzzle/MuzzleFlash")
+
+[node name="FireSound" type="AudioStreamPlayer" parent="Components/HitscanComponent" unique_id=657821025]
+stream = ExtResource("22_revolver")
 
 [node name="ClamberController" type="Node3D" parent="." unique_id=734493003]
 script = ExtResource("5_5tmop")
@@ -102,13 +119,12 @@ shape = SubResource("CapsuleShape3D_6cejb")
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=468858017]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-# All layers except 2 (the viewmodel layer) -- the world camera must never draw the gun itself,
-# or it would clip into walls at world scale. ViewmodelCamera draws it instead, in its own pass.
 cull_mask = 1048573
 script = ExtResource("16_efrwb")
 CrouchSpeed = 3.5
-BobAmount = 0.015
+BobAmount = 0.005
 BobStride = 3.8
+BobSway = 0.3
 RollAngle = 1.0
 MaxPunch = 4.5
 MaxStepLag = 0.7
@@ -117,31 +133,48 @@ MaxStepLag = 0.7
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.285, -0.17, -0.236)
 layers = 2
 mesh = SubResource("BoxMesh_6cejb")
+script = ExtResource("23_vmsway")
+BobScale = 0.05
 
-[node name="Muzzle" type="Node3D" parent="Camera3D/TestGun"]
+[node name="Muzzle" type="Node3D" parent="Camera3D/TestGun" unique_id=160801104]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.15)
+
+[node name="MuzzleFlash" type="OmniLight3D" parent="Camera3D/TestGun/Muzzle" unique_id=1079326942]
+visible = false
+light_color = Color(1, 0.76, 0.42, 1)
+light_energy = 4.0
+omni_range = 6.0
+
+[node name="Flare" type="Sprite3D" parent="Camera3D/TestGun/Muzzle/MuzzleFlash" unique_id=1172758957]
+layers = 2
+pixel_size = 0.0025
+billboard = 1
+no_depth_test = true
+texture = SubResource("GradientTexture2D_flash")
 
 [node name="Hud" type="CanvasLayer" parent="." unique_id=1995193942]
 script = ExtResource("17_hiqhm")
 
-[node name="ViewmodelContainer" type="SubViewportContainer" parent="Hud"]
+[node name="ViewmodelContainer" type="SubViewportContainer" parent="Hud" unique_id=130320752]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 stretch = true
 
-[node name="ViewmodelViewport" type="SubViewport" parent="Hud/ViewmodelContainer"]
-handle_input_locally = false
+[node name="ViewmodelViewport" type="SubViewport" parent="Hud/ViewmodelContainer" unique_id=893962606]
 transparent_bg = true
-size = Vector2i(1920, 1080)
+handle_input_locally = false
+size = Vector2i(1152, 648)
+render_target_update_mode = 4
 
-[node name="ViewmodelCamera" type="Camera3D" parent="Hud/ViewmodelContainer/ViewmodelViewport"]
+[node name="ViewmodelCamera" type="Camera3D" parent="Hud/ViewmodelContainer/ViewmodelViewport" unique_id=1141242540]
 cull_mask = 2
 fov = 70.0
 script = ExtResource("21_viewmodelcam")
 
-[node name="Crosshair" type="Control" parent="Hud"]
+[node name="Crosshair" type="Control" parent="Hud" unique_id=1651642504]
+layout_mode = 3
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5

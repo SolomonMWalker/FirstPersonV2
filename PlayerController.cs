@@ -3,9 +3,14 @@ using Godot;
 
 public partial class PlayerController : CharacterBody3D
 {
+	// Metres per second on the ground at a walk. The movement states scale off this rather than
+	// carrying their own absolute speeds, so sprint and crouch stay in proportion when it is tuned.
 	[Export] public float Speed = 5.0f;
-	[Export] public float JumpVelocity = 4.5f;
-	[Export] public float MouseSensitivity = 0.003f;
+	[Export] public float JumpVelocity = 4.5f;        // metres per second, upward, applied on the jump frame
+	[Export] public float MouseSensitivity = 0.003f;  // radians of look per pixel of mouse movement
+
+	// Both optional and both fall back to a lookup in _Ready -- Clamber to a child node, Weapon to a
+	// HitscanComponent on this GameObject. Wire them only to override that.
 	[Export] public ClamberController Clamber;
 	[Export] public HitscanComponent Weapon;
 

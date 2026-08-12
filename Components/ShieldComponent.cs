@@ -13,15 +13,15 @@ public partial class ShieldComponent : Component
 	[Signal] public delegate void BrokenEventHandler();
 	[Signal] public delegate void RechargedEventHandler();   // back to full
 
-	[Export] public float Max = 70f;
+	[Export] public float Max = 70f;   // shield points, and the value it starts at
 
-	// Two delays and two rates. A break costs you a much longer wait, and the fast refill afterwards
+	// Two delays and two rates. Delays in seconds without taking damage, rates in points per second. A break costs you a much longer wait, and the fast refill afterwards
 	// is what makes the wait read as recovery rather than as nothing happening. Any damage at all
 	// restarts the wait, which is what stops chip damage from being free.
-	[Export] public float RechargeDelay = 3f;
-	[Export] public float BrokenRechargeDelay = 6f;
-	[Export] public float RechargeRate = 25f;        // points per second
-	[Export] public float BrokenRechargeRate = 50f;
+	[Export] public float RechargeDelay = 3f;          // chipped but still up
+	[Export] public float BrokenRechargeDelay = 6f;    // after a break, and it latches until full
+	[Export] public float RechargeRate = 25f;
+	[Export] public float BrokenRechargeRate = 50f;    // held for the whole climb back, not just the start
 
 	public float Current { get; private set; }
 	public bool Up => Current > 0f;

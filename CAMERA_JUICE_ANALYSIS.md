@@ -1,4 +1,4 @@
-# Head bob and movement roll — research & recommendation
+# Head bob and movement roll â€” research & recommendation
 
 Research into how shipped FPS games implement head bob and the camera roll that leans into
 strafing, and what that should look like in *this* project.
@@ -10,12 +10,12 @@ strafing, and what that should look like in *this* project.
 
 ## 1. What the shipped games actually do
 
-### Quake (1996) — the original, and still the template
+### Quake (1996) â€” the original, and still the template
 
 `WinQuake/view.c` is the ancestor of nearly every implementation since. Two separate functions,
 two separate ideas.
 
-**Bob** — `V_CalcBob()`:
+**Bob** â€” `V_CalcBob()`:
 
 ```c
 cvar_t cl_bob      = {"cl_bob",      "0.02"};   // amplitude per unit of speed
@@ -37,21 +37,21 @@ else if (bob < -7) bob = -7;
 
 Four things worth stealing from ten lines of 1996 C:
 
-1. **Amplitude is proportional to horizontal speed.** `sqrt(vx² + vy²)`, Z deliberately excluded so
-   jumping doesn't inflate the bob. Stand still → amplitude zero → bob disappears with no explicit
+1. **Amplitude is proportional to horizontal speed.** `sqrt(vxÂ² + vyÂ²)`, Z deliberately excluded so
+   jumping doesn't inflate the bob. Stand still â†’ amplitude zero â†’ bob disappears with no explicit
    "am I walking" check anywhere.
-2. **`bob*0.3 + bob*0.7*sin(cycle)`** — a DC offset plus the oscillation. The eye sits slightly
+2. **`bob*0.3 + bob*0.7*sin(cycle)`** â€” a DC offset plus the oscillation. The eye sits slightly
    *above* neutral while moving and dips through it, rather than swinging symmetrically. Cheap, and
    it reads as "leaning into the run".
 3. **`cl_bobup` skews the waveform.** The rise and fall get different fractions of the cycle, so it
-   isn't a pure sine — footfalls land harder than the recovery. This is the single biggest
+   isn't a pure sine â€” footfalls land harder than the recovery. This is the single biggest
    contributor to bob feeling like *steps* instead of like a boat.
 4. **Hard clamps.** `[-7, 4]` units. No matter how fast you go, the view never leaves a sane box.
 
 Applied in `V_CalcRefdef` to the view origin, and to the gun at `bob*0.4` along forward + `bob` on Z
-— **the weapon bobs more than the eye does**, and along a different axis.
+â€” **the weapon bobs more than the eye does**, and along a different axis.
 
-**Roll** — `V_CalcRoll()`:
+**Roll** â€” `V_CalcRoll()`:
 
 ```c
 cvar_t cl_rollspeed = {"cl_rollspeed", "200"};  // sideways speed at which roll maxes out
@@ -68,18 +68,18 @@ return side*sign;
 ```
 
 Note what this is *not*: it is not driven by input keys, and it is not an animation. It's a pure
-function of `dot(velocity, right)` — the projection of actual velocity onto the player's right
+function of `dot(velocity, right)` â€” the projection of actual velocity onto the player's right
 vector. That means it works for free with air control, knockback, sliding, moving platforms, and
 diagonal movement (which gets a partial roll, correctly). Two degrees. That's all it ever was.
 
-Half-Life shipped the same function with `cl_rollangle = 0.65` — a third of Quake's. Quake wanted
+Half-Life shipped the same function with `cl_rollangle = 0.65` â€” a third of Quake's. Quake wanted
 arcade, Half-Life wanted grounded.
 
-Quake also has `V_AddIdle()`, which adds `sin(t)` on all three axes scaled by `v_idlescale` — the
+Quake also has `V_AddIdle()`, which adds `sin(t)` on all three axes scaled by `v_idlescale` â€” the
 drunk/underwater sway. Zero by default, but it's the same primitive and worth knowing about for a
 future "exhausted" or "concussed" state.
 
-### Source / Half-Life 2 — the bob moved to the gun
+### Source / Half-Life 2 â€” the bob moved to the gun
 
 Source's constants (`basehlcombatweapon_shared.cpp`):
 
@@ -90,7 +90,7 @@ Source's constants (`basehlcombatweapon_shared.cpp`):
 #define HL2_BOB_UP         0.5f
 ```
 
-`CalcViewmodelBob()` computes **two** channels — `g_verticalBob` and `g_lateralBob` — each
+`CalcViewmodelBob()` computes **two** channels â€” `g_verticalBob` and `g_lateralBob` â€” each
 `speed * 0.005f`, each shaped by `0.3 + 0.7*sin(cycle)` and clamped to `[-7, 4]`, exactly the Quake
 shape. `AddViewmodelBob()` then applies them:
 
@@ -104,24 +104,24 @@ VectorMA( origin, g_lateralBob * 0.8f, right, origin );
 Two structural lessons:
 
 - **Vertical and lateral together trace a figure-8.** Lateral runs at half the vertical frequency
-  (one sway per stride, two vertical dips — left foot, right foot). This is why HL2's bob reads as
+  (one sway per stride, two vertical dips â€” left foot, right foot). This is why HL2's bob reads as
   *walking* and a single sine reads as *floating*. It's the single highest-value detail in this
   whole document.
-- **Position bob is accompanied by small rotation bob.** Roll/pitch/yaw at 30–50% of the positional
+- **Position bob is accompanied by small rotation bob.** Roll/pitch/yaw at 30â€“50% of the positional
   amount. Translation alone looks like a camera on a rail; adding a few tenths of a degree of
   rotation makes it a head on a neck.
-- **The cycle time shortens with speed** (`CYCLE_MIN` → `CYCLE_MAX`) rather than staying fixed.
+- **The cycle time shortens with speed** (`CYCLE_MIN` â†’ `CYCLE_MAX`) rather than staying fixed.
   Running takes faster steps, not just bigger ones.
 
-Crucially, HL2's *camera* bob is near-zero — almost everything you perceive as bob is the weapon
+Crucially, HL2's *camera* bob is near-zero â€” almost everything you perceive as bob is the weapon
 model. That's a deliberate motion-sickness tradeoff: the viewmodel occupies the lower third of the
 screen, so bobbing it sells physicality without moving the horizon.
 
-### Titanfall 2 / Apex — Source lineage, tuned for speed
+### Titanfall 2 / Apex â€” Source lineage, tuned for speed
 
 Both are Source derivatives and inherit this exact machinery. What Respawn changed is the *weighting*:
-roll is pushed hard during wallrunning and slides (well past 2°), while walk bob stays subtle. The
-takeaway is that roll is the channel that scales up gracefully for special movement states — bob does
+roll is pushed hard during wallrunning and slides (well past 2Â°), while walk bob stays subtle. The
+takeaway is that roll is the channel that scales up gracefully for special movement states â€” bob does
 not. If clamber/slide/wallrun get camera treatment later, roll and FOV are the knobs, not bob amplitude.
 
 ### Destiny / Overwatch (GDC animation talks)
@@ -129,15 +129,15 @@ not. If clamber/slide/wallrun get camera treatment later, roll and FOV are the k
 The relevant principle, stated in Bungie's and Blizzard's first-person animation talks: **camera
 animation for persistent physical states (locomotion, breathing, exertion), screen-space effects for
 momentary events (damage, impact, landing).** Continuous vs. impulse. Don't implement a landing
-thump by spiking the bob amplitude — it's a different system with different lifetime.
+thump by spiking the bob amplitude â€” it's a different system with different lifetime.
 
-### Accessibility — not optional, and it's one export away
+### Accessibility â€” not optional, and it's one export away
 
 This came up in every source consulted. Head bob is a top-three motion-sickness trigger (vestibular
 mismatch: eyes see motion, inner ear reports none). Practical consensus:
 
-- Ship a **slider, not a toggle** — 0 to ~150% of default, where 0 fully disables.
-- Most games land around **30–60% of "realistic"** amplitude. Physically accurate head motion is
+- Ship a **slider, not a toggle** â€” 0 to ~150% of default, where 0 fully disables.
+- Most games land around **30â€“60% of "realistic"** amplitude. Physically accurate head motion is
   nauseating.
 - Roll is *less* nauseating than vertical bob and contributes more to the feel of physicality per
   unit of discomfort. If forced to pick one, pick roll.
@@ -165,15 +165,15 @@ division rather than the old approximation:
 > That one writes the player's yaw and this camera's `Rotation.X`; this one writes `Position` and
 > `Rotation.Z`, so the two still never fight.
 
-### ⚠️ The integration hazard — confirmed real, fixed as designed
+### âš ï¸ The integration hazard â€” confirmed real, fixed as designed
 
 `CrouchOffset => _standY - Position.Y` is consumed by `PlayerController.ApplyCrouchHeight()` to
 resize the capsule *and* by `ClamberController.HeightScale`. **If bob writes into `Position.Y`, the
-collision capsule will oscillate with the head bob** — resizing several times a second, jittering
+collision capsule will oscillate with the head bob** â€” resizing several times a second, jittering
 clamber reach, and potentially popping the player off the floor.
 
-Fixed with one field, exactly as planned: `_eyeY` holds the bob-free eye height — standing, crouched,
-or easing between the two — `CrouchOffset` derives from *that* rather than from the live node, and
+Fixed with one field, exactly as planned: `_eyeY` holds the bob-free eye height â€” standing, crouched,
+or easing between the two â€” `CrouchOffset` derives from *that* rather than from the live node, and
 bob is added at the last moment.
 
 ```csharp
@@ -191,7 +191,7 @@ with bob running at the same time.
 **1. Phase by distance travelled, not by time.** Quake advances the cycle on `cl.time` and scales
 amplitude by speed; Source patches around the resulting mismatch by interpolating cycle length with
 speed. Advancing the phase by `speed * delta / stride` gets the same result in one line, and steps
-stay locked to ground actually covered — accelerating shortens the stride instead of jumping the sine.
+stay locked to ground actually covered â€” accelerating shortens the stride instead of jumping the sine.
 
 **2. Amplitude from speed, not from the state machine.** Tempting to hang bob off `WalkingState` /
 `SprintingState`, but that's three states to keep in sync and it breaks for anything that moves the
@@ -199,18 +199,18 @@ player without a state (clamber, knockback). `velocity.Length()` already encodes
 sprinting is `Speed * 1.4f`, so sprint bob scales automatically. **Nothing new to wire into the state
 machine.**
 
-**3. Vertical at 2× the lateral frequency.** The figure-8. `sin(2θ)` and `sin(θ)` — a free character
+**3. Vertical at 2Ã— the lateral frequency.** The figure-8. `sin(2Î¸)` and `sin(Î¸)` â€” a free character
 upgrade over a lone sine.
 
 **4. Smooth the amplitude.** Project-specific: `WalkingState` writes velocity straight from input with
-no acceleration or friction, so `speed` is a *step function* — release W and the bob offset would snap
+no acceleration or friction, so `speed` is a *step function* â€” release W and the bob offset would snap
 to centre with a visible pop. One exponential smooth on the amplitude fixes it and doubles as the
 graceful fade when going airborne.
 
 ### The code, as built
 
 The whole feature is the body of `CameraController._PhysicsProcess`. Reproduced here as it actually
-ships (comments trimmed — see `CameraController.cs` for the full versions):
+ships (comments trimmed â€” see `CameraController.cs` for the full versions):
 
 ```csharp
 [Export] public float BobAmount = 0.045f;  // metres, peak vertical at full speed. 0 disables.
@@ -269,7 +269,7 @@ public override void _PhysicsProcess(double delta)
 }
 ```
 
-Sign on `RollAngle` is taste — flip it if strafing right should lean the other way. Try both; they
+Sign on `RollAngle` is taste â€” flip it if strafing right should lean the other way. Try both; they
 feel genuinely different and neither is wrong.
 
 ### Two things the research plan didn't anticipate
@@ -279,22 +279,22 @@ camera is authored at `(0, 0.5, 0)` so it made no difference today, but any futu
 camera node would have been silently yanked to zero. One field, and the authored offset survives.
 
 **`Mathf.Wrap` on the phase.** `_bobPhase` accumulates forever, and a float large enough eventually
-quantises `sin()` into visible steps. Wrapping to `[0, τ)` is free and sine is periodic anyway.
+quantises `sin()` into visible steps. Wrapping to `[0, Ï„)` is free and sine is periodic anyway.
 
 ### Shipped values, and how to tune
 
 All five are `[Export]`, so they're inspector-tunable per scene, and `0` cleanly disables each
-channel — the accessibility requirement from section 1, satisfied by construction.
+channel â€” the accessibility requirement from section 1, satisfied by construction.
 
 | Knob | Shipped | Notes |
 |---|---|---|
-| `BobAmount` | `0.045` m | ~4.5cm peak. Quake's clamp works out around 0.1m; halved, per the 30–60% guidance. |
-| `BobStride` | `1.5` m | At `Speed = 5`, ≈0.6s per cycle — the same rhythm as `cl_bobcycle`. |
+| `BobAmount` | `0.045` m | ~4.5cm peak. Quake's clamp works out around 0.1m; halved, per the 30â€“60% guidance. |
+| `BobStride` | `1.5` m | At `Speed = 5`, â‰ˆ0.6s per cycle â€” the same rhythm as `cl_bobcycle`. |
 | `BobSway` | `0.6` | HL2 weights lateral high (`0.8f` vs `0.1f`); on the camera it needs to be gentler. |
-| `RollAngle` | `2.0`° | Quake's default. Half-Life used `0.65` for a grounded feel — try both. |
+| `RollAngle` | `2.0`Â° | Quake's default. Half-Life used `0.65` for a grounded feel â€” try both. |
 | `Smoothing` | `8` | ~0.12s to settle. Lower feels drunk, higher feels twitchy. |
 
-These are research-derived starting points, **not playtested numbers** — they have been verified to
+These are research-derived starting points, **not playtested numbers** â€” they have been verified to
 behave correctly, not to feel good. Tune bob with roll at 0 and vice versa; together they mask each
 other's problems.
 
@@ -302,13 +302,13 @@ other's problems.
 
 - **`cl_bobup` waveform skew.** Real, and it's what makes footfalls *land*. Two extra lines, but
   only worth adding once the plain figure-8 is tuned and still feels too smooth.
-- **Landing dip / spring.** Per the Destiny principle this is an *impulse* system, not part of bob —
-  it belongs on the `InAir → Grounded` transition, scaled by impact velocity, as a separate decaying
+- **Landing dip / spring.** Per the Destiny principle this is an *impulse* system, not part of bob â€”
+  it belongs on the `InAir â†’ Grounded` transition, scaled by impact velocity, as a separate decaying
   offset. A critically damped spring (Ryan Juckett / Unity's `SmoothDamp`) is the standard tool.
   Add it after bob lands, not with it.
 - **Sprint FOV kick.** The cheapest remaining juice, and it's a `SprintingState` enter/exit lerp on
-  `Camera3D.Fov` — genuinely unrelated to this system.
-- **Rotational bob** (HL2's roll/pitch/yaw nudges at 0.3–0.5× the positional bob). Add if positional
+  `Camera3D.Fov` â€” genuinely unrelated to this system.
+- **Rotational bob** (HL2's roll/pitch/yaw nudges at 0.3â€“0.5Ã— the positional bob). Add if positional
   bob still reads as rail-mounted after tuning.
 - **Weapon-model bob.** No viewmodel in the project yet. When there is one, HL2's lesson applies:
   bob the gun harder than the eye and much of the camera bob can come back down.
@@ -319,7 +319,7 @@ other's problems.
 
 ### Changes to `PlayerStates/PlayerStateTests.cs`
 
-The existing crouch assertion sampled `Cam().Position.Y` at frame 98 — while the player is walking
+The existing crouch assertion sampled `Cam().Position.Y` at frame 98 â€” while the player is walking
 backwards, so with bob now on the node that reading is crouch *plus* bob. Switched to
 `Cam().CrouchOffset`, which is the bob-free value and also the one that actually drives the capsule,
 so the assertion got stricter rather than looser:
@@ -335,16 +335,16 @@ Four new assertions, plus a `True(bool, string)` helper alongside the existing `
 | Assertion | Why it's the one worth having |
 |---|---|
 | `walking bobs the camera` | The system is on at all. |
-| `bob stays within BobAmount` | The upper bound — the export must actually be a ceiling. |
+| `bob stays within BobAmount` | The upper bound â€” the export must actually be a ceiling. |
 | `strafing rolls the view` | Roll fires, and in the correct direction (negative for a right strafe). |
 | `walking straight keeps the view level` | The `dot(velocity, right)` projection isn't leaking forward motion into roll. |
 
-Driven by a new strafe window at frames 370–390: press `D` on open ground, track peak bob, sample
+Driven by a new strafe window at frames 370â€“390: press `D` on open ground, track peak bob, sample
 roll, release.
 
 ### The bug the tests caught
 
-First run failed on `bob stays within BobAmount (peak 0.2917m)` — nearly 7× the 0.045 ceiling. Not a
+First run failed on `bob stays within BobAmount (peak 0.2917m)` â€” nearly 7Ã— the 0.045 ceiling. Not a
 bob bug: the window opened at frame 370 while the frame-365 stand-up was still easing (0.5m at
 2.5 m/s = 0.2s = ~12 frames), so it was measuring the crouch recovery. The measurement was wrong,
 not the code. Fixed by measuring bob against the live crouch height rather than against stand height:
@@ -354,9 +354,9 @@ var eye = _standCamY - Cam().CrouchOffset;
 _maxBob = Mathf.Max(_maxBob, Mathf.Abs(Cam().Position.Y - eye));
 ```
 
-Worth recording because it's the same confusion the `_eyeY` split exists to prevent — "eye
+Worth recording because it's the same confusion the `_eyeY` split exists to prevent â€” "eye
 height" and "bob offset" are different quantities and mixing them reads plausible right up until
-the number comes out 7× too big.
+the number comes out 7Ã— too big.
 
 ### Measured behaviour
 
@@ -367,72 +367,72 @@ peak bob 0.0395m / BobAmount 0.045    strafe roll -1.82 deg / RollAngle 2.0
 straight roll 0.000 deg               crouch dip 0.500m / CrouchDrop 0.5
 ```
 
-Bob and roll both approach their ceilings without reaching them — correct, since `Smoothing = 8`
+Bob and roll both approach their ceilings without reaching them â€” correct, since `Smoothing = 8`
 means the amplitude is still chasing over a ~0.3s window. Straight-line roll is exactly zero and the
 crouch dip is exactly `CrouchDrop`, which is the capsule-isolation fix demonstrated end to end.
 
-### ⚠️ Running the tests
+### âš ï¸ Running the tests
 
 **`godot --headless` does not rebuild the C# assembly.** The first run of this session reported
 "all passed" against a stale DLL that predated every change. Always build first:
 
 ```
 dotnet build FirstPersonV2.sln
-& "C:\Godot\Godot_v4.7-stable_mono_win64\Godot_v4.7-stable_mono_win64_console.exe" --headless --path . res://test_player_states.tscn
+& "C:\Godot\Godot_v4.7-stable_mono_win64\Godot_v4.7-stable_mono_win64_console.exe" --headless --path . res://Tests/test_player_states.tscn
 ```
 
-Use `..._console.exe`, not `Godot_v4.7-stable_mono_win64.exe` — the non-console binary detaches and
+Use `..._console.exe`, not `Godot_v4.7-stable_mono_win64.exe` â€” the non-console binary detaches and
 prints nothing to the terminal.
 
 `PlayerStateTests._Ready` pins `Engine.PhysicsTicksPerSecond = 60`. Every frame number in that suite
-is really a duration — crouch easing, clamber flight and the camera smoothing all run on wall-clock
-seconds — so inheriting the project's tick rate made the schedule mean different things at different
+is really a duration â€” crouch easing, clamber flight and the camera smoothing all run on wall-clock
+seconds â€” so inheriting the project's tick rate made the schedule mean different things at different
 settings. Raising the project to 120Hz (see below) broke `clambering does not cancel the sprint`
 before the pin went in.
 
 ### Follow-up: the 60Hz judder
 
 Head bob made an existing problem visible. Physics ran at Godot's default 60Hz with rendering
-uncapped, so the camera transform only changed 60×/second while frames drew at monitor refresh —
+uncapped, so the camera transform only changed 60Ã—/second while frames drew at monitor refresh â€”
 each position held for an uneven number of frames. Before bob, the camera's local position was
 static while walking, so nothing made it obvious.
 
 Fixed with one project setting, `physics/common/physics_ticks_per_second=120`. Physics interpolation
 (`physics/common/physics_interpolation`, 3D support restored in Godot 4.4) is the more thorough fix
-for world motion, but it interpolates the camera too — and with mouse-look living in
+for world motion, but it interpolates the camera too â€” and with mouse-look living in
 `_UnhandledInput`, that would add latency to aiming and trip Godot's "Interpolated Camera3D
 triggered from outside physics process" warning. Not worth it here.
 
 Also removed a second, narrower jitter source while in there: the roll lerp used to read `Rotation.Z`
 back off the node each tick, which decomposes the basis to Euler angles. Mouse-look clamps pitch to
-±85.9°, close enough to gimbal lock for that decomposition to be ill-conditioned, so roll now lives
+Â±85.9Â°, close enough to gimbal lock for that decomposition to be ill-conditioned, so roll now lives
 in a `_roll` field and the node is only ever written.
 
 Final state of all three suites, against a fresh build:
 
 | Suite | Result |
 |---|---|
-| `res://test_player_states.tscn` | all passed (exit 0) |
-| `res://test_clamber.tscn` | all passed (exit 0) |
-| `res://test_state_machine.tscn` | all passed (exit 0) |
+| `res://Tests/test_player_states.tscn` | all passed (exit 0) |
+| `res://Tests/test_clamber.tscn` | all passed (exit 0) |
+| `res://Tests/test_state_machine.tscn` | all passed (exit 0) |
 
 `test_state_machine` prints a `StateMachine exceeded 64 transitions` error with a stack trace on the
-way through — that's `RunawayGuardTripsTheCap` deliberately tripping the loop cap, and the suite
+way through â€” that's `RunawayGuardTripsTheCap` deliberately tripping the loop cap, and the suite
 passes.
 
 ---
 
 ## Sources
 
-- [Quake `WinQuake/view.c`](https://github.com/defunkt/quake/blob/master/WinQuake/view.c) — `V_CalcBob`, `V_CalcRoll`, `V_AddIdle`, cvar defaults
-- [Valve Developer Community — Camera Bob](https://developer.valvesoftware.com/wiki/Camera_Bob)
-- [Source SDK `basehlcombatweapon_shared.cpp`](https://swarm.workshop.perforce.com/files/guest/knut_wikstrom/ValveSDKCodegame_shared/hl2/basehlcombatweapon_shared.cpp) — `CalcViewmodelBob` / `AddViewmodelBob`
-- [TWHL — VERC: View Roll When Strafing (like DMC)](https://twhl.info/wiki/page/VERC:_View_Roll_When_Strafing_(like_DMC)) — Half-Life's `cl_rollangle = 0.65` / `cl_rollspeed = 300`
-- [TWHL — Tutorial: View bobbing](https://twhl.info/wiki/page/Tutorial:_View_bobbing:_Part_1)
-- [GameDev.net — How to make camera roll whilst strafing](https://www.gamedev.net/forums/topic/632823-how-to-make-camera-roll-whilst-strafing/4990366/)
-- [GDC Vault — The Art of First Person Animation for Destiny](https://www.gdcvault.com/play/1022297/The-Art-of-First-Person)
-- [GDC Vault — Animation Bootcamp: The First Person Animation of Overwatch](https://gdcvault.com/play/1024319/Animation-Bootcamp-The-First-Person)
-- [Ryan Juckett — Damped Springs](https://www.ryanjuckett.com/damped-springs/) — for the landing dip later
-- [Game Developer — Instant Game Feel: Springs Explained](https://www.gamedeveloper.com/game-platforms/instant-game-feel---springs-explained)
+- [Quake `WinQuake/view.c`](https://github.com/defunkt/quake/blob/master/WinQuake/view.c) â€” `V_CalcBob`, `V_CalcRoll`, `V_AddIdle`, cvar defaults
+- [Valve Developer Community â€” Camera Bob](https://developer.valvesoftware.com/wiki/Camera_Bob)
+- [Source SDK `basehlcombatweapon_shared.cpp`](https://swarm.workshop.perforce.com/files/guest/knut_wikstrom/ValveSDKCodegame_shared/hl2/basehlcombatweapon_shared.cpp) â€” `CalcViewmodelBob` / `AddViewmodelBob`
+- [TWHL â€” VERC: View Roll When Strafing (like DMC)](https://twhl.info/wiki/page/VERC:_View_Roll_When_Strafing_(like_DMC)) â€” Half-Life's `cl_rollangle = 0.65` / `cl_rollspeed = 300`
+- [TWHL â€” Tutorial: View bobbing](https://twhl.info/wiki/page/Tutorial:_View_bobbing:_Part_1)
+- [GameDev.net â€” How to make camera roll whilst strafing](https://www.gamedev.net/forums/topic/632823-how-to-make-camera-roll-whilst-strafing/4990366/)
+- [GDC Vault â€” The Art of First Person Animation for Destiny](https://www.gdcvault.com/play/1022297/The-Art-of-First-Person)
+- [GDC Vault â€” Animation Bootcamp: The First Person Animation of Overwatch](https://gdcvault.com/play/1024319/Animation-Bootcamp-The-First-Person)
+- [Ryan Juckett â€” Damped Springs](https://www.ryanjuckett.com/damped-springs/) â€” for the landing dip later
+- [Game Developer â€” Instant Game Feel: Springs Explained](https://www.gamedeveloper.com/game-platforms/instant-game-feel---springs-explained)
 - [Alleviating motion sickness in first-person video games](https://nicolas.busseneau.fr/en/blog/2020/09/alleviating-motion-sickness-in-first-person-video-games)
-- [Godot forum — smooth camera bob system](https://forum.godotengine.org/t/how-to-make-a-smooth-camera-bob-system/90613)
+- [Godot forum â€” smooth camera bob system](https://forum.godotengine.org/t/how-to-make-a-smooth-camera-bob-system/90613)

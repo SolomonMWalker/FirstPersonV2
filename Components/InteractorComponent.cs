@@ -10,6 +10,8 @@ using Godot;
 [GlobalClass]
 public partial class InteractorComponent : Component
 {
+	// Metres the ray reaches from the camera. This is the whole of "how close do I have to stand" --
+	// there is no per-interactable volume to author, which is the point.
 	[Export] public float Range = 3f;
 
 	// What is under the crosshair right now, or null. Read by the HUD to decide what to prompt --

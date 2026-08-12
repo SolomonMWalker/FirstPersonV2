@@ -10,6 +10,8 @@ namespace FirstPerson.CustomTypes.StateMachine;
 [GlobalClass]
 public partial class CompoundState : State
 {
+    // Which child this region enters when nothing says otherwise. Unset falls back to the first
+    // State child, so a region with an obvious starting state needs no wiring.
     [Export] public State DefaultState;
 
     // Shallow history (SCXML's <history type="shallow">). Off by default: re-entering resolves to

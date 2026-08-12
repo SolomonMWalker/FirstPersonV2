@@ -71,6 +71,13 @@ public partial class CameraController : Camera3D
 	private float _lastEyeY;
 	private bool _wasGrounded;
 
+	// Read by the viewmodel (ViewmodelSway), which bobs the gun off this phase instead of running a
+	// second oscillator. One phase means the gun and the eye are locked to the same stride by
+	// construction: a second sine would be a second answer to "where in the footstep are we", and the
+	// two would drift apart the moment either end was tuned.
+	public float BobPhase => _bobPhase;
+	public float BobAmp => _bobAmp;
+
 	// For tests. The guards are the part of this that regresses silently.
 	public float StepLag => _stepLag;
 	// Radians, X = pitch and Y = roll, same as _punch.

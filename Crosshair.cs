@@ -5,10 +5,12 @@ using Godot;
 // numbers recalculated here each frame, not several nodes to reposition.
 public partial class Crosshair : Control
 {
-	[Export] public float DotRadius = 1.5f;
-	[Export] public float LineLength = 6f;
-	[Export] public float Gap = 4f;   // distance from centre to the start of each line
-	[Export] public float LineWidth = 2f;
+	// The resting cross. All four lengths are in pixels and none of them scale with resolution yet --
+	// on a 4K display this draws the same physical pixel count and so reads smaller.
+	[Export] public float DotRadius = 1.5f;    // centre dot; 0 leaves the four arms with nothing between them
+	[Export] public float LineLength = 6f;     // length of each of the four arms
+	[Export] public float Gap = 4f;            // distance from centre to the start of each line
+	[Export] public float LineWidth = 2f;      // stroke width, shared by the arms and the hitmarker X
 	[Export] public Color CrosshairColor = Colors.White;
 
 	// Hitmarker: four diagonal lines (NE/SE/SW/NW), the classic X, slotted between the resting
@@ -16,7 +18,7 @@ public partial class Crosshair : Control
 	// dot and lines never change. Health and shield are both live today. Weakspot has no way to
 	// fire yet -- there is no hit-location system -- but the color is ready for whenever one
 	// exists, same as the roadmap asked for.
-	[Export] public float FlashDuration = 0.15f;
+	[Export] public float FlashDuration = 0.15f;   // seconds the X stays up after a hit; 0 disables it
 	[Export] public Color HealthFlashColor = Colors.White;
 	[Export] public Color ShieldFlashColor = new(0.2f, 0.55f, 1f);
 	[Export] public Color WeakspotFlashColor = new(1f, 0.2f, 0.2f);

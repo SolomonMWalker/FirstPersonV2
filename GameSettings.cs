@@ -8,8 +8,10 @@ public partial class GameSettings : Resource
 {
 	private const string DefaultPath = "user://settings.tres";
 
-	[Export] public float MouseSensitivity = 0.003f;
-	[Export] public float Fov = 75f;
+	// The player-facing copies of live node values, round-tripped through user://settings.tres and
+	// pushed back out by ApplyTo. These are the defaults used when no save file exists yet.
+	[Export] public float MouseSensitivity = 0.003f;   // radians of look per pixel; mirrors PlayerController
+	[Export] public float Fov = 75f;                   // degrees, the world camera only -- the viewmodel has its own
 
 	// Motion sickness is the most common complaint about camera juice, so both stay switchable at
 	// 0 -- same posture as the knobs they mirror on CameraController.
