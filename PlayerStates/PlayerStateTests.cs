@@ -73,7 +73,7 @@ public partial class PlayerStateTests : Node
 
         if (_frame == 40)
         {
-            _body = GetNode<PlayerController>("LevelSkeleton/CharacterBody3D");
+            _body = GetNode<PlayerController>("LevelSkeleton/Player");
             _sm = _body.GetNode<StateMachine>("StateMachine");
             var q = PhysicsRayQueryParameters3D.Create(new Vector3(0, 10, -5), new Vector3(0, -5, -5));
             _ledgeTop = ((Vector3)_body.GetWorld3D().DirectSpaceState.IntersectRay(q)["position"]).Y;

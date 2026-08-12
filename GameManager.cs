@@ -25,9 +25,9 @@ public partial class GameManager : Node
 		GetNode<Button>("../../PauseMenu/Center/SettingsPanel/Back").Pressed += CloseSettings;
 
 		// Looked up directly rather than through PlayerController.Camera: Managers is earlier in the
-		// scene tree than CharacterBody3D, so this runs before PlayerController._Ready populates it.
-		_player = GetNode<PlayerController>("../../CharacterBody3D");
-		_camera = GetNode<CameraController>("../../CharacterBody3D/Camera3D");
+		// scene tree than Player, so this runs before PlayerController._Ready populates it.
+		_player = GetNode<PlayerController>("../../Player");
+		_camera = GetNode<CameraController>("../../Player/Camera3D");
 
 		// Reuses Restart and Quit as-is: dying and giving up mid-level want exactly the same two
 		// things to happen, and a second copy of either would be a second thing to keep in step.

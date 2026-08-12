@@ -7,9 +7,21 @@ using Godot;
 [GlobalClass]
 public partial class Projectile : Area3D
 {
+	// Reports what happened, for a shooter that wants to react (a hitmarker) rather than watch the
+	// target's own signals -- this fires once per shot regardless of who or what was hit, where
+	// HealthComponent's Damaged only fires for the "reached hit points" case.
+	[Signal] public delegate void LandedEventHandler(DamageResult result);
+
 	[Export] public float Speed = 14f;
 	[Export] public float Damage = 20f;
 	[Export] public float Lifetime = 5f;   // seconds before it gives up, so strays don't accumulate
+
+	// Set by GunComponent right after spawning, not authored in a scene. The one thing this needs
+	// to know about its shooter: every existing muzzle sits well clear of its own shooter's
+	// collider, but a muzzle overridden onto the shooter's own camera (the player's viewmodel) can
+	// sit well inside it, and there is no other way to tell "the body I just grazed on the way out"
+	// from a real target.
+	public Node3D Shooter;
 
 	private float _life;
 	// Two bodies can enter on the same physics frame -- a wall corner and the player, say. Without
@@ -32,12 +44,16 @@ public partial class Projectile : Area3D
 
 	private void OnHit(Node3D body)
 	{
+		// Passes straight through, not spent: this is the shot clearing its own muzzle, not a shot
+		// that hit something. It must still be able to hit a real target afterward.
+		if (body == Shooter) return;
 		if (_spent) return;
 		_spent = true;
 
 		// No HealthComponent is the normal case, not a failure: that's a wall, and hitting a wall is
 		// how taking cover works without anything here having to know what cover is.
-		Component.Get<HealthComponent>(body)?.TakeDamage(Damage, GlobalPosition);
+		var result = Component.Get<HealthComponent>(body)?.TakeDamage(Damage, GlobalPosition) ?? DamageResult.None;
+		if (result != DamageResult.None) EmitSignal(SignalName.Landed, (int)result);
 		QueueFree();
 	}
 }

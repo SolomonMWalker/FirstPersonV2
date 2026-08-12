@@ -19,6 +19,11 @@ public partial class EnemyController : CharacterBody3D
 
 	[Export] public float TurnSpeed = 6f;   // radians per second of yaw toward the target
 
+	// Visual-only: no gameplay reads this. A brief unshaded white flash on the body mesh so a hit
+	// registers at a glance while tuning damage/fire-rate numbers, without needing a hitmarker or
+	// combat log to confirm a shot landed.
+	[Export] public float FlashDuration = 0.1f;
+
 	// Switched off, an enemy never wakes however close you get, and one already awake goes back to
 	// Idle. Defaults on, so an enemy you just drop into a level behaves; the ones that should start
 	// dormant say so in the scene.
@@ -45,6 +50,10 @@ public partial class EnemyController : CharacterBody3D
 	// at the bottom of a ramp think you are further away than one standing next to you.
 	public float FlatDistanceToTarget =>
 		Target is null ? float.MaxValue : ((Target.GlobalPosition - GlobalPosition) with { Y = 0f }).Length();
+
+	private MeshInstance3D _mesh;
+	private StandardMaterial3D _flashMaterial;
+	private float _flashTimer;
 
 	// Nearest EnemyController ancestor, for the state nodes hanging several levels below the body.
 	// A near-copy of PlayerController.Of on purpose: two copies is not yet a pattern, and hoisting it
@@ -73,9 +82,28 @@ public partial class EnemyController : CharacterBody3D
 			UpdateVerb();
 		}
 
+		// The body flashes itself rather than being wired up by something else, same reasoning as
+		// CameraController subscribing to the player's own Damaged: the thing owning the visual is
+		// what should own the subscription.
+		_mesh = GetNode<MeshInstance3D>("MeshInstance3D");
+		if (Health is not null) Health.Damaged += OnDamaged;
+
 		// After the StateMachine child, so MoveAndSlide applies the velocity the states just wrote.
 		// Same arrangement, and the same reason, as PlayerController.
 		ProcessPhysicsPriority = 1;
+	}
+
+	private void OnDamaged(float amount, Vector3 fromPosition)
+	{
+		_flashTimer = FlashDuration;
+		// MaterialOverride, not editing the mesh's own material: that StandardMaterial3D is one
+		// shared resource across every enemy instance (and the barrel), same trap as an inline
+		// CollisionShape3D -- writing into it would flash every enemy in the level at once.
+		_mesh.MaterialOverride ??= _flashMaterial ??= new StandardMaterial3D
+		{
+			ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+			AlbedoColor = Colors.White,
+		};
 	}
 
 	private void ToggleActive()
@@ -87,7 +115,16 @@ public partial class EnemyController : CharacterBody3D
 	// What pressing the key will DO, not what the enemy currently is -- same rule as GunComponent's.
 	private void UpdateVerb() => Switch.Verb = Active ? $"turn {SwitchLabel} off" : $"turn {SwitchLabel} on";
 
-	public override void _PhysicsProcess(double delta) => MoveAndSlide();
+	public override void _PhysicsProcess(double delta)
+	{
+		MoveAndSlide();
+
+		if (_flashTimer > 0f)
+		{
+			_flashTimer -= (float)delta;
+			if (_flashTimer <= 0f) _mesh.MaterialOverride = null;
+		}
+	}
 
 	// Yaw only. A capsule has no business leaning, and pitching the body would tip the gun with it.
 	public void FaceTarget(double delta)

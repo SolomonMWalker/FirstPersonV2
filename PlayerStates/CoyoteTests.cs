@@ -57,7 +57,7 @@ public partial class CoyoteTests : Node
 
         if (_frame == 10)
         {
-            _body = GetNode<PlayerController>("LevelSkeleton/CharacterBody3D");
+            _body = GetNode<PlayerController>("LevelSkeleton/Player");
             _sm = _body.GetNode<StateMachine>("StateMachine");
             Has(_sm.GetStateMachineString(), Grounded, "starts grounded");
             return;

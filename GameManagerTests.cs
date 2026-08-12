@@ -106,7 +106,7 @@ public partial class GameManagerTests : Node
 
             // Two hits, not one: the shield absorbs the first whole however big it is, so the
             // killing blow has to land on a shield that is already down.
-            var health = Component.Get<HealthComponent>(GetNode<Node>("LevelSkeleton/CharacterBody3D"));
+            var health = Component.Get<HealthComponent>(GetNode<Node>("LevelSkeleton/Player"));
             health.TakeDamage(9999f);
             health.TakeDamage(9999f);
             True(!health.Alive, "player survived two 9999 hits");

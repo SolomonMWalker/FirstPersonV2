@@ -7,6 +7,7 @@ public partial class PlayerController : CharacterBody3D
 	[Export] public float JumpVelocity = 4.5f;
 	[Export] public float MouseSensitivity = 0.003f;
 	[Export] public ClamberController Clamber;
+	[Export] public GunComponent Weapon;
 
 	// Sampled once per physics tick; the states read these rather than polling input themselves.
 	public Vector2 MoveInput { get; private set; }
@@ -71,6 +72,11 @@ public partial class PlayerController : CharacterBody3D
 
 		// Fall back to a child node so clamber works without inspector wiring.
 		Clamber ??= GetNodeOrNull<ClamberController>("ClamberController");
+		Weapon ??= Component.Get<GunComponent>(this);
+		// The viewmodel gun sits under the camera so it inherits full look direction (pitch
+		// included) for free; GunComponent itself has to stay under Components (see
+		// Components/README.md), so it fires from this muzzle point instead of its own transform.
+		if (Weapon is not null) Weapon.MuzzleOverride = GetNode<Node3D>("Camera3D/TestGun/Muzzle");
 		// Run after the StateMachine child, so MoveAndSlide applies the velocity the states just
 		// wrote. Input sampled here is consumed by the states on the next tick — one frame of
 		// latency, invisible for movement and harmless for the latched jump edge.
@@ -129,6 +135,8 @@ public partial class PlayerController : CharacterBody3D
 		else if (Input.IsActionJustPressed("sprint")) SprintArmed = true;
 
 		if (Input.IsActionJustPressed("crouch")) CrouchToggled = !CrouchToggled;
+
+		if (Weapon is not null) Weapon.Firing = Input.IsActionPressed("fire");
 
 		MoveInput = Input.GetVector("move_left", "move_right", "move_forward", "move_back");
 

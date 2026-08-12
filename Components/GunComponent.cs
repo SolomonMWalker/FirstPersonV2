@@ -19,8 +19,19 @@ using Godot;
 [GlobalClass]
 public partial class GunComponent : Component
 {
+	// Forwarded from each shot's own Landed, so a listener (a hitmarker) only has to subscribe once
+	// here rather than to every transient projectile this gun spawns.
+	[Signal] public delegate void ShotLandedEventHandler(DamageResult result);
+
 	[Export] public PackedScene Projectile;
 	[Export] public float Interval = 2f;
+
+	// Optional. When set, shots spawn from this node's transform instead of the component's own --
+	// for a carrier whose muzzle has to track something the component itself cannot be a child of.
+	// The player's viewmodel gun is the case that motivated it: full look direction (pitch included)
+	// lives on the camera, and a component has to stay a direct child of Components (see
+	// Components/README.md), which is nowhere near the camera.
+	[Export] public Node3D MuzzleOverride;
 
 	// Authored per object. A sibling InteractableComponent, if there is one, becomes a switch; so does
 	// a state machine that writes this directly. An object with neither is simply always on.
@@ -79,9 +90,19 @@ public partial class GunComponent : Component
 		// Into the level, not under this node. A shot parented to its shooter would inherit the
 		// shooter's transform and be freed along with it -- neither is true of a bullet in flight.
 		(GetTree().CurrentScene ?? GameObject.GetParent()).AddChild(shot);
-		// Straight out of the muzzle, down this node's own -Z, exactly where the barrel points.
+		// Straight out of the muzzle, down the muzzle's own -Z, exactly where the barrel points.
 		// Orthonormalized so a scaled shooter cannot smuggle a scale into the shot's basis, which
 		// Projectile multiplies by Speed and would silently read as a different muzzle velocity.
-		shot.GlobalTransform = GlobalTransform.Orthonormalized();
+		shot.GlobalTransform = (MuzzleOverride ?? this).GlobalTransform.Orthonormalized();
+
+		// Every existing muzzle sits well clear of its own shooter's collider, so this has never
+		// mattered before -- but a muzzle overridden onto the shooter's own camera (the player's
+		// viewmodel) can sit well inside its body's collision capsule. Without this, the very first
+		// shot would hit the shooter on the way out.
+		if (shot is Projectile projectile)
+		{
+			projectile.Shooter = GameObject as Node3D;
+			projectile.Landed += result => EmitSignal(SignalName.ShotLanded, (int)result);
+		}
 	}
 }

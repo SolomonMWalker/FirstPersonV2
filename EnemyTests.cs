@@ -49,7 +49,7 @@ public partial class EnemyTests : Node
 
         if (_frame == 10)
         {
-            _player = GetNode<PlayerController>("LevelSkeleton/CharacterBody3D");
+            _player = GetNode<PlayerController>("LevelSkeleton/Player");
             _walker = GetNode<EnemyController>("LevelSkeleton/Walker");
             _brain = _walker.GetNode<StateMachine>("StateMachine");
             _gun = Component.Get<GunComponent>(_walker);
@@ -96,7 +96,7 @@ public partial class EnemyTests : Node
 
         if (_frame == 30)
         {
-            var prompt = GetNode<Label>("LevelSkeleton/CharacterBody3D/Hud/Prompt");
+            var prompt = GetNode<Label>("LevelSkeleton/Player/Hud/Prompt");
             True(prompt.Visible && prompt.Text == "Press E to turn the enemy on",
                 $"the switch prompt reads '{prompt.Text}' (visible={prompt.Visible})");
             PressE(true);

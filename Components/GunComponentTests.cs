@@ -24,6 +24,7 @@ public partial class GunComponentTests : Node
     // The punch is a spring, and it has decayed back to nothing well before the assertions run --
     // so the peak is sampled every frame rather than read once at the end.
     private Vector2 _peakPunch;
+    private DamageResult? _shotResult;
 
     public override void _Ready()
     {
@@ -37,7 +38,7 @@ public partial class GunComponentTests : Node
 
         if (_frame == 10)
         {
-            var player = GetNode<PlayerController>("LevelSkeleton/CharacterBody3D");
+            var player = GetNode<PlayerController>("LevelSkeleton/Player");
             var enemy = GetNode<Node3D>("LevelSkeleton/Enemy");
 
             _shield = Component.Get<ShieldComponent>(player);
@@ -49,7 +50,9 @@ public partial class GunComponentTests : Node
             // Invulnerability is the absence of a capability, not a flag on one.
             True(Component.Get<HealthComponent>(enemy) is null,
                 "the turret carries a HealthComponent; it is supposed to be undamageable");
-            True(Component.Get<GunComponent>(enemy) is not null, "the turret has no GunComponent");
+            var enemyGun = Component.Get<GunComponent>(enemy);
+            True(enemyGun is not null, "the turret has no GunComponent");
+            if (enemyGun is not null) enemyGun.ShotLanded += r => _shotResult = r;
             return;
         }
 
@@ -65,9 +68,15 @@ public partial class GunComponentTests : Node
                 True(Mathf.IsEqualApprox(_health.Current, _health.Max),
                     $"health took damage through a shield that had plenty left ({_health.Current}/{_health.Max})");
 
+            // The signal a hitmarker would key off of: the shield ate the hit whole, so this must
+            // report Shield, not Health -- the shooter never sees GunComponent.Landed at all unless
+            // Projectile actually forwards HealthComponent's return value through.
+            True(_shotResult == DamageResult.Shield,
+                $"the turret's shot should have reported Shield (got {_shotResult})");
+
             // The HUD's failure mode is silent: if it cannot find the player its bars just sit at
             // full. Cheapest place to catch that is here, where a shield is known to be down.
-            var bar = GetNode<ProgressBar>("LevelSkeleton/CharacterBody3D/Hud/Bars/Shield");
+            var bar = GetNode<ProgressBar>("LevelSkeleton/Player/Hud/Bars/Shield");
             if (_shield is not null)
                 True(Mathf.IsEqualApprox((float)bar.Value, _shield.Current),
                     $"the HUD shield bar reads {bar.Value}, the component reads {_shield.Current}");

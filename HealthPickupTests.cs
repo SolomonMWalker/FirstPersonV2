@@ -42,7 +42,7 @@ public partial class HealthPickupTests : Node
 
         if (_frame == 10)
         {
-            _player = GetNode<PlayerController>("LevelSkeleton/CharacterBody3D");
+            _player = GetNode<PlayerController>("LevelSkeleton/Player");
             _pack = GetNode<HealthPickup>("LevelSkeleton/HealthPickup");
             _health = Component.Get<HealthComponent>(_player);
             _pack.RespawnDelay = 0.4f;

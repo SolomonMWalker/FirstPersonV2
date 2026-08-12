@@ -1,6 +1,13 @@
 using System;
 using Godot;
 
+// What TakeDamage did with an incoming hit, for a caller that needs the answer synchronously (a
+// hitmarker deciding what color to flash) rather than by listening to a signal. "Shield" is this
+// component's own honest name for it: it does not know an absorber is a shield, only that
+// something installed in AbsorbDamage consumed the hit whole. If armour ever chains onto the same
+// slot (see AbsorbDamage below), this stops being an accurate name for that case.
+public enum DamageResult { None, Shield, Health }
+
 // Hit points and nothing else. The same component goes on the player and on every enemy -- there is
 // no player health and enemy health, and no interface between them, because there is no difference.
 //
@@ -35,20 +42,21 @@ public partial class HealthComponent : Component
 		Current = Max;
 	}
 
-	public void TakeDamage(float amount, Vector3 fromPosition = default)
+	public DamageResult TakeDamage(float amount, Vector3 fromPosition = default)
 	{
 		// Already dead absorbs nothing: two hits landing on the same frame must not fire Died twice,
 		// or every death listener (ragdoll, score, respawn) runs twice.
-		if (amount <= 0f || !Alive) return;
+		if (amount <= 0f || !Alive) return DamageResult.None;
 
 		if (AbsorbDamage is not null) amount = AbsorbDamage(amount, fromPosition);
 		// Fully soaked. Nothing lost hit points, so Damaged must not fire -- it means "took real
 		// damage", and anything wanting "was hit at all" listens to the absorber's own signal too.
-		if (amount <= 0f) return;
+		if (amount <= 0f) return DamageResult.Shield;
 
 		Current = Mathf.Max(Current - amount, 0f);
 		EmitSignal(SignalName.Damaged, amount, fromPosition);
 		if (!Alive) EmitSignal(SignalName.Died);
+		return DamageResult.Health;
 	}
 
 	// Never resurrects: a health pack walked over by a corpse has to do nothing, or death stops

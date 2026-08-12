@@ -49,12 +49,12 @@ public partial class InteractableComponentTests : Node
 
         if (_frame == 10)
         {
-            _player = GetNode<PlayerController>("LevelSkeleton/CharacterBody3D");
+            _player = GetNode<PlayerController>("LevelSkeleton/Player");
             _turretObject = GetNode<Node3D>("LevelSkeleton/Enemy2");
             _interactor = Component.Get<InteractorComponent>(_player);
             _switch = Component.Get<InteractableComponent>(_turretObject);
             _turret = Component.Get<GunComponent>(_turretObject);
-            _prompt = GetNode<Label>("LevelSkeleton/CharacterBody3D/Hud/Prompt");
+            _prompt = GetNode<Label>("LevelSkeleton/Player/Hud/Prompt");
 
             True(_interactor is not null, "the player has no InteractorComponent");
             True(_switch is not null, "the second turret has no InteractableComponent");
