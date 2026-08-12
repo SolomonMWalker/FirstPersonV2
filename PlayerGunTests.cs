@@ -7,10 +7,9 @@ namespace FirstPerson;
 // Exits 0 on pass, 1 on failure.
 //
 // Proves the player's own weapon is wired end to end: holding "fire" drives the player's
-// GunComponent, a shot spawns from the viewmodel's muzzle and lands on a real target -- and, the
-// regression this setup makes possible for the first time, the shooter never damages itself, even
-// though the muzzle sits inside the player's own collision capsule (the viewmodel is mounted on
-// the camera, a few centimetres off the body's own centre).
+// HitscanComponent, the ray lands on a real target the instant Interval is up (no travel time to
+// wait on) -- and, the regression the camera-origin ray makes possible, the shooter never damages
+// itself, even though the ray starts from dead centre of its own collision capsule.
 public partial class PlayerGunTests : Node
 {
     private readonly List<string> _failures = [];
@@ -19,6 +18,11 @@ public partial class PlayerGunTests : Node
     private ShieldComponent _playerShield;
     private HealthComponent _walkerHealth;
     private DamageResult? _shotResult;
+    private CameraController _camera;
+    // The punch is a spring and has started decaying back toward level well before the assertion
+    // runs, so the peak is sampled every frame rather than read once at the end -- same reasoning
+    // as GunComponentTests' _peakPunch.
+    private float _peakPunchX;
 
     public override void _Ready()
     {
@@ -49,13 +53,14 @@ public partial class PlayerGunTests : Node
             _playerShield = Component.Get<ShieldComponent>(player);
             _walkerHealth = Component.Get<HealthComponent>(walker);
             True(_walkerHealth is not null, "the Walker has no HealthComponent to shoot at");
-            var playerGun = Component.Get<GunComponent>(player);
-            True(playerGun is not null, "the player has no GunComponent");
+            var playerGun = Component.Get<HitscanComponent>(player);
+            True(playerGun is not null, "the player has no HitscanComponent");
             if (playerGun is not null) playerGun.ShotLanded += r => _shotResult = r;
+            _camera = player.Camera;
 
             // Close range and aimed dead-on (Y matched, so this is pure yaw -- see EnemyTests for
-            // why LookAt has to avoid pitching the body), so one shot is enough and travel time is
-            // short and predictable. This is a wiring check, not a marksmanship one.
+            // why LookAt has to avoid pitching the body). This is a wiring check, not a
+            // marksmanship one; the range only has to comfortably clear HitscanComponent.Range.
             player.GlobalPosition = walker.GlobalPosition + new Vector3(0f, 1f, 4f);
             player.LookAt(walker.GlobalPosition with { Y = player.GlobalPosition.Y });
 
@@ -63,9 +68,14 @@ public partial class PlayerGunTests : Node
             return;
         }
 
-        // Interval defaults to 0.2s (12 ticks) plus the usual one-tick input-sampling latency, plus
-        // travel time for a 4m shot at 14 m/s (~17 ticks): comfortably done by 60 ticks in.
-        if (_frame == 70)
+        if (_camera is not null) _peakPunchX = Mathf.Max(_peakPunchX, _camera.Punch.X);
+
+        // Interval defaults to 0.2s (12 ticks); input sampling and Firing-forwarding both add a
+        // tick of their own latency on top (this test node is the tree root, so it and every
+        // priority-0 node process before PlayerController's priority-1 SampleInput each tick --
+        // measured empirically at 15 ticks total from Fire(true) to the shot actually landing).
+        // There is no travel time to wait on beyond that; padded well past it regardless.
+        if (_frame == 30)
         {
             Fire(false);
 
@@ -76,10 +86,16 @@ public partial class PlayerGunTests : Node
             // shielded player) is what actually proves the color mapping picks the right one.
             True(_shotResult == DamageResult.Health,
                 $"the player's shot on the (unshielded) Walker should have reported Health (got {_shotResult})");
+            // Placeholder recoil: a positive pitch kicks the view up (Godot's convention, opposite
+            // Quake's -- see CameraController.AddPunch). Same spring landing and damage punch use,
+            // so this only proves HitscanComponent actually calls it, not the spring itself.
+            True(_peakPunchX > 0f, $"firing produced no upward recoil kick (peak Punch.X={_peakPunchX:F4})");
 
-            // The muzzle sits inside the player's own capsule. Without Projectile.Shooter (set by
-            // GunComponent right after spawning), the very first shot would have hit the player
-            // before it ever cleared its own muzzle.
+            // The ray starts at the camera's own GlobalPosition, inside the player's own capsule.
+            // Godot does not report a hit on a shape the ray originates inside of, so query.Exclude
+            // is not actually load-bearing for this dead-centre geometry -- but it is what
+            // InteractorComponent's own ray relies on for the same reason, and this is the guard
+            // against the day the muzzle or the camera's offset stops being dead centre.
             if (_playerShield is not null)
                 True(Mathf.IsEqualApprox(_playerShield.Current, _playerShield.Max),
                     $"the player's own shot damaged their shield ({_playerShield.Current}/{_playerShield.Max})");
@@ -89,7 +105,7 @@ public partial class PlayerGunTests : Node
             return;
         }
 
-        if (_frame < 80) return;
+        if (_frame < 40) return;
 
         if (_failures.Count == 0) GD.Print("player gun tests: all passed");
         else foreach (var f in _failures) GD.PrintErr(f);

@@ -11,14 +11,23 @@ public partial class Crosshair : Control
 	[Export] public float LineWidth = 2f;
 	[Export] public Color CrosshairColor = Colors.White;
 
-	// Hitmarker: a brief, bolder pulse over the resting crosshair, colored by what the shot landed
-	// on. Health and shield are both live today. Weakspot has no way to fire yet -- there is no
-	// hit-location system -- but the color is ready for whenever one exists, same as the roadmap
-	// asked for.
+	// Hitmarker: four diagonal lines (NE/SE/SW/NW), the classic X, slotted between the resting
+	// cross's own up/down/left/right arms rather than replacing or resizing them -- the resting
+	// dot and lines never change. Health and shield are both live today. Weakspot has no way to
+	// fire yet -- there is no hit-location system -- but the color is ready for whenever one
+	// exists, same as the roadmap asked for.
 	[Export] public float FlashDuration = 0.15f;
 	[Export] public Color HealthFlashColor = Colors.White;
 	[Export] public Color ShieldFlashColor = new(0.2f, 0.55f, 1f);
 	[Export] public Color WeakspotFlashColor = new(1f, 0.2f, 0.2f);
+
+	private static readonly Vector2[] DiagonalDirections =
+	[
+		new Vector2(1, -1).Normalized(),   // NE
+		new Vector2(1, 1).Normalized(),    // SE
+		new Vector2(-1, 1).Normalized(),   // SW
+		new Vector2(-1, -1).Normalized(),  // NW
+	];
 
 	private float _flashTimer;
 	private Color _flashColor;
@@ -29,7 +38,7 @@ public partial class Crosshair : Control
 		// own _Ready, which always runs after this node's (Crosshair sits several levels below
 		// Player) -- reading it here would always see it unset. See ViewmodelCamera for the same
 		// trap.
-		var gun = Component.Get<GunComponent>(PlayerController.Of(this));
+		var gun = Component.Get<HitscanComponent>(PlayerController.Of(this));
 		if (gun is not null) gun.ShotLanded += OnShotLanded;
 	}
 
@@ -60,13 +69,9 @@ public partial class Crosshair : Control
 		DrawLine(center + Vector2.Right * Gap, center + Vector2.Right * (Gap + LineLength), CrosshairColor, LineWidth);
 
 		if (_flashTimer <= 0f) return;
-		// Bigger and bolder than the resting crosshair -- has to read as "a hit just landed" even
-		// when the color (a normal hit) matches the resting white.
-		DrawCircle(center, DotRadius * 2f, _flashColor);
-		var flashLength = Gap + LineLength * 1.6f;
-		DrawLine(center + Vector2.Up * Gap, center + Vector2.Up * flashLength, _flashColor, LineWidth * 1.5f);
-		DrawLine(center + Vector2.Down * Gap, center + Vector2.Down * flashLength, _flashColor, LineWidth * 1.5f);
-		DrawLine(center + Vector2.Left * Gap, center + Vector2.Left * flashLength, _flashColor, LineWidth * 1.5f);
-		DrawLine(center + Vector2.Right * Gap, center + Vector2.Right * flashLength, _flashColor, LineWidth * 1.5f);
+		// Same geometry as the resting lines, just rotated into the gaps between them -- only
+		// position and color mark this as a hit, not a change to the crosshair itself.
+		foreach (var dir in DiagonalDirections)
+			DrawLine(center + dir * Gap, center + dir * (Gap + LineLength), _flashColor, LineWidth);
 	}
 }

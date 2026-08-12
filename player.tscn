@@ -18,8 +18,7 @@
 [ext_resource type="Script" uid="uid://dy144vidsxs50" path="res://CameraController.cs" id="16_efrwb"]
 [ext_resource type="Script" uid="uid://dxcnxu3ovj4px" path="res://Hud.cs" id="17_hiqhm"]
 [ext_resource type="Script" path="res://Crosshair.cs" id="18_crosshair"]
-[ext_resource type="Script" path="res://Components/GunComponent.cs" id="19_gun"]
-[ext_resource type="PackedScene" path="res://projectile.tscn" id="20_projectile"]
+[ext_resource type="Script" path="res://Components/HitscanComponent.cs" id="19_hitscan"]
 [ext_resource type="Script" path="res://ViewmodelCamera.cs" id="21_viewmodelcam"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_6cejb"]
@@ -52,9 +51,8 @@ script = ExtResource("3_pylmc")
 [node name="InteractorComponent" type="Node3D" parent="Components" unique_id=1461581337]
 script = ExtResource("4_pbfsw")
 
-[node name="GunComponent" type="Node3D" parent="Components"]
-script = ExtResource("19_gun")
-Projectile = ExtResource("20_projectile")
+[node name="HitscanComponent" type="Node3D" parent="Components"]
+script = ExtResource("19_hitscan")
 Interval = 0.2
 Firing = false
 
