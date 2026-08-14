@@ -2,6 +2,33 @@
 
 Conventions that aren't derivable from reading the code, and traps that have already cost time.
 
+## Where things live
+
+Folders are **features**, not file types. A feature folder holds its scripts, its scene, and its
+states together — you should never have to visit three folders to change how the grunt behaves.
+
+```
+Player/      PlayerController, camera, clamber, viewmodel + player.tscn + States/
+Enemy/       EnemyController + enemy/grunt scenes + States/
+Weapons/     Projectile.cs + projectile.tscn
+Pickups/     HealthPickup.cs + health_pickup.tscn
+UI/          Hud, Crosshair, StateLabel
+Core/        GameManager, GameSettings
+Components/  cross-cutting capability nodes — see Components/README.md
+StateMachine/ engine-generic statechart — see StateMachine/README.md
+Tests/       every *Tests.cs and its test_*.tscn harness
+Assets/      raw DCC output: Blender/, Audio/, Animations/, Materials/
+Docs/        roadmap and the analysis write-ups
+```
+
+Root holds only project-level files: `project.godot`, the sln/csproj, `icon.svg`,
+`default_bus_layout.tres`, this file, and `test_level.tscn`.
+
+`Components/` and `StateMachine/` stay type-shaped on purpose — both are used by every feature, so
+neither belongs to one. Namespaces (`FirstPerson.PlayerStates`, `FirstPerson.CustomTypes.StateMachine`)
+do **not** track folder names and are not expected to; moving a file does not mean renaming its
+namespace and re-touching every `using`.
+
 ## Tests live in `Tests/`
 
 Both halves of a test go there: the `*Tests.cs` script and the one-node `test_*.tscn` harness that

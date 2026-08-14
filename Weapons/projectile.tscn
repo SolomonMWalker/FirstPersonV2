@@ -1,0 +1,29 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://Weapons/Projectile.cs" id="1_projectile"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_shot"]
+radius = 0.15
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_shot"]
+albedo_color = Color(1, 0.35, 0.1, 1)
+emission_enabled = true
+emission = Color(1, 0.45, 0.15, 1)
+emission_energy_multiplier = 3.0
+
+[sub_resource type="SphereMesh" id="SphereMesh_shot"]
+material = SubResource("StandardMaterial3D_shot")
+radius = 0.15
+height = 0.3
+radial_segments = 12
+rings = 6
+
+[node name="Projectile" type="Area3D"]
+collision_mask = 3
+script = ExtResource("1_projectile")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_shot")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_shot")

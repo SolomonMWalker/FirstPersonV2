@@ -303,7 +303,7 @@ AddTransition("Walking", () => !Player.SprintHeld && Player.IsOnFloor());
 
 ### Hoisting a terminal state: both traps at once
 
-The enemy brain (`EnemyStates/`) is the second machine in this project and it hit both. `Brain` is a
+The enemy brain (`Enemy/States/`) is the second machine in this project and it hit both. `Brain` is a
 compound containing `Idle`, `Chase`, `Attack` and `Dead`, and death is true from anywhere, so the
 edge to `Dead` is written once on the parent instead of three times on the children:
 

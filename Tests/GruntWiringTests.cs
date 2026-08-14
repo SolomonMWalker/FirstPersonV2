@@ -18,7 +18,7 @@ public partial class GruntWiringTests : Node
         player.AddToGroup("player");
         AddChild(player);
 
-        var scene = GD.Load<PackedScene>("res://grunt.tscn").Instantiate<Node3D>();
+        var scene = GD.Load<PackedScene>("res://Enemy/grunt.tscn").Instantiate<Node3D>();
         AddChild(scene);
         var grunt = (EnemyController)scene;
 

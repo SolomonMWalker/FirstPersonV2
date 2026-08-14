@@ -1,14 +1,14 @@
 [gd_scene format=3 uid="uid://24fvrsk85j16"]
 
-[ext_resource type="Script" uid="uid://cev8f37yhaveb" path="res://GameManager.cs" id="2_gamemgr"]
-[ext_resource type="Material" uid="uid://drljhmw7xl0se" path="res://checker_material.tres" id="3_checker"]
-[ext_resource type="PackedScene" uid="uid://ldt2sh6h723d" path="res://player.tscn" id="8_6emce"]
-[ext_resource type="Script" uid="uid://cxodw34d7i83" path="res://StateLabel.cs" id="14_statelabel"]
+[ext_resource type="Script" uid="uid://cev8f37yhaveb" path="res://Core/GameManager.cs" id="2_gamemgr"]
+[ext_resource type="Material" uid="uid://drljhmw7xl0se" path="res://Assets/Materials/checker_material.tres" id="3_checker"]
+[ext_resource type="PackedScene" uid="uid://ldt2sh6h723d" path="res://Player/player.tscn" id="8_6emce"]
+[ext_resource type="Script" uid="uid://cxodw34d7i83" path="res://UI/StateLabel.cs" id="14_statelabel"]
 [ext_resource type="Script" uid="uid://d1v1fu1gpv2ac" path="res://Components/GunComponent.cs" id="19_gun"]
-[ext_resource type="PackedScene" path="res://projectile.tscn" id="20_projectile"]
-[ext_resource type="PackedScene" path="res://health_pickup.tscn" id="22_pickup"]
+[ext_resource type="PackedScene" path="res://Weapons/projectile.tscn" id="20_projectile"]
+[ext_resource type="PackedScene" path="res://Pickups/health_pickup.tscn" id="22_pickup"]
 [ext_resource type="Script" uid="uid://c8qygbih11n05" path="res://Components/InteractableComponent.cs" id="23_interactable"]
-[ext_resource type="PackedScene" path="res://enemy.tscn" id="25_enemy"]
+[ext_resource type="PackedScene" path="res://Enemy/enemy.tscn" id="25_enemy"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_gojnm"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
