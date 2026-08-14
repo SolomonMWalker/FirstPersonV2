@@ -1,5 +1,7 @@
 using Godot;
 
+namespace FirstPerson;
+
 // Tracks stagger damage separately from hit points and knocks the object into a Staggered state
 // once enough of it lands. A sibling capability like HealthComponent and ShieldComponent, and just
 // as optional -- the player carries no StaggerComponent, so a shot at the player simply has nowhere

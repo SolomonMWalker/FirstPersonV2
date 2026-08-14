@@ -1,5 +1,7 @@
 using Godot;
 
+namespace FirstPerson;
+
 // Lives inside a SubViewport, rendering only the viewmodel layer -- that separate render pass is
 // the whole point (see player.tscn's cull_mask setup): it gives the gun its own near/far clip
 // range and FOV, so it can never clip into world geometry the way a shared depth buffer would let

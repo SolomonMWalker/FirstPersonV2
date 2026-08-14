@@ -1,5 +1,7 @@
 using Godot;
 
+namespace FirstPerson;
+
 // A health pack: heals whatever touches it, vanishes, and comes back after a delay. Like Projectile
 // it uses the component system without being part of it -- it asks whatever walked into it for a
 // HealthComponent, so it heals the player, a future ally, or anything else with hit points, and does

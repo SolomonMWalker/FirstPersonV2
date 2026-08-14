@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
-namespace FirstPerson.CustomTypes.StateMachine;
+namespace FirstPerson.StateMachines;
 
 // All children are active whenever this state is active.
 [GlobalClass]

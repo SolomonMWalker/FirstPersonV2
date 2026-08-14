@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FirstPerson.StateMachines;
 using Godot;
 
-namespace FirstPerson.CustomTypes.StateMachine;
+namespace FirstPerson.Tests;
 
 // Run headless:  godot --headless --path . res://Tests/test_state_machine.tscn
 // Exits 0 on pass, 1 on failure. Covers the checklist in REFACTOR_PLAN.md section 7.

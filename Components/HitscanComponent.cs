@@ -1,5 +1,7 @@
 using Godot;
 
+namespace FirstPerson;
+
 // Instant raycast damage from the player's camera, no travel time -- the standard first weapon
 // type (PhysicsRayQueryParameters3D, no lead, no projectile pooling). GunComponent's projectiles
 // stay the deliberately dodgeable, telegraphed kind for turrets and enemies; this is specifically

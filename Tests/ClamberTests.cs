@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Godot;
 
-namespace FirstPerson.Helpers;
+namespace FirstPerson.Tests;
 
 // Run headless:  godot --headless --path . res://Tests/test_clamber.tscn
 // Exits 0 on pass, 1 on failure.

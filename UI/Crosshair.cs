@@ -1,5 +1,7 @@
 using Godot;
 
+namespace FirstPerson;
+
 // A dot plus four separated tick marks -- the minimal FPS crosshair. Drawn rather than built from
 // a handful of Control nodes so the day this grows spread/recoil dynamism, it's a couple of
 // numbers recalculated here each frame, not several nodes to reposition.

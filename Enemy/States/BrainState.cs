@@ -1,4 +1,4 @@
-using FirstPerson.CustomTypes.StateMachine;
+using FirstPerson.StateMachines;
 using Godot;
 
 namespace FirstPerson.EnemyStates;

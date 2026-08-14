@@ -1,6 +1,6 @@
 using System;
 
-namespace FirstPerson.CustomTypes.StateMachine;
+namespace FirstPerson.StateMachines;
 
 // A declarative transition: where to go, an optional guard that decides when it's
 // eligible, and an optional effect that fires as the edge is taken.

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
-namespace FirstPerson.CustomTypes.StateMachine;
+namespace FirstPerson.StateMachines;
 
 public class ChangeStateEventArgs(string stateName) : EventArgs
 {

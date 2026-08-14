@@ -1,5 +1,7 @@
 using Godot;
 
+namespace FirstPerson;
+
 // "This object can interact with things." Dropping this one node on the player is the entire
 // feature: it looks where the camera looks, publishes whatever InteractableComponent is under the
 // crosshair, and presses it on the interact key.

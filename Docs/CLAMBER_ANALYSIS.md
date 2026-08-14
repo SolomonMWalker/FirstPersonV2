@@ -58,7 +58,7 @@ class of bug. Keep this property through any rewrite.
 
 | # | Issue |
 |---|---|
-| B1 | `using FirstPerson.Scenes.Player;` â€” namespace doesn't exist in this repo. `PlayerController` is global-namespace here. |
+| B1 | `using FirstPerson.Scenes.Player;` â€” namespace doesn't exist in this repo. `PlayerController` is in `FirstPerson` here. |
 | B2 | `PlayerController.BottomOfPlayer`, `.ClamberVelocity`, `.Clambering` â€” none exist on the current `PlayerController.cs`. |
 | B3 | `[Export] public PlayerController PlayerController;` â€” field named identically to its type. Legal C#, but every future reference is ambiguous to read. |
 

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Godot;
 
-namespace FirstPerson.CustomTypes.StateMachine;
+namespace FirstPerson.StateMachines;
 
 [GlobalClass]
 public partial class State : Node

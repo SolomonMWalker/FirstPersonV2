@@ -1,5 +1,7 @@
 using Godot;
 
+namespace FirstPerson;
+
 // The viewmodel's own motion, on top of everything it already inherits. It sits on the gun mesh,
 // which is a real child of the world Camera3D, so look, roll, punch and the camera's own bob arrive
 // for free -- this writes nothing but a local offset from the authored rest pose.

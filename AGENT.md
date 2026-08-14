@@ -25,9 +25,34 @@ Root holds only project-level files: `project.godot`, the sln/csproj, `icon.svg`
 `default_bus_layout.tres`, this file, and `test_level.tscn`.
 
 `Components/` and `StateMachine/` stay type-shaped on purpose — both are used by every feature, so
-neither belongs to one. Namespaces (`FirstPerson.PlayerStates`, `FirstPerson.CustomTypes.StateMachine`)
-do **not** track folder names and are not expected to; moving a file does not mean renaming its
-namespace and re-touching every `using`.
+neither belongs to one.
+
+## Namespaces
+
+Five, and no more. They do **not** track folder names — moving a file between feature folders does
+not mean renaming its namespace and re-touching every `using`.
+
+| Namespace | Holds |
+|---|---|
+| `FirstPerson` | all game code: components, controllers, UI, core, weapons, pickups |
+| `FirstPerson.PlayerStates` | the player's state nodes |
+| `FirstPerson.EnemyStates` | the enemy's state nodes |
+| `FirstPerson.StateMachines` | the engine-generic statechart types |
+| `FirstPerson.Tests` | everything in `Tests/` |
+
+A new script goes in `FirstPerson` unless it is a state node or a test. Don't add a namespace per
+folder: `FirstPerson.UI` and `FirstPerson.Components` buy nothing but three more `using` lines at
+the top of every file that touches them.
+
+The two state namespaces exist for a reason that will bite later — `IdleState` and `DeadState` are
+names both sets want, and only the split lets them both have it. `StateMachines` is **plural**
+deliberately: a namespace cannot share a name with a type it contains, and `StateMachine` is the
+main type in it (`FirstPerson.StateMachine` makes every bare `StateMachine` elsewhere under
+`FirstPerson` a CS0118).
+
+Tests do not live in the namespace of what they test. They used to — `ClamberTests` sat in
+`FirstPerson.Helpers` and `StateMachineTests` in the statechart's own namespace — purely to reach
+internals without a `using`. That makes a test look like production code in every file listing.
 
 ## Tests live in `Tests/`
 

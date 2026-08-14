@@ -1,5 +1,7 @@
 using Godot;
 
+namespace FirstPerson;
+
 // Spits a projectile down its own -Z every Interval seconds while Firing. It does not track, aim,
 // lead, or check line of sight, and it has no idea the player exists -- where it points is wherever
 // the object carrying it is facing, and that is the caller's problem, not this component's.

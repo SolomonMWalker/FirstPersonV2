@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Godot;
 
-namespace FirstPerson;
+namespace FirstPerson.Tests;
 
 // Run headless:  godot --headless --path . res://Tests/test_stagger.tscn
 // Exits 0 on pass, 1 on failure. Same fixed-delta-driven-by-hand approach as ShieldComponentTests.

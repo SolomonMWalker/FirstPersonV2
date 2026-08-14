@@ -1,5 +1,7 @@
 using Godot;
 
+namespace FirstPerson;
+
 // The body half of an enemy: movement, facing, and the handful of facts its brain asks about.
 // Deliberately shaped like PlayerController -- it owns the single MoveAndSlide and runs at
 // ProcessPhysicsPriority 1 so the states have already written Velocity by the time it moves.

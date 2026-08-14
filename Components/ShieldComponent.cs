@@ -1,5 +1,7 @@
 using Godot;
 
+namespace FirstPerson;
+
 // A Halo-style regenerating shield: it soaks damage entirely until it breaks, then stays down until
 // the object has gone long enough without being hit. Installs itself into HealthComponent's
 // AbsorbDamage slot, so every existing damage source keeps calling TakeDamage and knows nothing

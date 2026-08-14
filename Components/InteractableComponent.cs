@@ -1,5 +1,7 @@
 using Godot;
 
+namespace FirstPerson;
+
 // "The player can do something to this." That is the whole component -- it knows nothing about what
 // it is attached to or what interacting with it means. A sibling component subscribes to Interacted
 // and supplies the meaning, so a door, a button and a light switch are all this plus one collaborator.

@@ -1,5 +1,7 @@
-using FirstPerson.CustomTypes.StateMachine;
+using FirstPerson.StateMachines;
 using Godot;
+
+namespace FirstPerson;
 
 // Debug overlay: the player machine's active configuration plus horizontal speed, which is the only
 // thing that actually differs between Walking, Sprinting and Crouching.

@@ -1,5 +1,7 @@
 using Godot;
 
+namespace FirstPerson;
+
 // Two bars for the two numbers the player has to make decisions about. Polled every frame rather
 // than driven by the components' signals: the shield's recharge is a continuous ramp with no signal
 // to hang a bar off, so something here has to poll regardless, and two float reads a frame is not a

@@ -1,6 +1,6 @@
 using Godot;
 
-namespace FirstPerson.Helpers;
+namespace FirstPerson;
 
 // Clamber/mantle, and the smaller step-up that fills the dead band under it, for a
 // CharacterBody3D.

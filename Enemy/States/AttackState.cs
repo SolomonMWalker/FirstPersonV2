@@ -1,4 +1,4 @@
-using FirstPerson.CustomTypes.StateMachine;
+using FirstPerson.StateMachines;
 
 namespace FirstPerson.EnemyStates;
 

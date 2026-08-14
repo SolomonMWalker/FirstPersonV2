@@ -1,6 +1,8 @@
 using System.Linq;
 using Godot;
 
+namespace FirstPerson;
+
 // Base for everything that hangs under a GameObject's `Components` node. See README.md.
 //
 // Node3D rather than Node: a component is allowed to have a place on the object it belongs to (a

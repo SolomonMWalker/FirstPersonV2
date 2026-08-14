@@ -1,9 +1,8 @@
 using System.Collections.Generic;
-using FirstPerson.CustomTypes.StateMachine;
-using FirstPerson.Helpers;
+using FirstPerson.StateMachines;
 using Godot;
 
-namespace FirstPerson.PlayerStates;
+namespace FirstPerson.Tests;
 
 // Run headless:  godot --headless --path . res://Tests/test_player_states.tscn
 // Exits 0 on pass, 1 on failure.

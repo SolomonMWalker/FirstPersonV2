@@ -1,6 +1,6 @@
 using Godot;
 
-namespace FirstPerson.CustomTypes.StateMachine;
+namespace FirstPerson.StateMachines;
 
 // A leaf state. Processing is delivered by the StateMachine, not polled per node.
 [GlobalClass]

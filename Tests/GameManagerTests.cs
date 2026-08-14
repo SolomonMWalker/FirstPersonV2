@@ -1,6 +1,6 @@
 using Godot;
 
-namespace FirstPerson;
+namespace FirstPerson.Tests;
 
 // Run headless:  godot --headless --path . res://Tests/test_game_manager.tscn
 // Exits 0 on pass, 1 on failure. Restart and Quit aren't exercised here -- ReloadCurrentScene and

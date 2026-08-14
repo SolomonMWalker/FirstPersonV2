@@ -1,6 +1,8 @@
 using System;
 using Godot;
 
+namespace FirstPerson;
+
 // What TakeDamage did with an incoming hit, for a caller that needs the answer synchronously (a
 // hitmarker deciding what color to flash) rather than by listening to a signal. "Shield" is this
 // component's own honest name for it: it does not know an absorber is a shield, only that

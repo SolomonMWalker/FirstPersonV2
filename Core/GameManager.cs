@@ -1,6 +1,8 @@
 using System;
 using Godot;
 
+namespace FirstPerson;
+
 public partial class GameManager : Node
 {
 	private CanvasLayer _pauseMenu;

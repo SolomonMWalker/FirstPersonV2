@@ -1,6 +1,6 @@
 using Godot;
 
-namespace FirstPerson;
+namespace FirstPerson.Tests;
 
 // Run headless:  godot --headless --path . res://Tests/test_grunt_wiring.tscn
 // Exits 0 on pass, 1 on failure. Config, not logic, but the kind of config that breaks silently: a

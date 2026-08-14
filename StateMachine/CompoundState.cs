@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
-namespace FirstPerson.CustomTypes.StateMachine;
+namespace FirstPerson.StateMachines;
 
 // Exactly one child is active at a time. The StateMachine owns ActiveState; it is updated as part
 // of computing the entry set, so this class no longer decides anything about transitions itself.

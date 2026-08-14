@@ -1,5 +1,7 @@
 using Godot;
 
+namespace FirstPerson;
+
 // Every bit of camera motion. PlayerController handles input and turns the body's yaw; it records
 // look pitch but never writes this node, so look, strafe roll and impact punch all compose here and
 // cannot fight each other.

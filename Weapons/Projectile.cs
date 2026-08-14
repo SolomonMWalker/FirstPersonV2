@@ -1,5 +1,7 @@
 using Godot;
 
+namespace FirstPerson;
+
 // A shot in flight. Flies straight down its own -Z, damages the first thing it touches that can be
 // damaged, and dies either way. It knows nothing about who fired it or what it hit -- asking the
 // thing it hit for a HealthComponent is the whole of its targeting logic, which is what lets the

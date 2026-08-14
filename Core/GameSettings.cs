@@ -1,5 +1,7 @@
 using Godot;
 
+namespace FirstPerson;
+
 // Everything a future options menu needs to read and write, and nothing a config framework would
 // add on top: no schema, no change events, just fields that round-trip through Godot's own
 // Resource (de)serializer.

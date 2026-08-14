@@ -1,5 +1,6 @@
-using FirstPerson.Helpers;
 using Godot;
+
+namespace FirstPerson;
 
 public partial class PlayerController : CharacterBody3D
 {

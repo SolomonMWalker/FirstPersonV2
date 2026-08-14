@@ -1,7 +1,7 @@
-using FirstPerson.CustomTypes.StateMachine;
+using FirstPerson.StateMachines;
 using Godot;
 
-namespace FirstPerson.PlayerStates;
+namespace FirstPerson.Tests;
 
 // Run headless:  godot --headless --path . res://Tests/test_coyote.tscn
 // Exits 0 on pass, 1 on failure.
