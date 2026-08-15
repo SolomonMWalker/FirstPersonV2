@@ -77,6 +77,14 @@ fire={
 ]
 }
 
+[layer_names]
+
+3d_physics/layer_1="staticGeometry"
+3d_physics/layer_2="dynamicGeometry"
+3d_physics/layer_3="characterPhysics"
+3d_physics/layer_4="player"
+3d_physics/layer_5="enemy"
+
 [physics]
 
 common/physics_ticks_per_second=120

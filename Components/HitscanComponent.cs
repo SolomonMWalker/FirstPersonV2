@@ -115,12 +115,12 @@ public partial class HitscanComponent : Component
 		// own body every time, same trap Projectile.Shooter exists to dodge for GunComponent.
 		query.Exclude = [_player.GetRid()];
 
-		// Layer 1: everything that has always been shot straight (walls, the placeholder capsule
-		// enemies). Layer 2: the fine per-bone hitboxes an object like Grunt hangs off its physical
-		// skeleton (see grunt.tscn). Deliberately NOT layer 3+ -- that is reserved for a movement-only
-		// collider (Grunt's own capsule is one), which fully encloses those finer hitboxes and would
-		// shadow every one of them if the ray could see it too.
-		query.CollisionMask = 0b011;
+		// World geometry so the shot stops at a wall, plus the enemy hit layer -- the per-bone
+		// hitboxes an object like Grunt hangs off its physical skeleton. Deliberately NOT
+		// CharacterPhysics: a movement capsule (Grunt has one) fully encloses those finer hitboxes,
+		// so a ray that could see both would hit the capsule every time and no bone would ever
+		// register, with nothing about the failure visible in the editor.
+		query.CollisionMask = Layers.PlayerShot;
 
 		var hit = GetWorld3D().DirectSpaceState.IntersectRay(query);
 		if (hit.Count == 0) return;

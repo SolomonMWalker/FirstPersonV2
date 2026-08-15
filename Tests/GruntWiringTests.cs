@@ -4,50 +4,62 @@ namespace FirstPerson.Tests;
 
 // Run headless:  godot --headless --path . res://Tests/test_grunt_wiring.tscn
 // Exits 0 on pass, 1 on failure. Config, not logic, but the kind of config that breaks silently: a
-// bone losing its collision_layer override, or Component.Get failing to walk up through the
-// skeleton to find Health/Stagger on the object that actually owns them.
+// bone losing its collision_layer override puts it back on the world's layer, where the movement
+// capsule shadows it and no shot ever registers on a limb again.
+//
+// This covers the collision layers only. It used to also assert the whole gameplay stack --
+// EnemyController, Health, Stagger, the NavigationAgent3D, GunComponent, and StateMachine/Brain's
+// four states -- but grunt_basic_enemy.tscn is a rebuild that has not been rewired yet: it is the
+// imported model, a movement capsule and the 19 bone hitboxes, with no script on it. Those
+// assertions come back from git (HEAD:Enemy/grunt.tscn) when the Grunt is wired up again.
 public partial class GruntWiringTests : Node
 {
+    private const string GruntScene = "res://Enemy/Grunt/grunt_basic_enemy.tscn";
+
     public override void _Ready()
     {
         var failures = 0;
 
-        // EnemyController._Ready looks this up via GetFirstNodeInGroup("player") and pushes an error
-        // if it's missing -- present so the rest of _Ready runs exactly like it would in the level.
-        var player = new Node3D { Name = "Player" };
-        player.AddToGroup("player");
-        AddChild(player);
+        // Load defensively. The previous version of this test pointed at a scene that had been
+        // deleted, and GD.Load returning null meant _Ready threw before ever reaching Quit -- so
+        // headless Godot sat there forever instead of failing. A hang is a much worse failure mode
+        // than a red exit code, because nothing in CI or a terminal tells you which test it was.
+        var packed = GD.Load<PackedScene>(GruntScene);
+        if (packed is null)
+        {
+            GD.PrintErr($"could not load {GruntScene}");
+            GetTree().Quit(1);
+            return;
+        }
 
-        var scene = GD.Load<PackedScene>("res://Enemy/grunt.tscn").Instantiate<Node3D>();
-        AddChild(scene);
-        var grunt = (EnemyController)scene;
+        var grunt = packed.Instantiate<CharacterBody3D>();
+        AddChild(grunt);
 
-        var capsule = grunt.GetNode<CollisionShape3D>("CollisionShape3D");
-        var head = grunt.GetNode<PhysicalBone3D>("GruntRig/Skeleton3D/PhysicalBoneSimulator3D/Head");
+        // The movement capsule and the bone hitboxes must land on different layers, which is what
+        // lets HitscanComponent's query mask (Layers.PlayerShot) see the bones and not the capsule.
+        failures += Check(grunt.CollisionLayer == Layers.CharacterPhysics,
+            $"Grunt's capsule is on layer {grunt.CollisionLayer}, expected CharacterPhysics ({Layers.CharacterPhysics})");
+        failures += Check(grunt.CollisionMask == Layers.Movement,
+            $"Grunt's capsule masks {grunt.CollisionMask}, expected Movement ({Layers.Movement})");
 
-        // The movement-only capsule and a sample bone hitbox land on the two layers HitscanComponent
-        // and Projectile rely on to tell them apart (query.CollisionMask = 0b011 in both).
-        failures += Check(((CollisionObject3D)grunt).CollisionLayer == 4, "Grunt's capsule is not on the movement-only layer (4)");
-        failures += Check(head.CollisionLayer == 2, "Head hitbox is not on the hitbox layer (2)");
+        var simulator = grunt.GetNodeOrNull("GruntRig/Skeleton3D/PhysicalBoneSimulator3D");
+        failures += Check(simulator is not null, "PhysicalBoneSimulator3D is missing");
 
-        // Component.Get must resolve Health/Stagger from a hit on either collider -- the bone hitbox
-        // several levels deep under Skeleton3D/PhysicalBoneSimulator3D, and the capsule itself.
-        failures += Check(Component.Get<HealthComponent>(head) is not null, "HealthComponent did not resolve from a bone hitbox");
-        failures += Check(Component.Get<StaggerComponent>(head) is not null, "StaggerComponent did not resolve from a bone hitbox");
-        failures += Check(Component.Get<HealthComponent>(capsule) is not null, "HealthComponent did not resolve from the capsule");
+        var bones = 0;
+        foreach (var child in simulator?.GetChildren() ?? [])
+        {
+            if (child is not PhysicalBone3D bone) continue;
+            bones++;
+            failures += Check(bone.CollisionLayer == Layers.Enemy,
+                $"bone {bone.Name} is on layer {bone.CollisionLayer}, expected Enemy ({Layers.Enemy})");
+            // Mask 0 is the half that is easiest to lose and hardest to notice: a hitbox only ever
+            // needs to be *found* by a query, never to collide. Leave it at the default 1 and the
+            // bones shove themselves around against the floor.
+            failures += Check(bone.CollisionMask == 0,
+                $"bone {bone.Name} masks {bone.CollisionMask}, expected 0 -- hitboxes must not collide");
+        }
 
-        // The controller itself: EnemyController._Ready must find its Skeleton-nested mesh (via
-        // FlashMesh, not the hardcoded top-level "MeshInstance3D" the placeholder capsule enemy
-        // uses), its NavigationAgent3D, its Health, and a GunComponent to drive Attack's Firing flag.
-        failures += Check(grunt.Health is not null, "EnemyController did not resolve its HealthComponent");
-        failures += Check(grunt.Agent is not null, "EnemyController did not resolve its NavigationAgent3D");
-        failures += Check(Component.Get<GunComponent>(grunt) is not null, "GunComponent did not resolve on Grunt");
-
-        // The state machine BrainState hard-requires by name, plus the two states that give this
-        // enemy its chase-and-shoot behaviour.
-        foreach (var stateName in new[] { "Idle", "Chase", "Attack", "Dead" })
-            failures += Check(grunt.GetNodeOrNull($"StateMachine/Brain/{stateName}") is not null,
-                $"StateMachine/Brain/{stateName} is missing");
+        failures += Check(bones == 19, $"found {bones} bone hitboxes, expected 19");
 
         if (failures == 0) GD.Print("grunt wiring tests: all passed");
         GetTree().Quit(failures == 0 ? 0 : 1);
