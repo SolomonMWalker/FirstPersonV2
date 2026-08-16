@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://Pickups/health_pickup.tscn" id="22_pickup"]
 [ext_resource type="Script" uid="uid://c8qygbih11n05" path="res://Components/InteractableComponent.cs" id="23_interactable"]
 [ext_resource type="PackedScene" path="res://Enemy/enemy.tscn" id="25_enemy"]
+[ext_resource type="PackedScene" uid="uid://d22jh2rrka2na" path="res://Enemy/Grunt/grunt_basic_enemy.tscn" id="26_grunt"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_gojnm"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -35,6 +36,12 @@ agent_max_climb = 0.5
 albedo_color = Color(0.15, 0.45, 0.85, 1)
 emission_enabled = true
 emission = Color(0.2, 0.5, 1, 1)
+emission_energy_multiplier = 0.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ragdollswitch"]
+albedo_color = Color(0.85, 0.35, 0.1, 1)
+emission_enabled = true
+emission = Color(1, 0.45, 0.1, 1)
 emission_energy_multiplier = 0.8
 
 [node name="LevelSkeleton" type="Node" unique_id=24507664]
@@ -221,6 +228,23 @@ Firing = false
 [node name="InteractableComponent" type="Node3D" parent="Enemy2/Components" unique_id=601342222]
 script = ExtResource("23_interactable")
 Verb = "turn the turret on"
+
+[node name="Grunt" parent="." unique_id=-353115089 instance=ExtResource("26_grunt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 0, -10)
+
+[node name="GruntRagdollSwitch" type="Node3D" parent="." unique_id=-353115088 groups=["navmesh"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.5, 0, -10)
+
+[node name="Body" type="CSGBox3D" parent="GruntRagdollSwitch" unique_id=-353115087]
+transform = Transform3D(1.6, 0, 0, 0, 1.6, 0, 0, 0, 1.6, 0, 0.8, 0)
+use_collision = true
+material = SubResource("StandardMaterial3D_ragdollswitch")
+
+[node name="Components" type="Node3D" parent="GruntRagdollSwitch" unique_id=-353115086]
+
+[node name="InteractableComponent" type="Node3D" parent="GruntRagdollSwitch/Components" unique_id=-353115085]
+script = ExtResource("23_interactable")
+Verb = "ragdoll the grunt"
 
 [node name="Player" parent="." unique_id=725568976 instance=ExtResource("8_6emce")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)

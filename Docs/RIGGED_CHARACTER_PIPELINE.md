@@ -154,7 +154,9 @@ Optional, and effectively free once layer 4 exists — it's a mode switch on nod
 
 > **In this project**
 >
-> Not wired up yet — deliberately deferred. The hitboxes already exist and already sit on their own non-colliding layer, so turning them into a death ragdoll later is one `physical_bones_start_simulation()` call and some joint tuning, not new nodes.
+> The joint tuning is done — all 19 hitbox bones now carry real constraints (`ConeJoint` on the spine, neck, head, shoulders/clavicles, hips, wrists, ankles; `HingeJoint` on elbows and knees), following [`RAGDOLL_JOINT_GUIDE.md`](RAGDOLL_JOINT_GUIDE.md). Only `pelvis` (bone `spine`) is still a plain `Pin` — it's the root of the chain with no parent physical bone to joint against, so `joint_type` on it is moot. `physical_bones_start_simulation()` is still not called anywhere — that's the remaining wire-up, on death.
+>
+> The elbow/knee hinge axis sign is unverified — set from anatomical reasoning (0° to ~140-145° flex, small buffer past straight), not confirmed against this rig's actual local bone axes in-editor. Start a simulation and watch one arm/leg fall; if a joint bends the wrong way, negate that bone's `angular_limit_upper`/`angular_limit_lower` pair.
 
 ## 06 — Navigation
 
