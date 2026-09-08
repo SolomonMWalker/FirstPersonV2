@@ -1,0 +1,76 @@
+[gd_scene format=3 uid="uid://d4fberfjpttwp"]
+
+[ext_resource type="Script" uid="uid://dggxwrxcj3iow" path="res://Player/PlayerController.cs" id="1_player"]
+[ext_resource type="Script" uid="uid://mr4yjig6y86j" path="res://Player/ClamberController.cs" id="2_clamber"]
+[ext_resource type="Script" uid="uid://csfiuwgihnlal" path="res://StateMachine/StateMachine.cs" id="3_sm"]
+[ext_resource type="Script" uid="uid://crtr3umctqeyl" path="res://StateMachine/CompoundState.cs" id="4_compound"]
+[ext_resource type="Script" uid="uid://bcnx21w1ivrut" path="res://Player/States/LocomotingState.cs" id="5_locomoting"]
+[ext_resource type="Script" uid="uid://pv2h8072kpbq" path="res://Player/States/GroundedState.cs" id="6_grounded"]
+[ext_resource type="Script" uid="uid://df4qvvxj8qw6q" path="res://Player/States/InAirState.cs" id="7_inair"]
+[ext_resource type="Script" uid="uid://druyex0dfvleg" path="res://Player/States/CoyoteState.cs" id="8_coyote"]
+[ext_resource type="Script" uid="uid://c8dqyyhg1ddja" path="res://Player/States/WalkingState.cs" id="9_walking"]
+[ext_resource type="Script" uid="uid://cccrcqiv7hdlq" path="res://Player/States/SprintingState.cs" id="10_sprinting"]
+[ext_resource type="Script" uid="uid://b1xxcgrt88eii" path="res://Player/States/CrouchingState.cs" id="11_crouching"]
+[ext_resource type="Script" uid="uid://d35li1co3iiqs" path="res://Player/States/ClamberingState.cs" id="12_clambering"]
+[ext_resource type="Script" uid="uid://d0n1ub471d1c2" path="res://Player/CameraController.cs" id="13_camera"]
+[ext_resource type="PackedScene" uid="uid://dwb3stmyphy10" path="res://player_rig.tscn" id="14_gu6f8"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
+
+[node name="Player" type="CharacterBody3D" unique_id=1878783226 node_paths=PackedStringArray("Clamber") groups=["player"]]
+floor_snap_length = 0.35
+script = ExtResource("1_player")
+Clamber = NodePath("Components/ClamberComponent")
+
+[node name="StateMachine" type="Node" parent="." unique_id=620021452]
+script = ExtResource("3_sm")
+
+[node name="Player" type="Node" parent="StateMachine" unique_id=143650237]
+script = ExtResource("4_compound")
+
+[node name="Locomoting" type="Node" parent="StateMachine/Player" unique_id=287399591]
+script = ExtResource("5_locomoting")
+
+[node name="AirState" type="Node" parent="StateMachine/Player/Locomoting" unique_id=748551334]
+script = ExtResource("4_compound")
+
+[node name="Grounded" type="Node" parent="StateMachine/Player/Locomoting/AirState" unique_id=926798235]
+script = ExtResource("6_grounded")
+
+[node name="InAir" type="Node" parent="StateMachine/Player/Locomoting/AirState" unique_id=247658121]
+script = ExtResource("7_inair")
+
+[node name="Coyote" type="Node" parent="StateMachine/Player/Locomoting/AirState" unique_id=740162398]
+script = ExtResource("8_coyote")
+
+[node name="MovementState" type="Node" parent="StateMachine/Player/Locomoting" unique_id=1341735460]
+script = ExtResource("4_compound")
+RememberActiveState = true
+
+[node name="Walking" type="Node" parent="StateMachine/Player/Locomoting/MovementState" unique_id=1399446361]
+script = ExtResource("9_walking")
+
+[node name="Sprinting" type="Node" parent="StateMachine/Player/Locomoting/MovementState" unique_id=517981371]
+script = ExtResource("10_sprinting")
+
+[node name="Crouching" type="Node" parent="StateMachine/Player/Locomoting/MovementState" unique_id=47620913]
+script = ExtResource("11_crouching")
+
+[node name="Clambering" type="Node" parent="StateMachine/Player" unique_id=2005884829]
+script = ExtResource("12_clambering")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1906496044]
+shape = SubResource("CapsuleShape3D_1")
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=972355194]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+script = ExtResource("13_camera")
+
+[node name="PlayerRig" parent="Camera3D" unique_id=1981729185 instance=ExtResource("14_gu6f8")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
+
+[node name="Components" type="Node3D" parent="." unique_id=77945987]
+
+[node name="ClamberComponent" type="Node3D" parent="Components" unique_id=1121582334 node_paths=PackedStringArray("Player")]
+script = ExtResource("2_clamber")
+Player = NodePath("../..")

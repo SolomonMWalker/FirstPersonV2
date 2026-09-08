@@ -1,0 +1,39 @@
+[gd_scene load_steps=2 format=3 uid="uid://bqp5m2xk4v3n1"]
+
+[ext_resource type="Script" path="res://UI/PauseMenu.cs" id="1_pausemenu"]
+
+[node name="PauseMenu" type="CanvasLayer"]
+process_mode = 3
+layer = 10
+visible = false
+script = ExtResource("1_pausemenu")
+
+[node name="Tint" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.6)
+
+[node name="Center" type="CenterContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Buttons" type="VBoxContainer" parent="Center"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Continue" type="Button" parent="Center/Buttons"]
+custom_minimum_size = Vector2(220, 44)
+layout_mode = 2
+text = "Continue"
+
+[node name="Restart" type="Button" parent="Center/Buttons"]
+custom_minimum_size = Vector2(220, 44)
+layout_mode = 2
+text = "Restart Level"
+
+[node name="Quit" type="Button" parent="Center/Buttons"]
+custom_minimum_size = Vector2(220, 44)
+layout_mode = 2
+text = "Quit"

@@ -1,0 +1,9 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# Blender auto-save / backup files
+*.blend1
+*.blend2
+*.blend3
+*.blend@
