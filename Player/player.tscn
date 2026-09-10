@@ -17,10 +17,11 @@
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
 
-[node name="Player" type="CharacterBody3D" unique_id=1878783226 node_paths=PackedStringArray("Clamber") groups=["player"]]
+[node name="Player" type="CharacterBody3D" unique_id=1878783226 node_paths=PackedStringArray("Clamber", "Rig") groups=["player"]]
 floor_snap_length = 0.35
 script = ExtResource("1_player")
 Clamber = NodePath("Components/ClamberComponent")
+Rig = NodePath("Camera3D/PlayerRig")
 
 [node name="StateMachine" type="Node" parent="." unique_id=620021452]
 script = ExtResource("3_sm")

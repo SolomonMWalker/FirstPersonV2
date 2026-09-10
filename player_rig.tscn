@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://csfiuwgihnlal" path="res://StateMachine/StateMachine.cs" id="2_3falg"]
 [ext_resource type="Script" uid="uid://ciglti735rx7c" path="res://RigController.cs" id="2_73l5c"]
 [ext_resource type="Script" uid="uid://dun080cox3oij" path="res://RevolverController.cs" id="2_s28vq"]
+[ext_resource type="Script" uid="uid://xs202khb8uxg" path="res://RevolverCylinderRotationModifier.cs" id="3_jlf0t"]
 [ext_resource type="Script" uid="uid://dqb33m31l7id" path="res://StateMachine/ParallelState.cs" id="3_ln5ei"]
 [ext_resource type="Script" uid="uid://crtr3umctqeyl" path="res://StateMachine/CompoundState.cs" id="4_s28vq"]
 [ext_resource type="Script" uid="uid://58pf6lf3i4cx" path="res://PlayerRigStates/HipState.cs" id="6_hip"]
@@ -19,6 +20,7 @@
 [ext_resource type="Script" uid="uid://c7insb8k3rq05" path="res://PlayerRigStates/InsertBulletState.cs" id="16_insert"]
 [ext_resource type="Script" uid="uid://c7closdaw2tf6" path="res://PlayerRigStates/CloseCylinderState.cs" id="17_close"]
 [ext_resource type="Script" uid="uid://c7intrp1x5md8" path="res://PlayerRigStates/InterruptState.cs" id="18_intr"]
+[ext_resource type="Script" uid="uid://cd5opbt1o0k2o" path="res://RevolverCylinderController.cs" id="21_vh7l8"]
 
 [sub_resource type="AnimationNodeAnimation" id="Anim_ReloadClose"]
 animation = &"RevolverRigReloadCloseCylinder"
@@ -223,21 +225,21 @@ states/RevolverRigHammerDownHip/position = Vector2(580, 40)
 states/RevolverRigHipFire/node = SubResource("Anim_HipFire")
 states/RevolverRigHipFire/position = Vector2(768, 120.96)
 states/RevolverRigHipIdle/node = SubResource("Anim_HipIdle")
-states/RevolverRigHipIdle/position = Vector2(320, 120)
+states/RevolverRigHipIdle/position = Vector2(320, 120.64)
 states/RevolverRigReloadStartOpenCylinderAim/node = SubResource("Anim_ReloadStartAim")
 states/RevolverRigReloadStartOpenCylinderAim/position = Vector2(580, 260)
 states/RevolverRigReloadStartOpenCylinderHip/node = SubResource("Anim_ReloadStartHip")
 states/RevolverRigReloadStartOpenCylinderHip/position = Vector2(580, 200)
 states/Start/position = Vector2(100, 240)
 transitions = ["Start", "RevolverRigHipIdle", SubResource("T_start_idle"), "RevolverRigHipIdle", "RevolverRigAimIdle", SubResource("T_hipidle_aimidle"), "RevolverRigAimIdle", "RevolverRigHipIdle", SubResource("T_aimidle_hipidle"), "RevolverRigHipIdle", "RevolverRigHammerDownHip", SubResource("T_hipidle_hdhip"), "RevolverRigAimIdle", "RevolverRigHammerDownAim", SubResource("T_aimidle_hdaim"), "RevolverRigHammerDownHip", "RevolverRigHammerDownAim", SubResource("T_hdhip_hdaim"), "RevolverRigHammerDownAim", "RevolverRigHammerDownHip", SubResource("T_hdaim_hdhip"), "RevolverRigHammerDownHip", "RevolverRigHipIdle", SubResource("T_hdhip_hipidle"), "RevolverRigHammerDownAim", "RevolverRigAimIdle", SubResource("T_hdaim_aimidle"), "RevolverRigHipFire", "RevolverRigHipIdle", SubResource("T_hipfire_hipidle"), "RevolverRigAimFire", "RevolverRigAimIdle", SubResource("T_aimfire_aimidle"), "RevolverRigHipIdle", "RevolverRigReloadStartOpenCylinderHip", SubResource("T_hipidle_relhip"), "RevolverRigAimIdle", "RevolverRigReloadStartOpenCylinderAim", SubResource("T_aimidle_relaim"), "RevolverRigReloadStartOpenCylinderHip", "RevolverRigReloadStartOpenCylinderAim", SubResource("T_relhip_relaim"), "RevolverRigReloadStartOpenCylinderAim", "RevolverRigReloadStartOpenCylinderHip", SubResource("T_relaim_relhip"), "RevolverRigReloadStartOpenCylinderHip", "Reload", SubResource("T_relhip_reload"), "RevolverRigReloadStartOpenCylinderAim", "Reload", SubResource("T_relaim_reload"), "Reload", "RevolverRigHipIdle", SubResource("T_reload_hipidle"), "RevolverRigHipIdle", "RevolverRigHipFire", SubResource("AnimationNodeStateMachineTransition_ikfv6"), "RevolverRigAimIdle", "RevolverRigAimFire", SubResource("AnimationNodeStateMachineTransition_3mbro")]
-graph_offset = Vector2(85, -1)
+graph_offset = Vector2(35, 32)
 
 [node name="PlayerRig" unique_id=1981729185 node_paths=PackedStringArray("AnimationTree", "Revolver") instance=ExtResource("1_dwq0k")]
 script = ExtResource("2_73l5c")
 AnimationTree = NodePath("AnimationTree")
 Revolver = NodePath("WeaponControllers/RevolverController")
 
-[node name="Skeleton3D" parent="RigArmature" parent_id_path=PackedInt32Array(115041630) index="0" unique_id=608092777]
+[node name="Skeleton3D" parent="RigArmature" parent_id_path=PackedInt32Array(1761375378) index="0" unique_id=1552876810]
 bones/1/position = Vector3(0.62319916, -0.23332143, -0.69142526)
 bones/1/rotation = Quaternion(0.6735852, -0.2119018, 0.6818761, -0.19085485)
 bones/2/position = Vector3(-0.41848147, -0.4601254, 0.437012)
@@ -271,24 +273,62 @@ bones/28/rotation = Quaternion(-0.11400621, 0.32789442, -0.13837323, 0.9275455)
 bones/30/position = Vector3(4.19792e-08, 0.03130312, 0.045634754)
 bones/30/rotation = Quaternion(0.33384988, -0.62333333, 0.33384982, 0.6233332)
 bones/31/position = Vector3(-2.0793966e-08, 0.2270315, -0.034465257)
-bones/32/rotation = Quaternion(0.63374597, -3.392325e-08, -1.2325974e-07, 0.7735413)
-bones/33/rotation = Quaternion(0.9146414, 1.7222476e-08, -1.777922e-07, -0.4042662)
-bones/34/rotation = Quaternion(0.21185228, 0.0049846163, 0.022987578, 0.9770186)
-bones/35/rotation = Quaternion(-0.55603623, 0.0069303545, -0.010357937, 0.8310647)
-bones/36/rotation = Quaternion(-0.41086477, 0.0028547805, -0.0063322433, 0.9116699)
-bones/37/rotation = Quaternion(-0.7103099, 0.06142544, -0.060412575, 0.69859654)
-bones/38/rotation = Quaternion(-0.55607355, -0.007422797, 0.01109303, 0.8310259)
-bones/39/rotation = Quaternion(-0.26734883, 0.003375023, -0.012166796, 0.96351707)
-bones/42/rotation = Quaternion(-0.77561903, -0.005521782, -0.0011468572, 0.6311761)
-bones/43/rotation = Quaternion(-0.25968808, 0.0029160483, -0.008178778, 0.96565354)
-bones/44/rotation = Quaternion(-0.4478049, -0.021713234, 0.023507964, 0.89355844)
-bones/45/rotation = Quaternion(-0.7119356, 0.033944596, -0.033357896, 0.70063037)
-bones/46/rotation = Quaternion(-0.53884095, -0.008123484, 0.012693195, 0.84227276)
-bones/47/rotation = Quaternion(-0.21498021, -0.0011292978, 0.0035287682, 0.9766114)
-bones/48/position = Vector3(-0.08194808, 0.07263984, -0.021973306)
-bones/48/rotation = Quaternion(-0.30254066, -0.16064715, 0.14660606, 0.9279916)
-bones/49/rotation = Quaternion(0.28639585, 0.036308404, -0.15246996, 0.94520473)
-bones/50/rotation = Quaternion(0.050501086, 0.17065054, -0.096585274, 0.9792851)
+bones/33/rotation = Quaternion(0.63374597, -3.392325e-08, -1.2325974e-07, 0.7735413)
+bones/34/rotation = Quaternion(0.9146414, 1.7222476e-08, -1.777922e-07, -0.4042662)
+bones/35/rotation = Quaternion(0.21185228, 0.0049846163, 0.022987578, 0.9770186)
+bones/36/rotation = Quaternion(-0.55603623, 0.0069303545, -0.010357937, 0.8310647)
+bones/37/rotation = Quaternion(-0.41086477, 0.0028547805, -0.0063322433, 0.9116699)
+bones/38/rotation = Quaternion(-0.7103099, 0.06142544, -0.060412575, 0.69859654)
+bones/39/rotation = Quaternion(-0.55607355, -0.007422797, 0.01109303, 0.8310259)
+bones/40/rotation = Quaternion(-0.26734883, 0.003375023, -0.012166796, 0.96351707)
+bones/43/rotation = Quaternion(-0.77561903, -0.005521782, -0.0011468572, 0.6311761)
+bones/44/rotation = Quaternion(-0.25968808, 0.0029160483, -0.008178778, 0.96565354)
+bones/45/rotation = Quaternion(-0.4478049, -0.021713234, 0.023507964, 0.89355844)
+bones/46/rotation = Quaternion(-0.7119356, 0.033944596, -0.033357896, 0.70063037)
+bones/47/rotation = Quaternion(-0.53884095, -0.008123484, 0.012693195, 0.84227276)
+bones/48/rotation = Quaternion(-0.21498021, -0.0011292978, 0.0035287682, 0.9766114)
+bones/49/position = Vector3(-0.08194808, 0.07263984, -0.021973306)
+bones/49/rotation = Quaternion(-0.30254066, -0.16064715, 0.14660606, 0.9279916)
+bones/50/rotation = Quaternion(0.28639585, 0.036308404, -0.15246996, 0.94520473)
+bones/51/rotation = Quaternion(0.050501086, 0.17065054, -0.096585274, 0.9792851)
+
+[node name="RevolverCylinderRotationModifier" type="SkeletonModifier3D" parent="RigArmature/Skeleton3D" index="0" unique_id=1173145331]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.12048, 0.14088, -1.0607)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+active = true
+influence = 1.0
+script = ExtResource("3_jlf0t")
+metadata/_custom_type_script = "uid://xs202khb8uxg"
+
+[node name="bulletCasing1" parent="RigArmature/Skeleton3D" index="2" unique_id=1899422555]
+visible = false
+
+[node name="bulletCasing2" parent="RigArmature/Skeleton3D" index="3" unique_id=4960541]
+visible = false
+
+[node name="bulletCasing3" parent="RigArmature/Skeleton3D" index="4" unique_id=227113670]
+visible = false
+
+[node name="bulletCasing4" parent="RigArmature/Skeleton3D" index="5" unique_id=66189540]
+visible = false
+
+[node name="bulletCasing5" parent="RigArmature/Skeleton3D" index="6" unique_id=1896065084]
+visible = false
+
+[node name="bulletCasing6" parent="RigArmature/Skeleton3D" index="7" unique_id=1908252653]
+visible = false
 
 [node name="AnimationTree" type="AnimationTree" parent="." index="2" unique_id=1347530506]
 deterministic = false
@@ -310,12 +350,16 @@ script = ExtResource("4_s28vq")
 DefaultState = NodePath("Hip")
 metadata/_custom_type_script = "uid://crtr3umctqeyl"
 
-[node name="Hip" type="Node" parent="StateMachine/Root/AimOrHip" index="0" unique_id=55794369]
+[node name="Hip" type="Node" parent="StateMachine/Root/AimOrHip" index="0" unique_id=55794369 node_paths=PackedStringArray("RevolverController", "RigController")]
 script = ExtResource("6_hip")
+RevolverController = NodePath("../../../../WeaponControllers/RevolverController")
+RigController = NodePath("../../../..")
 metadata/_custom_type_script = "uid://1203ywfe4cex"
 
-[node name="Aim" type="Node" parent="StateMachine/Root/AimOrHip" index="1" unique_id=1899768531]
+[node name="Aim" type="Node" parent="StateMachine/Root/AimOrHip" index="1" unique_id=1899768531 node_paths=PackedStringArray("RevolverController", "RigController")]
 script = ExtResource("7_aim")
+RevolverController = NodePath("../../../../WeaponControllers/RevolverController")
+RigController = NodePath("../../../..")
 metadata/_custom_type_script = "uid://1203ywfe4cex"
 
 [node name="Weapon" type="Node" parent="StateMachine/Root" index="1" unique_id=628507254 node_paths=PackedStringArray("DefaultState")]
@@ -347,8 +391,10 @@ metadata/_custom_type_script = "uid://1203ywfe4cex"
 script = ExtResource("4_s28vq")
 metadata/_custom_type_script = "uid://crtr3umctqeyl"
 
-[node name="Idle" type="Node" parent="StateMachine/Root/Revolver/Action" index="0" unique_id=904302725]
+[node name="Idle" type="Node" parent="StateMachine/Root/Revolver/Action" index="0" unique_id=904302725 node_paths=PackedStringArray("RevolverController", "RigController")]
 script = ExtResource("7_2lhuv")
+RevolverController = NodePath("../../../../../WeaponControllers/RevolverController")
+RigController = NodePath("../../../../..")
 metadata/_custom_type_script = "uid://1203ywfe4cex"
 
 [node name="PushHammerDown" type="Node" parent="StateMachine/Root/Revolver/Action" index="1" unique_id=1205594090]
@@ -385,5 +431,14 @@ metadata/_custom_type_script = "uid://1203ywfe4cex"
 
 [node name="WeaponControllers" type="Node" parent="." index="4" unique_id=161381544]
 
-[node name="RevolverController" type="Node" parent="WeaponControllers" index="0" unique_id=1439695976]
+[node name="RevolverController" type="Node" parent="WeaponControllers" index="0" unique_id=1439695976 node_paths=PackedStringArray("StateMachine")]
 script = ExtResource("2_s28vq")
+StateMachine = NodePath("../../StateMachine")
+
+[node name="RevolverCylinderController" type="Node" parent="WeaponControllers/RevolverController" index="0" unique_id=997456131 node_paths=PackedStringArray("RevolverController", "RevolverCylinderRotationModifier", "Bullets", "BulletShells")]
+script = ExtResource("21_vh7l8")
+RevolverController = NodePath("..")
+RevolverCylinderRotationModifier = NodePath("../../../RigArmature/Skeleton3D/RevolverCylinderRotationModifier")
+Bullets = [NodePath("../../../RigArmature/Skeleton3D/bulletWithCasing1"), NodePath("../../../RigArmature/Skeleton3D/bulletWithCasing2"), NodePath("../../../RigArmature/Skeleton3D/bulletWithCasing3"), NodePath("../../../RigArmature/Skeleton3D/bulletWithCasing4"), NodePath("../../../RigArmature/Skeleton3D/bulletWithCasing5"), NodePath("../../../RigArmature/Skeleton3D/bulletWithCasing6")]
+BulletShells = [NodePath("../../../RigArmature/Skeleton3D/bulletCasing1"), NodePath("../../../RigArmature/Skeleton3D/bulletCasing2"), NodePath("../../../RigArmature/Skeleton3D/bulletCasing3"), NodePath("../../../RigArmature/Skeleton3D/bulletCasing4"), NodePath("../../../RigArmature/Skeleton3D/bulletCasing5"), NodePath("../../../RigArmature/Skeleton3D/bulletCasing6")]
+metadata/_custom_type_script = "uid://cd5opbt1o0k2o"
