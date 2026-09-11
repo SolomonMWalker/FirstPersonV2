@@ -9,11 +9,17 @@ public partial class AimState : AtomicState
 {
     [Export] public RevolverController RevolverController { get; set; }
     [Export] public RigController RigController { get; set; }
-    
+
+    public override void _Ready()
+    {
+        base._Ready();
+        AddTransitions();
+    }
+
     public override void StateEntered()
     {
         base.StateEntered();
-        RigController.Travel("RevolverRigAimIdle"); 
+        RigController.Travel("RevolverRigAimIdle");
     }
 
     public override void StateExited()

@@ -13,8 +13,8 @@
 [ext_resource type="Script" uid="uid://b1xxcgrt88eii" path="res://Player/States/CrouchingState.cs" id="11_crouching"]
 [ext_resource type="Script" uid="uid://d35li1co3iiqs" path="res://Player/States/ClamberingState.cs" id="12_clambering"]
 [ext_resource type="Script" uid="uid://d0n1ub471d1c2" path="res://Player/CameraController.cs" id="13_camera"]
-[ext_resource type="PackedScene" uid="uid://dwb3stmyphy10" path="res://player_rig.tscn" id="14_gu6f8"]
-[ext_resource type="Script" path="res://Player/ViewmodelCamera.cs" id="15_viewmodel"]
+[ext_resource type="PackedScene" uid="uid://ddbsaxux3ovur" path="res://player_rig_glb.tscn" id="13_dkpta"]
+[ext_resource type="Script" uid="uid://cyqb6ca3osvw2" path="res://Player/ViewmodelCamera.cs" id="15_viewmodel"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
 
@@ -22,10 +22,11 @@
 floor_snap_length = 0.35
 script = ExtResource("1_player")
 Clamber = NodePath("Components/ClamberComponent")
-Rig = NodePath("Camera3D/PlayerRig")
+Rig = NodePath("Camera3D/Arms")
 
-[node name="StateMachine" type="Node" parent="." unique_id=620021452]
+[node name="StateMachine" type="Node" parent="." unique_id=620021452 node_paths=PackedStringArray("RootState")]
 script = ExtResource("3_sm")
+RootState = NodePath("Player")
 
 [node name="Player" type="Node" parent="StateMachine" unique_id=143650237]
 script = ExtResource("4_compound")
@@ -71,7 +72,7 @@ cull_mask = 1048573
 fov = 90.0
 script = ExtResource("13_camera")
 
-[node name="PlayerRig" parent="Camera3D" unique_id=1981729185 instance=ExtResource("14_gu6f8")]
+[node name="Arms" parent="Camera3D" unique_id=1490377202 instance=ExtResource("13_dkpta")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
 
 [node name="Components" type="Node3D" parent="." unique_id=77945987]
@@ -92,13 +93,13 @@ stretch = true
 [node name="SubViewport" type="SubViewport" parent="ViewmodelContainer" unique_id=1662905530]
 transparent_bg = true
 handle_input_locally = false
+size = Vector2i(1152, 648)
 render_target_update_mode = 4
 
 [node name="ViewmodelCamera" type="Camera3D" parent="ViewmodelContainer/SubViewport" unique_id=884517203 node_paths=PackedStringArray("WorldCamera", "Viewmodel")]
 keep_aspect = 0
 cull_mask = 2
 current = true
-fov = 75.0
 script = ExtResource("15_viewmodel")
 WorldCamera = NodePath("../../../Camera3D")
-Viewmodel = NodePath("../../../Camera3D/PlayerRig")
+Viewmodel = NodePath("../../../Camera3D/Arms")

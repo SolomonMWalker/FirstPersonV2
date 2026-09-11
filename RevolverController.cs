@@ -10,8 +10,9 @@ public partial class RevolverController : Node
     public int ammoInCylinder = 6;
 
     //Fired action bools
-    public bool fire;
-    public bool pushHammerDown;
+    public bool fireTrigger;
+    public bool pushHammerDownTrigger;
+    public bool reloadTrigger;
 
     //Consistent "state" bools
     public bool aiming;
@@ -41,8 +42,15 @@ public partial class RevolverController : Node
 
     public void Fire()
     {
+        GD.Print("Fire");
         isHammerDown = false;
-        fire = true;
+        fireTrigger = true;
+    }
+    
+    public void PushHammerDown()
+    {
+        GD.Print("PushHammerDown");
+        pushHammerDownTrigger = true;
     }
 
     public void AddBulletToCylinder()
@@ -58,10 +66,5 @@ public partial class RevolverController : Node
     public void SubtractBulletFromTotalAmmo()
     {
         reserveAmmo -= 1;
-    }
-
-    public void PushHammerDown()
-    {
-        isHammerDown = true;
     }
 }

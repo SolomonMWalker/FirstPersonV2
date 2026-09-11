@@ -1,26 +1,26 @@
-[gd_scene format=3 uid="uid://dwb3stmyphy10"]
+[gd_scene format=3 uid="uid://bhpfu0khveksh"]
 
-[ext_resource type="PackedScene" uid="uid://dq2jywjr0bft0" path="res://Assets/Blender/Arms.blend" id="1_dwq0k"]
-[ext_resource type="Script" uid="uid://csfiuwgihnlal" path="res://StateMachine/StateMachine.cs" id="2_3falg"]
-[ext_resource type="Script" uid="uid://ciglti735rx7c" path="res://RigController.cs" id="2_73l5c"]
-[ext_resource type="Script" uid="uid://dun080cox3oij" path="res://RevolverController.cs" id="2_s28vq"]
-[ext_resource type="Script" uid="uid://xs202khb8uxg" path="res://RevolverCylinderRotationModifier.cs" id="3_jlf0t"]
-[ext_resource type="Script" uid="uid://dqb33m31l7id" path="res://StateMachine/ParallelState.cs" id="3_ln5ei"]
-[ext_resource type="Script" uid="uid://crtr3umctqeyl" path="res://StateMachine/CompoundState.cs" id="4_s28vq"]
-[ext_resource type="Script" uid="uid://58pf6lf3i4cx" path="res://PlayerRigStates/HipState.cs" id="6_hip"]
-[ext_resource type="Script" uid="uid://vqji0jh51gmo" path="res://PlayerRigStates/IdleState.cs" id="7_2lhuv"]
-[ext_resource type="Script" uid="uid://cq2avyq5cxdeg" path="res://PlayerRigStates/AimState.cs" id="7_aim"]
-[ext_resource type="Script" uid="uid://cffoh4q1iacbi" path="res://PlayerRigStates/WeaponRevolverState.cs" id="8_wrev"]
-[ext_resource type="Script" uid="uid://c7hmup3lawq2a" path="res://PlayerRigStates/HammerUpState.cs" id="9_hup"]
-[ext_resource type="Script" uid="uid://c7hmdn5r8xt4b" path="res://PlayerRigStates/HammerDownState.cs" id="10_hdn"]
-[ext_resource type="Script" uid="uid://bvg0j3yadcw4o" path="res://PlayerRigStates/PushHammerDownState.cs" id="12_phdn"]
-[ext_resource type="Script" uid="uid://dn61uwkl1k2gs" path="res://PlayerRigStates/FireState.cs" id="13_fire"]
-[ext_resource type="Script" uid="uid://c7intib2m6vea" path="res://PlayerRigStates/IntroInsertBulletState.cs" id="14_intro"]
-[ext_resource type="Script" uid="uid://c7turnc4p1ns7" path="res://PlayerRigStates/TurnCylinderState.cs" id="15_turn"]
-[ext_resource type="Script" uid="uid://c7insb8k3rq05" path="res://PlayerRigStates/InsertBulletState.cs" id="16_insert"]
-[ext_resource type="Script" uid="uid://c7closdaw2tf6" path="res://PlayerRigStates/CloseCylinderState.cs" id="17_close"]
-[ext_resource type="Script" uid="uid://c7intrp1x5md8" path="res://PlayerRigStates/InterruptState.cs" id="18_intr"]
-[ext_resource type="Script" uid="uid://cd5opbt1o0k2o" path="res://RevolverCylinderController.cs" id="21_vh7l8"]
+[ext_resource type="PackedScene" uid="uid://dq2jywjr0bft0" path="res://Assets/Blender/Arms.blend" id="1_7god1"]
+[ext_resource type="Script" uid="uid://ciglti735rx7c" path="res://RigController.cs" id="2_eennn"]
+[ext_resource type="Script" uid="uid://xs202khb8uxg" path="res://RevolverCylinderRotationModifier.cs" id="3_x7eup"]
+[ext_resource type="Script" uid="uid://csfiuwgihnlal" path="res://StateMachine/StateMachine.cs" id="4_uxeh5"]
+[ext_resource type="Script" uid="uid://dqb33m31l7id" path="res://StateMachine/ParallelState.cs" id="5_wmqer"]
+[ext_resource type="Script" uid="uid://crtr3umctqeyl" path="res://StateMachine/CompoundState.cs" id="6_sj3ms"]
+[ext_resource type="Script" uid="uid://58pf6lf3i4cx" path="res://PlayerRigStates/HipState.cs" id="7_t7pvd"]
+[ext_resource type="Script" uid="uid://cq2avyq5cxdeg" path="res://PlayerRigStates/AimState.cs" id="8_7aoa5"]
+[ext_resource type="Script" uid="uid://cffoh4q1iacbi" path="res://PlayerRigStates/WeaponRevolverState.cs" id="9_06xgb"]
+[ext_resource type="Script" uid="uid://c7hmup3lawq2a" path="res://PlayerRigStates/HammerUpState.cs" id="10_nidwr"]
+[ext_resource type="Script" uid="uid://c7hmdn5r8xt4b" path="res://PlayerRigStates/HammerDownState.cs" id="11_hkccg"]
+[ext_resource type="Script" uid="uid://vqji0jh51gmo" path="res://PlayerRigStates/IdleState.cs" id="12_2a4y2"]
+[ext_resource type="Script" uid="uid://bvg0j3yadcw4o" path="res://PlayerRigStates/PushHammerDownState.cs" id="13_f1b3y"]
+[ext_resource type="Script" uid="uid://dn61uwkl1k2gs" path="res://PlayerRigStates/FireState.cs" id="14_f7kcw"]
+[ext_resource type="Script" uid="uid://c7intib2m6vea" path="res://PlayerRigStates/IntroInsertBulletState.cs" id="15_v6toc"]
+[ext_resource type="Script" uid="uid://c7turnc4p1ns7" path="res://PlayerRigStates/TurnCylinderState.cs" id="16_m38u2"]
+[ext_resource type="Script" uid="uid://c7insb8k3rq05" path="res://PlayerRigStates/InsertBulletState.cs" id="17_xln2s"]
+[ext_resource type="Script" uid="uid://c7closdaw2tf6" path="res://PlayerRigStates/CloseCylinderState.cs" id="18_3eyms"]
+[ext_resource type="Script" uid="uid://c7intrp1x5md8" path="res://PlayerRigStates/InterruptState.cs" id="19_7kysf"]
+[ext_resource type="Script" uid="uid://dun080cox3oij" path="res://RevolverController.cs" id="20_hy5mq"]
+[ext_resource type="Script" uid="uid://cd5opbt1o0k2o" path="res://RevolverCylinderController.cs" id="21_7grxj"]
 
 [sub_resource type="AnimationNodeAnimation" id="Anim_ReloadClose"]
 animation = &"RevolverRigReloadCloseCylinder"
@@ -234,12 +234,12 @@ states/Start/position = Vector2(100, 240)
 transitions = ["Start", "RevolverRigHipIdle", SubResource("T_start_idle"), "RevolverRigHipIdle", "RevolverRigAimIdle", SubResource("T_hipidle_aimidle"), "RevolverRigAimIdle", "RevolverRigHipIdle", SubResource("T_aimidle_hipidle"), "RevolverRigHipIdle", "RevolverRigHammerDownHip", SubResource("T_hipidle_hdhip"), "RevolverRigAimIdle", "RevolverRigHammerDownAim", SubResource("T_aimidle_hdaim"), "RevolverRigHammerDownHip", "RevolverRigHammerDownAim", SubResource("T_hdhip_hdaim"), "RevolverRigHammerDownAim", "RevolverRigHammerDownHip", SubResource("T_hdaim_hdhip"), "RevolverRigHammerDownHip", "RevolverRigHipIdle", SubResource("T_hdhip_hipidle"), "RevolverRigHammerDownAim", "RevolverRigAimIdle", SubResource("T_hdaim_aimidle"), "RevolverRigHipFire", "RevolverRigHipIdle", SubResource("T_hipfire_hipidle"), "RevolverRigAimFire", "RevolverRigAimIdle", SubResource("T_aimfire_aimidle"), "RevolverRigHipIdle", "RevolverRigReloadStartOpenCylinderHip", SubResource("T_hipidle_relhip"), "RevolverRigAimIdle", "RevolverRigReloadStartOpenCylinderAim", SubResource("T_aimidle_relaim"), "RevolverRigReloadStartOpenCylinderHip", "RevolverRigReloadStartOpenCylinderAim", SubResource("T_relhip_relaim"), "RevolverRigReloadStartOpenCylinderAim", "RevolverRigReloadStartOpenCylinderHip", SubResource("T_relaim_relhip"), "RevolverRigReloadStartOpenCylinderHip", "Reload", SubResource("T_relhip_reload"), "RevolverRigReloadStartOpenCylinderAim", "Reload", SubResource("T_relaim_reload"), "Reload", "RevolverRigHipIdle", SubResource("T_reload_hipidle"), "RevolverRigHipIdle", "RevolverRigHipFire", SubResource("AnimationNodeStateMachineTransition_ikfv6"), "RevolverRigAimIdle", "RevolverRigAimFire", SubResource("AnimationNodeStateMachineTransition_3mbro")]
 graph_offset = Vector2(35, 32)
 
-[node name="PlayerRig" unique_id=1981729185 node_paths=PackedStringArray("AnimationTree", "Revolver") instance=ExtResource("1_dwq0k")]
-script = ExtResource("2_73l5c")
+[node name="PlayerRig" unique_id=1981729185 node_paths=PackedStringArray("AnimationTree", "Revolver") instance=ExtResource("1_7god1")]
+script = ExtResource("2_eennn")
 AnimationTree = NodePath("AnimationTree")
 Revolver = NodePath("WeaponControllers/RevolverController")
 
-[node name="Skeleton3D" parent="RigArmature" parent_id_path=PackedInt32Array(1761375378) index="0" unique_id=1552876810]
+[node name="Skeleton3D" parent="RigArmature" parent_id_path=PackedInt32Array(812330700) index="0" unique_id=1155125985]
 bones/1/position = Vector3(0.62319916, -0.23332143, -0.69142526)
 bones/1/rotation = Quaternion(0.6735852, -0.2119018, 0.6818761, -0.19085485)
 bones/2/position = Vector3(-0.41848147, -0.4601254, 0.437012)
@@ -273,7 +273,7 @@ bones/28/rotation = Quaternion(-0.11400621, 0.32789442, -0.13837323, 0.9275455)
 bones/30/position = Vector3(4.19792e-08, 0.03130312, 0.045634754)
 bones/30/rotation = Quaternion(0.33384988, -0.62333333, 0.33384982, 0.6233332)
 bones/31/position = Vector3(-2.0793966e-08, 0.2270315, -0.034465257)
-bones/33/rotation = Quaternion(0.63374597, -3.392325e-08, -1.2325974e-07, 0.7735413)
+bones/33/rotation = Quaternion(0.63374597, -3.3722525e-08, -1.2332104e-07, 0.7735413)
 bones/34/rotation = Quaternion(0.9146414, 1.7222476e-08, -1.777922e-07, -0.4042662)
 bones/35/rotation = Quaternion(0.21185228, 0.0049846163, 0.022987578, 0.9770186)
 bones/36/rotation = Quaternion(-0.55603623, 0.0069303545, -0.010357937, 0.8310647)
@@ -309,25 +309,25 @@ visible = true
 visibility_parent = NodePath("")
 active = true
 influence = 1.0
-script = ExtResource("3_jlf0t")
+script = ExtResource("3_x7eup")
 metadata/_custom_type_script = "uid://xs202khb8uxg"
 
-[node name="bulletCasing1" parent="RigArmature/Skeleton3D" index="2" unique_id=1899422555]
+[node name="bulletCasing1" parent="RigArmature/Skeleton3D" index="2" unique_id=592770744]
 visible = false
 
-[node name="bulletCasing2" parent="RigArmature/Skeleton3D" index="3" unique_id=4960541]
+[node name="bulletCasing2" parent="RigArmature/Skeleton3D" index="3" unique_id=1112171847]
 visible = false
 
-[node name="bulletCasing3" parent="RigArmature/Skeleton3D" index="4" unique_id=227113670]
+[node name="bulletCasing3" parent="RigArmature/Skeleton3D" index="4" unique_id=2020946411]
 visible = false
 
-[node name="bulletCasing4" parent="RigArmature/Skeleton3D" index="5" unique_id=66189540]
+[node name="bulletCasing4" parent="RigArmature/Skeleton3D" index="5" unique_id=1283761767]
 visible = false
 
-[node name="bulletCasing5" parent="RigArmature/Skeleton3D" index="6" unique_id=1896065084]
+[node name="bulletCasing5" parent="RigArmature/Skeleton3D" index="6" unique_id=1431952919]
 visible = false
 
-[node name="bulletCasing6" parent="RigArmature/Skeleton3D" index="7" unique_id=1908252653]
+[node name="bulletCasing6" parent="RigArmature/Skeleton3D" index="7" unique_id=590216740]
 visible = false
 
 [node name="AnimationTree" type="AnimationTree" parent="." index="2" unique_id=1347530506]
@@ -337,108 +337,112 @@ tree_root = SubResource("SM_Root")
 anim_player = NodePath("../AnimationPlayer")
 parameters/Reload/conditions/reload_done = false
 
-[node name="StateMachine" type="Node" parent="." index="3" unique_id=408359097]
-script = ExtResource("2_3falg")
+[node name="StateMachine" type="Node" parent="." index="3" unique_id=408359097 node_paths=PackedStringArray("RootState")]
+script = ExtResource("4_uxeh5")
+RootState = NodePath("Root")
 metadata/_custom_type_script = "uid://csfiuwgihnlal"
 
 [node name="Root" type="Node" parent="StateMachine" index="0" unique_id=1415727339]
-script = ExtResource("3_ln5ei")
+script = ExtResource("5_wmqer")
 metadata/_custom_type_script = "uid://dqb33m31l7id"
 
 [node name="AimOrHip" type="Node" parent="StateMachine/Root" index="0" unique_id=1562250010 node_paths=PackedStringArray("DefaultState")]
-script = ExtResource("4_s28vq")
+script = ExtResource("6_sj3ms")
 DefaultState = NodePath("Hip")
 metadata/_custom_type_script = "uid://crtr3umctqeyl"
 
 [node name="Hip" type="Node" parent="StateMachine/Root/AimOrHip" index="0" unique_id=55794369 node_paths=PackedStringArray("RevolverController", "RigController")]
-script = ExtResource("6_hip")
+script = ExtResource("7_t7pvd")
 RevolverController = NodePath("../../../../WeaponControllers/RevolverController")
 RigController = NodePath("../../../..")
 metadata/_custom_type_script = "uid://1203ywfe4cex"
 
 [node name="Aim" type="Node" parent="StateMachine/Root/AimOrHip" index="1" unique_id=1899768531 node_paths=PackedStringArray("RevolverController", "RigController")]
-script = ExtResource("7_aim")
+script = ExtResource("8_7aoa5")
 RevolverController = NodePath("../../../../WeaponControllers/RevolverController")
 RigController = NodePath("../../../..")
 metadata/_custom_type_script = "uid://1203ywfe4cex"
 
 [node name="Weapon" type="Node" parent="StateMachine/Root" index="1" unique_id=628507254 node_paths=PackedStringArray("DefaultState")]
-script = ExtResource("4_s28vq")
+script = ExtResource("6_sj3ms")
 DefaultState = NodePath("Revolver")
 metadata/_custom_type_script = "uid://crtr3umctqeyl"
 
 [node name="Revolver" type="Node" parent="StateMachine/Root/Weapon" index="0" unique_id=208852505]
-script = ExtResource("8_wrev")
+script = ExtResource("9_06xgb")
 metadata/_custom_type_script = "uid://1203ywfe4cex"
 
 [node name="Revolver" type="Node" parent="StateMachine/Root" index="2" unique_id=1392218419]
-script = ExtResource("3_ln5ei")
+script = ExtResource("5_wmqer")
 metadata/_custom_type_script = "uid://dqb33m31l7id"
 
-[node name="Hammer" type="Node" parent="StateMachine/Root/Revolver" index="0" unique_id=971636557]
-script = ExtResource("4_s28vq")
+[node name="Hammer" type="Node" parent="StateMachine/Root/Revolver" index="0" unique_id=971636557 node_paths=PackedStringArray("DefaultState")]
+script = ExtResource("6_sj3ms")
+DefaultState = NodePath("HammerUp")
 metadata/_custom_type_script = "uid://crtr3umctqeyl"
 
 [node name="HammerUp" type="Node" parent="StateMachine/Root/Revolver/Hammer" index="0" unique_id=449180663]
-script = ExtResource("9_hup")
+script = ExtResource("10_nidwr")
 metadata/_custom_type_script = "uid://1203ywfe4cex"
 
 [node name="HammerDown" type="Node" parent="StateMachine/Root/Revolver/Hammer" index="1" unique_id=1394515482]
-script = ExtResource("10_hdn")
+script = ExtResource("11_hkccg")
 metadata/_custom_type_script = "uid://1203ywfe4cex"
 
-[node name="Action" type="Node" parent="StateMachine/Root/Revolver" index="1" unique_id=324608571]
-script = ExtResource("4_s28vq")
+[node name="Action" type="Node" parent="StateMachine/Root/Revolver" index="1" unique_id=324608571 node_paths=PackedStringArray("DefaultState")]
+script = ExtResource("6_sj3ms")
+DefaultState = NodePath("Idle")
 metadata/_custom_type_script = "uid://crtr3umctqeyl"
 
 [node name="Idle" type="Node" parent="StateMachine/Root/Revolver/Action" index="0" unique_id=904302725 node_paths=PackedStringArray("RevolverController", "RigController")]
-script = ExtResource("7_2lhuv")
+script = ExtResource("12_2a4y2")
 RevolverController = NodePath("../../../../../WeaponControllers/RevolverController")
 RigController = NodePath("../../../../..")
 metadata/_custom_type_script = "uid://1203ywfe4cex"
 
-[node name="PushHammerDown" type="Node" parent="StateMachine/Root/Revolver/Action" index="1" unique_id=1205594090]
-script = ExtResource("12_phdn")
+[node name="PushHammerDown" type="Node" parent="StateMachine/Root/Revolver/Action" index="1" unique_id=1205594090 node_paths=PackedStringArray("RevolverController", "RigController")]
+script = ExtResource("13_f1b3y")
+RevolverController = NodePath("../../../../../WeaponControllers/RevolverController")
+RigController = NodePath("../../../../..")
 metadata/_custom_type_script = "uid://1203ywfe4cex"
 
 [node name="Fire" type="Node" parent="StateMachine/Root/Revolver/Action" index="2" unique_id=1047644103]
-script = ExtResource("13_fire")
+script = ExtResource("14_f7kcw")
 metadata/_custom_type_script = "uid://1203ywfe4cex"
 
-[node name="Reload" type="Node" parent="StateMachine/Root/Revolver/Action" index="3" unique_id=1455079853]
-script = ExtResource("4_s28vq")
+[node name="Reload" type="Node" parent="StateMachine/Root/Revolver/Action" index="3" unique_id=1455079853 node_paths=PackedStringArray("DefaultState")]
+script = ExtResource("6_sj3ms")
+DefaultState = NodePath("IntroInsertBullet")
 metadata/_custom_type_script = "uid://crtr3umctqeyl"
 
 [node name="IntroInsertBullet" type="Node" parent="StateMachine/Root/Revolver/Action/Reload" index="0" unique_id=1593707673]
-script = ExtResource("14_intro")
+script = ExtResource("15_v6toc")
 metadata/_custom_type_script = "uid://1203ywfe4cex"
 
 [node name="TurnCylinder" type="Node" parent="StateMachine/Root/Revolver/Action/Reload" index="1" unique_id=1998559631]
-script = ExtResource("15_turn")
+script = ExtResource("16_m38u2")
 metadata/_custom_type_script = "uid://1203ywfe4cex"
 
 [node name="InsertNextBullet" type="Node" parent="StateMachine/Root/Revolver/Action/Reload" index="2" unique_id=17314856]
-script = ExtResource("16_insert")
+script = ExtResource("17_xln2s")
 metadata/_custom_type_script = "uid://1203ywfe4cex"
 
 [node name="CloseCylinder" type="Node" parent="StateMachine/Root/Revolver/Action/Reload" index="3" unique_id=849322767]
-script = ExtResource("17_close")
+script = ExtResource("18_3eyms")
 metadata/_custom_type_script = "uid://1203ywfe4cex"
 
 [node name="Interrupt" type="Node" parent="StateMachine/Root/Revolver/Action/Reload" index="4" unique_id=108907452]
-script = ExtResource("18_intr")
+script = ExtResource("19_7kysf")
 metadata/_custom_type_script = "uid://1203ywfe4cex"
 
 [node name="WeaponControllers" type="Node" parent="." index="4" unique_id=161381544]
 
 [node name="RevolverController" type="Node" parent="WeaponControllers" index="0" unique_id=1439695976 node_paths=PackedStringArray("StateMachine")]
-script = ExtResource("2_s28vq")
+script = ExtResource("20_hy5mq")
 StateMachine = NodePath("../../StateMachine")
 
-[node name="RevolverCylinderController" type="Node" parent="WeaponControllers/RevolverController" index="0" unique_id=997456131 node_paths=PackedStringArray("RevolverController", "RevolverCylinderRotationModifier", "Bullets", "BulletShells")]
-script = ExtResource("21_vh7l8")
-RevolverController = NodePath("..")
-RevolverCylinderRotationModifier = NodePath("../../../RigArmature/Skeleton3D/RevolverCylinderRotationModifier")
-Bullets = [NodePath("../../../RigArmature/Skeleton3D/bulletWithCasing1"), NodePath("../../../RigArmature/Skeleton3D/bulletWithCasing2"), NodePath("../../../RigArmature/Skeleton3D/bulletWithCasing3"), NodePath("../../../RigArmature/Skeleton3D/bulletWithCasing4"), NodePath("../../../RigArmature/Skeleton3D/bulletWithCasing5"), NodePath("../../../RigArmature/Skeleton3D/bulletWithCasing6")]
-BulletShells = [NodePath("../../../RigArmature/Skeleton3D/bulletCasing1"), NodePath("../../../RigArmature/Skeleton3D/bulletCasing2"), NodePath("../../../RigArmature/Skeleton3D/bulletCasing3"), NodePath("../../../RigArmature/Skeleton3D/bulletCasing4"), NodePath("../../../RigArmature/Skeleton3D/bulletCasing5"), NodePath("../../../RigArmature/Skeleton3D/bulletCasing6")]
+[node name="RevolverCylinderController" type="Node" parent="WeaponControllers/RevolverController" index="0" unique_id=997456131 node_paths=PackedStringArray("Bullets", "BulletShells")]
+script = ExtResource("21_7grxj")
+Bullets = []
+BulletShells = []
 metadata/_custom_type_script = "uid://cd5opbt1o0k2o"
