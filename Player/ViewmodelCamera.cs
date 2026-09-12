@@ -12,6 +12,9 @@ namespace FirstPerson;
 [GlobalClass]
 public partial class ViewmodelCamera : Camera3D
 {
+	/// Lets code elsewhere find this camera without a NodePath across the scene boundary.
+	public const string GroupName = "viewmodel_camera";
+
 	[Export] public Camera3D WorldCamera { get; set; }
 	[Export] public Node3D Viewmodel { get; set; }
 
@@ -20,6 +23,7 @@ public partial class ViewmodelCamera : Camera3D
 
 	public override void _Ready()
 	{
+		AddToGroup(GroupName);
 		if (WorldCamera is null || Viewmodel is null)
 		{
 			GD.PushError($"{Name}: WorldCamera and Viewmodel must both be wired.");

@@ -3,23 +3,29 @@ using FirstPerson.StateMachines;
 
 namespace FirstPerson.PlayerRigStates;
 
-// StateMachine/Root/Revolver/Action/PushHammerDown
+// StateMachine/Root/RevolverRig/Action/PushHammerDown
 [GlobalClass]
 public partial class PushHammerDownState : AtomicState
 {
     [Export] public RevolverController RevolverController { get; set; }
     [Export] public RigController RigController { get; set; }
-    
+
+    public override void _Ready()
+    {
+        base._Ready();
+        AddTransitions();
+    }
+
     public override void StateEntered()
     {
         base.StateEntered();
-        RigController.Travel(RevolverController.aiming ? "RevolverRigHammerDownAim" : "RevolverRigHammerDownHip");
+        var stance = RigController.Stance;
+        RigController.Travel($"{stance}/RevolverRigPushHammerDown{stance}");
     }
 
     public override void StateExited()
     {
         RevolverController.isHammerDown = true;
-        GD.Print("Leaving pushHammerDownState");
         base.StateExited();
     }
 
@@ -30,5 +36,9 @@ public partial class PushHammerDownState : AtomicState
     public override void StatePhysicsProcessing(double delta)
     {
     }
-    
+
+    protected virtual void AddTransitions()
+    {
+        AddTransition("Idle", () => RigController.IsCurrentAnimationFinished());
+    }
 }

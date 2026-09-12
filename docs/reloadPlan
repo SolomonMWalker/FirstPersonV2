@@ -1,0 +1,190 @@
+﻿Wire up the reload
+
+     Context
+
+     The reload is scaffolding only. The Action/Reload compound has five leaf states                                                                             
+     (IntroInsertBullet, TurnCylinder, InsertNextBullet, CloseCylinder, Interrupt) that are                                                                                                         
+     empty stubs with no exports, no transitions and no Travel calls, and nothing in the chart ever
+     enters Reload. reloadTrigger is set in two places and consumed nowhere; reloadInterrupted is
+     declared and never touched.
+
+     The AnimationTree side is mostly built: SM_Reload is a nested machine at
+     parameters/Reload/playback with InsertFirst / Turn / InsertNext / ToClose /
+     RevolverReloadInterrupt / Close, reached through the root leaves
+     RevolverRigReloadStartOpenCylinder{Hip,Aim}.
+
+     Outcome: R reloads one round at a time until the cylinder is full or the reserve is dry, and a fire
+     press during the insert loop aborts into the interrupt-to-close path.
+
+     Decisions taken (confirmed with the user)
+
+     1. Loop ends at a full cylinder or an empty reserve, whichever comes first. Each inserted round
+        decrements reserveAmmo via the existing SubtractBulletFromTotalAmmo().
+     2. A fire press mid-reload aborts only. It does not also cock or fire; the player presses again
+        once the cylinder is shut.
+     3. Interruptible only during the insert loop (InsertFirst / Turn / InsertNext), matching
+        the interrupt edges that already exist. No new root edges.
+     4. C# drives every step, like Idle / Fire / PushHammerDown.
+
+     Changes
+
+     1. player_rig_glb.tscn — hand control of the reload machine to C#
+
+     Decision 4 requires the same fix applied to Hip/Aim earlier this session: an Auto edge advances
+     the tree off the state C# is waiting on, so IsCurrentAnimationFinished() never returns true and
+     the chart deadlocks. Flip advance_mode from Auto (2) to Enabled (1) on:
+
+     - Rt_first_close, Rt_first_turn (out of InsertFirst)
+     - Rt_next_close (out of InsertNext)
+     - Rt_toclose_close, Rt_int_close, Rt_close_end
+     - Rr_openhip_reload, Rr_openaim_reload, Rr_reload_hip (root level)
+
+     Keep switch_mode = 2 (AtEnd) on all of them — that is what makes each clip finish before the next
+     begins. Leave Rt_start_first as Auto: the nested machine has never been active when the reload
+     first runs, and a Start() request to an inactive sub-machine is discarded (established earlier this
+     session), so Start → InsertFirst must self-advance.
+
+     Drop advance_condition = "reload_done" from Rt_first_close / Rt_next_close — C# decides now.
+     The parameters/Reload/conditions/reload_done line can stay; it becomes inert.
+
+     Add xfade_time = 0.05 to the three interrupt edges (Rt_first_int, Rt_turn_int, Rt_next_int),
+     which are currently hard cuts at 0.0.
+
+     Wire the five reload leaf nodes with node_paths for RevolverController and RigController,
+     copying the form used by Idle (player_rig_glb.tscn:391-395). Add a Reloading export on
+     WeaponControllers/RevolverController pointing at ../../StateMachine/Root/RevolverRig/Action/Reload.
+
+     2. RevolverController.cs
+
+     - public bool CanReload => ammoInCylinder < 6 && reserveAmmo > 0;
+     - [Export] public State Reloading { get; set; } — the Reload compound.
+     - GetInput: accept one input outside Idle — fire during a reload sets reloadInterrupted.
+
+     public void GetInput(bool pressFire, bool aim, bool pressReload)
+     {
+         // The one input accepted outside Idle: fire aborts a reload in progress.
+         if (Reloading is { Enabled: true })
+         {
+             if (pressFire) reloadInterrupted = true;
+             return;
+         }
+         if (!CanAct) return;
+         ...
+         if (pressReload && CanReload) reloadTrigger = true;
+         ...
+     }
+
+       Gating on CanReload at input time means a press with a full cylinder is dropped rather than
+       latching in reloadTrigger to fire later. Apply the same check to the dry-gun auto-reload in
+       PushHammerDown().
+
+     - Fix the off-by-one in ReloadAddBullet(). ReloadBullet() indexes Bullets[ammoInCylinder],
+       so it must run before the increment:
+
+     public void ReloadAddBullet()
+     {
+         RevolverCylinderController.ReloadBullet();   // uses the pre-increment index
+         AddBulletToCylinder();
+         SubtractBulletFromTotalAmmo();
+     }
+
+       The same inversion exists in BulletFired() (SubtractBulletFromCylinder() runs before
+       FireBullet(), which then indexes ammoInCylinder - 1). Flagged earlier and still unfixed —
+       worth correcting in the same pass since both drive the same meshes.
+
+     3. PlayerRigStates/ — the five states
+
+     All follow the established pattern: [Export] RevolverController + [Export] RigController,
+     _Ready → AddTransitions(), StateEntered → RigController.Travel(...), guards using
+     IsCurrentAnimationFinished().
+
+     Two states play two clips in sequence. Give them a _phase int, reset in StateEntered, advanced
+     in StatePhysicsProcessing once the first clip finishes:
+
+     ┌───────────────────┬────────────────────────────────────────────────────────┬────────────────────┬───────────────────────────────────────────────┐
+     │       state       │                         clip 1                         │       clip 2       │                   leaves to                   │
+     ├───────────────────┼────────────────────────────────────────────────────────┼────────────────────┼───────────────────────────────────────────────┤
+     │ IntroInsertBullet │ RevolverRigReloadStartOpenCylinder{Stance} (root leaf) │ Reload/InsertFirst │ TurnCylinder, or CloseCylinder if !CanReload  │
+     ├───────────────────┼────────────────────────────────────────────────────────┼────────────────────┼───────────────────────────────────────────────┤
+     │ TurnCylinder      │ Reload/Turn                                            │ —                  │ InsertNextBullet                              │
+     ├───────────────────┼────────────────────────────────────────────────────────┼────────────────────┼───────────────────────────────────────────────┤
+     │ InsertNextBullet  │ Reload/InsertNext                                      │ —                  │ TurnCylinder if CanReload, else CloseCylinder │
+     ├───────────────────┼────────────────────────────────────────────────────────┼────────────────────┼───────────────────────────────────────────────┤
+     │ CloseCylinder     │ Reload/ToClose                                         │ Reload/Close       │ Idle                                          │
+     ├───────────────────┼────────────────────────────────────────────────────────┼────────────────────┼───────────────────────────────────────────────┤
+     │ Interrupt         │ Reload/RevolverReloadInterrupt                         │ Reload/Close       │ Idle                                          │
+     └───────────────────┴────────────────────────────────────────────────────────┴────────────────────┴───────────────────────────────────────────────┘
+
+     Note the nested interrupt state is named RevolverReloadInterrupt, not Interrupt — the only
+     nested state that doesn't use a short name.
+
+     IntroInsertBullet, TurnCylinder and InsertNextBullet each also get
+     AddTransition("Interrupt", () => RevolverController.reloadInterrupted). CloseCylinder does not —
+     that is decision 3.
+
+     IntroInsertBulletState.StateEntered clears reloadInterrupted so a press that arrived during a
+     previous close can't leak into the next reload. InterruptState.StateEntered clears it on consume.
+
+     Loop safety. Termination depends on ammoInCylinder rising, which depends on an animation
+     method key (below). If that key is missing the loop never ends, so cap the insert count at 6 per
+     reload and force CloseCylinder past that, with a GD.PushWarning naming the missing key.
+
+     4. IdleState.cs — the entry edge
+
+     AddTransition("Reload",
+         () => RigController.IsTravelComplete() && RevolverController.reloadTrigger,
+         () => RevolverController.reloadTrigger = false);
+
+     5. Delete the temporary R-key hook
+
+     RevolverCylinderController._Process (the [TEMP] ejecting 6 shells block) swallows the reload
+     action every frame, bypasses CanAct and zeroes ammoInCylinder. It will fight the real reload.
+
+     Method keys you need to add
+
+     Only one exists today — RotateCylinderReloadTurnCylinder at t=0 on RevolverRigReloadTurnCylinder.
+     Paths are relative to the AnimationPlayer root (Arms); keep_custom_tracks is on, so these persist.
+
+     ┌───────────────────────────────────────────────────┬──────────────────────────────────────┬───────────────────────────────┐
+     │                       clip                        │              node path               │            method             │
+     ├───────────────────────────────────────────────────┼──────────────────────────────────────┼───────────────────────────────┤
+     │ RevolverRigReloadStartOpenCylinder{Hip,Aim}       │ …/RevolverCylinderController         │ EmptyBulletShellsFromCylinder │
+     ├───────────────────────────────────────────────────┼──────────────────────────────────────┼───────────────────────────────┤
+     │ RevolverRigReloadStartOpenCylinder{Hip,Aim}       │ …/RevolverCylinderController         │ RotateCylinderForReload       │
+     ├───────────────────────────────────────────────────┼──────────────────────────────────────┼───────────────────────────────┤
+     │ RevolverRigReloadEndOpenCylinderInsertFirstBullet │ WeaponControllers/RevolverController │ ReloadAddBullet               │
+     ├───────────────────────────────────────────────────┼──────────────────────────────────────┼───────────────────────────────┤
+     │ RevolverRigReloadInsertNextBullet                 │ WeaponControllers/RevolverController │ ReloadAddBullet               │
+     ├───────────────────────────────────────────────────┼──────────────────────────────────────┼───────────────────────────────┤
+     │ RevolverRigReloadCloseCylinder                    │ …/RevolverCylinderController         │ RotateCylinderAfterReload     │
+     └───────────────────────────────────────────────────┴──────────────────────────────────────┴───────────────────────────────┘
+
+     Until the two ReloadAddBullet keys exist the cylinder never fills, and only the loop cap above
+     stops it running forever.
+
+     Files
+
+     - player_rig_glb.tscn — advance_modes, interrupt xfades, five leaf wirings, Reloading export
+     - RevolverController.cs — CanReload, Reloading, interrupt input, ReloadAddBullet ordering
+     - RevolverCylinderController.cs — delete the temp _Process
+     - PlayerRigStates/{IntroInsertBullet,TurnCylinder,InsertBullet,CloseCylinder,Interrupt}State.cs
+     - PlayerRigStates/IdleState.cs — entry edge
+
+     Verification
+
+     1. dotnet build FirstPersonV3.sln — clean; headless run of test_level.tscn — exit 0.
+     2. Temporary harness on player_rig_glb.tscn, calling ReloadAddBullet() itself at each insert to
+        stand in for the not-yet-authored method keys, asserting:
+        - Full reload: ammo 2 / reserve 10, set reloadTrigger. Chart walks Idle → IntroInsertBullet → TurnCylinder → InsertNextBullet → … → CloseCylinder → Idle; ends at ammoInCylinder == 6,
+          reserveAmmo == 6. Log GetStateMachineString() each frame so the path is visible.
+        - The animation follows the chart: parameters/Reload/playback's current node matches the
+          active C# state at each step — this is what catches an advance_mode left on Auto.
+        - Reserve exhaustion: ammo 0 / reserve 2 → two inserts then close, ending at ammoInCylinder == 2, reserveAmmo == 0.
+        - Interrupt: start a reload, set fire during InsertNextBullet; chart goes to Interrupt →
+          Idle, ammo stops rising, and the playback reaches RevolverReloadInterrupt then Close.
+        - No leak: a fire press during CloseCylinder does not interrupt, and does not carry into the
+          next reload.
+        - Full cylinder: pressing reload at 6/6 sets no trigger and does not enter Reload.
+     3. In-game after adding the method keys: reload from empty, watch rounds appear one at a time and
+        shells drop on opening; then interrupt mid-loop with fire.
+     4. Delete the harness and re-run step 1.

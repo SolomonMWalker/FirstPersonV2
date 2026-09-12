@@ -6,9 +6,12 @@ public partial class RevolverCylinderRotationModifier : SkeletonModifier3D
 {
     [Export] public string BoneName { get; set; } = "revolverCylinderRotationBone";
 
+    // Animatable: an animation value track can drive this directly, or RotateTo can tween it.
+    // Not "RotationDegrees" -- that would collide with Node3D.rotation_degrees.
+    [Export] public float SpinDegrees { get; set; }
+
     private int _boneIndex = -1;
     private Quaternion _restRotation = Quaternion.Identity;
-    private float _rotationInDegrees;
     private Tween _rotationTween;
 
     public override void _Ready()
@@ -35,7 +38,7 @@ public partial class RevolverCylinderRotationModifier : SkeletonModifier3D
     {
         _rotationTween?.Kill();
 
-        float from = _rotationInDegrees;
+        float from = SpinDegrees;
         float to = from + Mathf.RadToDeg(Mathf.AngleDifference(
             Mathf.DegToRad(from), Mathf.DegToRad(targetRotationInDegrees)));
 
@@ -57,12 +60,12 @@ public partial class RevolverCylinderRotationModifier : SkeletonModifier3D
 
         // ponytail: composited from the rest pose because no action keys this bone (only its
         // parent). If one ever does, read GetBonePoseRotation into a cached base instead.
-        Quaternion spin = new Quaternion(Vector3.Up, Mathf.DegToRad(_rotationInDegrees));
+        Quaternion spin = new Quaternion(Vector3.Up, Mathf.DegToRad(SpinDegrees));
         GetSkeleton().SetBonePoseRotation(_boneIndex, _restRotation * spin);
     }
 
     private void ApplyRotation(float rotationInDegrees)
     {
-        _rotationInDegrees = Mathf.Wrap(rotationInDegrees, 0f, 360f);
+        SpinDegrees = Mathf.Wrap(rotationInDegrees, 0f, 360f);
     }
 }

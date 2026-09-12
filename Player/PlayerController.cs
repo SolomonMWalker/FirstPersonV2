@@ -146,9 +146,9 @@ public partial class PlayerController : CharacterBody3D
 		if (!Clamber.IsClambering)
 		{
 			var fireButtonJustPressed = Input.IsActionJustPressed("fire");
-			var fireButtonPressed = Input.IsActionPressed("fire");
 			var aimButtonPressed = Input.IsActionPressed("aim");
-			Rig.GetInput(fireButtonJustPressed, fireButtonPressed, aimButtonPressed);
+			var reloadButtonJustPressed = Input.IsActionJustPressed("reload");
+			Rig.GetInput(fireButtonJustPressed, aimButtonPressed, reloadButtonJustPressed);
 		}
 		else //IsClambering == true
 		{
