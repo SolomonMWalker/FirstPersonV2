@@ -15,7 +15,7 @@
 [ext_resource type="Script" uid="uid://d0n1ub471d1c2" path="res://Player/CameraController.cs" id="13_camera"]
 [ext_resource type="PackedScene" uid="uid://ddbsaxux3ovur" path="res://player_rig.tscn" id="13_dkpta"]
 [ext_resource type="Script" uid="uid://cyqb6ca3osvw2" path="res://Player/ViewmodelRenderer.cs" id="15_viewmodel"]
-[ext_resource type="Shader" path="res://Assets/Materials/viewmodel.gdshader" id="16_vmshader"]
+[ext_resource type="Shader" uid="uid://3fg3j5w7j2rx" path="res://Assets/Materials/viewmodel.gdshader" id="16_vmshader"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
 
@@ -81,8 +81,7 @@ transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0
 script = ExtResource("2_clamber")
 Player = NodePath("../..")
 
-[node name="ViewmodelRenderer" type="Node" parent="." node_paths=PackedStringArray("Viewmodel")]
+[node name="ViewmodelRenderer" type="Node" parent="." unique_id=96605071 node_paths=PackedStringArray("Viewmodel")]
 script = ExtResource("15_viewmodel")
 Viewmodel = NodePath("../Camera3D/PlayerRig")
 Shader = ExtResource("16_vmshader")
-Fov = 75.0

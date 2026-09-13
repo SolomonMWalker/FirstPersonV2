@@ -5,7 +5,7 @@ using Godot;
 namespace FirstPerson.StateMachines;
 
 [GlobalClass]
-public partial class State : Node
+public abstract partial class State : Node
 {
     public event EventHandler<ChangeStateEventArgs> StateChangeRequired;
     protected void OnStateChangeRequired(ChangeStateEventArgs e)

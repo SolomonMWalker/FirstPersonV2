@@ -4,7 +4,6 @@ using FirstPerson.StateMachines;
 namespace FirstPerson.PlayerRigStates;
 
 // StateMachine/Root/RevolverRig/Action/Reload/IntroInsertBullet
-[GlobalClass]
 public partial class IntroInsertBulletState : AtomicState
 {
     [Export] public RevolverController RevolverController { get; set; }

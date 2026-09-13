@@ -14,7 +14,7 @@ dest_files=["res://.godot/imported/gruntBasicEnemy.glb-d8a0ce9f36aecf960be14fa78
 [params]
 
 nodes/root_type="CharacterBody3D"
-nodes/root_name="Grunt"
+nodes/root_name="Grunt_Enemy"
 nodes/root_script=null
 mesh_library/use_node_names_as_mesh_names=false
 array_mesh/deduplicate_surfaces=true
@@ -31,7 +31,7 @@ meshes/lightmap_texel_size=0.2
 meshes/force_disable_compression=false
 skins/use_named_skins=true
 animation/import=true
-animation/fps=30
+animation/fps=24.0
 animation/trimming=false
 animation/remove_immutable_tracks=true
 animation/import_rest_as_RESET=false
@@ -44,7 +44,7 @@ _subresources={
 "aimGun": {
 "save_to_file/enabled": true,
 "save_to_file/fallback_path": "res://Assets/Animations/Grunt/aimGun.res",
-"save_to_file/keep_custom_tracks": "",
+"save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://cepoxcdvaesi1",
 "settings/loop_mode": 0,
 "slice_1/end_frame": 0,
@@ -2100,7 +2100,7 @@ _subresources={
 "falling": {
 "save_to_file/enabled": true,
 "save_to_file/fallback_path": "res://Assets/Animations/Grunt/falling.res",
-"save_to_file/keep_custom_tracks": "",
+"save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://bpy6hk3djar0k",
 "settings/loop_mode": 1,
 "slice_1/end_frame": 0,
@@ -4156,7 +4156,7 @@ _subresources={
 "fireGun": {
 "save_to_file/enabled": true,
 "save_to_file/fallback_path": "res://Assets/Animations/Grunt/fireGun.res",
-"save_to_file/keep_custom_tracks": "",
+"save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://c6um1mohpofr1",
 "settings/loop_mode": 0,
 "slice_1/end_frame": 0,
@@ -6212,7 +6212,7 @@ _subresources={
 "idleWithGunDown": {
 "save_to_file/enabled": true,
 "save_to_file/fallback_path": "res://Assets/Animations/Grunt/idleWithGunDown.res",
-"save_to_file/keep_custom_tracks": "",
+"save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://bd68ouvbiocwe",
 "settings/loop_mode": 1,
 "slice_1/end_frame": 0,
@@ -8268,7 +8268,7 @@ _subresources={
 "idleWithGunReady": {
 "save_to_file/enabled": true,
 "save_to_file/fallback_path": "res://Assets/Animations/Grunt/idleWithGunReady.res",
-"save_to_file/keep_custom_tracks": "",
+"save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://dxljq87jyvggq",
 "settings/loop_mode": 1,
 "slice_1/end_frame": 0,
@@ -10324,7 +10324,7 @@ _subresources={
 "stagger": {
 "save_to_file/enabled": true,
 "save_to_file/fallback_path": "res://Assets/Animations/Grunt/stagger.res",
-"save_to_file/keep_custom_tracks": "",
+"save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://delu2xplv4b52",
 "settings/loop_mode": 0,
 "slice_1/end_frame": 0,
@@ -14436,7 +14436,7 @@ _subresources={
 "walkGunDown": {
 "save_to_file/enabled": true,
 "save_to_file/fallback_path": "res://Assets/Animations/Grunt/walkGunDown.res",
-"save_to_file/keep_custom_tracks": "",
+"save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://blfg1nnyekdm4",
 "settings/loop_mode": 1,
 "slice_1/end_frame": 0,
@@ -16492,7 +16492,7 @@ _subresources={
 "walkGunReady": {
 "save_to_file/enabled": true,
 "save_to_file/fallback_path": "res://Assets/Animations/Grunt/walkGunReady.res",
-"save_to_file/keep_custom_tracks": "",
+"save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://xds2185qmx85",
 "settings/loop_mode": 1,
 "slice_1/end_frame": 0,

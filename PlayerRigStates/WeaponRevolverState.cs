@@ -4,7 +4,6 @@ using FirstPerson.StateMachines;
 namespace FirstPerson.PlayerRigStates;
 
 // StateMachine/Root/Weapon/Revolver
-[GlobalClass]
 public partial class WeaponRevolverState : AtomicState
 {
     public override void StateEntered()

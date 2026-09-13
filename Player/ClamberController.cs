@@ -37,6 +37,8 @@ public partial class ClamberController : Node3D
     [Export] public float ClamberReach { get; set; } = 0.75f;
     // Godot's shape-sweep skin width, in metres. Above ~0.01 the sweeps snag and report false positives.
     [Export] public float SafeMargin { get; set; } = 0.001f;
+    // 0 = any surface. Set to the "clamberable" layer number to require ledges be marked.
+    [Export(PropertyHint.Layers3DPhysics)] public uint ClamberableLayers { get; set; }
 
     [ExportGroup("Step-up")]
     // Floor for what counts as a step at all, not a tuned match for wherever Godot's own capsule
@@ -104,7 +106,7 @@ public partial class ClamberController : Node3D
     {
         if (IsClambering || _cooldown > 0f) return false;
         if (!TrySweep(-Player.GlobalBasis.Z, ClamberReach, MinClamberHeight, MaxClamberHeight * HeightScale,
-                out var landing)) return false;
+                ClamberableLayers, out var landing)) return false;
 
         _start = Player.GlobalPosition;
         _landing = landing;
@@ -132,7 +134,9 @@ public partial class ClamberController : Node3D
         // open-ground walking -- the overwhelming majority of ticks -- never pays for them.
         if (!Player.TestMove(Player.GlobalTransform, direction * 0.05f, null, SafeMargin)) return false;
 
-        if (!TrySweep(direction, StepReach, MinStepHeight, MinClamberHeight, out var landing)) return false;
+        // requireLayers 0 = unfiltered: steps are geometry, not level-designer intent. Only clamber requires marking.
+        if (!TrySweep(direction, StepReach, MinStepHeight, MinClamberHeight, 0, out var landing)) 
+            return false;
 
         // Only the lift is applied here -- horizontal motion is left to the MoveAndSlide the caller
         // is about to run with the velocity already sampled this tick. Applying the sweep's forward
@@ -146,7 +150,8 @@ public partial class ClamberController : Node3D
     // `minRise`/`maxRise` bound what counts as a valid landing -- clamber and step-up pass
     // complementary ranges that meet exactly at MinClamberHeight, so neither has a gap or overlap
     // with the other.
-    private bool TrySweep(Vector3 direction, float reach, float minRise, float maxRise, out Vector3 landing)
+    private bool TrySweep(Vector3 direction, float reach, float minRise, float maxRise, uint requireLayers,
+        out Vector3 landing)
     {
         landing = Vector3.Zero;
         var xform = Player.GlobalTransform;
@@ -171,6 +176,9 @@ public partial class ClamberController : Node3D
         // rejecting those needs an explicit minimum-depth check, not this sweep.
         if (!Player.TestMove(xform, Vector3.Down * (rise + 0.05f), hit, SafeMargin))
             return Reject("nothing to stand on");
+        var ledge = hit.GetCollider() as CollisionObject3D;
+        if (requireLayers != 0 && (ledge is null || (ledge.CollisionLayer & requireLayers) == 0))
+            return Reject("ledge not on a clamberable layer");
         if (hit.GetNormal().AngleTo(Vector3.Up) > Player.FloorMaxAngle) return Reject("surface too steep");
 
         landing = xform.Origin + Vector3.Down * hit.GetTravel().Length();

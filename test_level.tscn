@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://keqc2pkudeb1"]
 
-[ext_resource type="PackedScene" path="res://Player/player.tscn" id="1_gojnm"]
+[ext_resource type="PackedScene" uid="uid://d4fberfjpttwp" path="res://Player/player.tscn" id="1_gojnm"]
 [ext_resource type="PackedScene" uid="uid://bqp5m2xk4v3n1" path="res://UI/pause_menu.tscn" id="2_pause"]
 [ext_resource type="Material" uid="uid://drljhmw7xl0se" path="res://Assets/Materials/checker_material.tres" id="3_checker"]
 
@@ -18,18 +18,28 @@ glow_enabled = true
 
 [node name="TestLevel" type="Node3D" unique_id=2067639631]
 
+[node name="CSGCombiner3D" type="CSGCombiner3D" parent="." unique_id=1996816898]
+layers = 17
+use_collision = true
+collision_layer = 17
+collision_mask = 0
+
+[node name="CSGBox3D" type="CSGBox3D" parent="CSGCombiner3D" unique_id=1457105698]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.69791317, 0, 0.04738617)
+use_collision = true
+size = Vector3(48.9, 1, 48)
+material = ExtResource("3_checker")
+
+[node name="CSGBox3D2" type="CSGBox3D" parent="CSGCombiner3D" unique_id=1488554352]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 8, 3.5, 1.6, 0)
+size = Vector3(1, 2.2, 1)
+
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=156305515]
 environment = SubResource("Environment_sb12i")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=343594926]
 transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
 shadow_enabled = true
-
-[node name="CSGBox3D" type="CSGBox3D" parent="." unique_id=1457105698]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4781189, 0, -0.6679077)
-use_collision = true
-size = Vector3(16.139587, 1, 17.23059)
-material = ExtResource("3_checker")
 
 [node name="Player" parent="." unique_id=501260263 instance=ExtResource("1_gojnm")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.6967397, 0)

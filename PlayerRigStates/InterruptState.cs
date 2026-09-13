@@ -4,7 +4,6 @@ using FirstPerson.StateMachines;
 namespace FirstPerson.PlayerRigStates;
 
 // StateMachine/Root/RevolverRig/Action/Reload/Interrupt
-[GlobalClass]
 public partial class InterruptState : AtomicState
 {
     [Export] public RevolverController RevolverController { get; set; }

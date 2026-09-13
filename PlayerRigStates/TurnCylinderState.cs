@@ -4,7 +4,6 @@ using FirstPerson.StateMachines;
 namespace FirstPerson.PlayerRigStates;
 
 // StateMachine/Root/RevolverRig/Action/Reload/TurnCylinder
-[GlobalClass]
 public partial class TurnCylinderState : AtomicState
 {
     [Export] public RevolverController RevolverController { get; set; }

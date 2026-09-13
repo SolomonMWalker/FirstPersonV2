@@ -4,7 +4,6 @@ using FirstPerson.StateMachines;
 namespace FirstPerson.PlayerRigStates;
 
 // StateMachine/Root/RevolverRig/Action/Idle
-[GlobalClass]
 public partial class IdleState : AtomicState
 {
     [Export] public RevolverController RevolverController { get; set; }
