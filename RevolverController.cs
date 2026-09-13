@@ -10,6 +10,11 @@ public partial class RevolverController : Node
 
     public bool CanAct => Idle is { Enabled: true };
 
+    // A reload press is dropped rather than latched when it would gain nothing: a full cylinder,
+    // or an empty pouch. Latching it would fire a reload later, at a moment the player never asked
+    // for one.
+    public bool CanReload => ammoInCylinder < 6 && reserveAmmo > 0;
+
     public override void _Ready()
     {
         base._Ready();
@@ -29,14 +34,24 @@ public partial class RevolverController : Node
     public bool isHammerDown;
     public bool reloadInterrupted;
 
+    // Rounds still to seat in the reload in progress. Fixed by BeginReload() when the reload
+    // starts, then counted down by each insert state as it commits to a round.
+    public int reloadRemaining;
+
+    public void BeginReload() => reloadRemaining = Mathf.Min(6 - ammoInCylinder, reserveAmmo);
+
     public void GetInput(bool pressFire, bool aim, bool pressReload)
     {
+        // The one input accepted outside Idle: fire aborts a reload in progress. Only the Reload
+        // states read this, and IntroInsertBullet clears it on entry, so a press latched during
+        // Fire or PushHammerDown cannot leak into the next reload.
+        if (pressFire && !CanAct) reloadInterrupted = true;
         if (!CanAct) return;
         if(aim && !aiming) StartAim();
         else if (!aim && aiming) EndAim();
         if (pressReload)
         {
-            reloadTrigger = true;
+            if (CanReload) reloadTrigger = true;
         }
         else if (pressFire)
         {
@@ -67,7 +82,7 @@ public partial class RevolverController : Node
         if (ammoInCylinder <= 0)
         {
             GD.Print("No ammo in cylinder!");
-            reloadTrigger = true;
+            if (CanReload) reloadTrigger = true;
         }
         else
         {
@@ -76,16 +91,28 @@ public partial class RevolverController : Node
         }
     }
 
+    // Both of these index the chamber meshes off ammoInCylinder, so the mesh call has to run
+    // before the count moves: FireBullet reads ammoInCylinder - 1, ReloadBullet reads
+    // ammoInCylinder.
     public void BulletFired()
     {
-        SubtractBulletFromCylinder();
         RevolverCylinderController.FireBullet();
+        SubtractBulletFromCylinder();
     }
 
+    // Called from a method key at the end of each insert clip. Nothing may branch on the count it
+    // writes in the same frame -- AnimationMixer dispatches method keys deferred, so this lands
+    // after every _PhysicsProcess. The reload loop counts with reloadRemaining for that reason.
+    //
+    // Guarded because the caller is animation content: a stray or duplicated key would otherwise
+    // push ammoInCylinder past 6, burn a reserve round, and crash the chamber-angle lookup, which
+    // only has entries for 0..6.
     public void ReloadAddBullet()
     {
-        AddBulletToCylinder();
+        if (ammoInCylinder >= 6 || reserveAmmo <= 0) return;
         RevolverCylinderController.ReloadBullet();
+        AddBulletToCylinder();
+        SubtractBulletFromTotalAmmo();
     }
 
     public void AddBulletToCylinder()

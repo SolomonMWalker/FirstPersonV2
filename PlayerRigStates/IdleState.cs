@@ -61,5 +61,10 @@ public partial class IdleState : AtomicState
             () => RigController.IsTravelComplete()
                   && RevolverController.fireTrigger,
             () => RevolverController.fireTrigger = false);
+        // Last, so a queued shot or cock wins over a reload press latched on the same frame.
+        AddTransition("Reload",
+            () => RigController.IsTravelComplete()
+                  && RevolverController.reloadTrigger,
+            () => RevolverController.reloadTrigger = false);
     }
 }

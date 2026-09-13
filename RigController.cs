@@ -110,6 +110,21 @@ public partial class RigController : Node3D
         return playback.GetFadingFromNode() == "";
     }
 
+    // What the tree is ACTUALLY showing: the root's current node, plus the clip inside it when
+    // that node is a nested state machine. Compare it against the state the chart thinks it is in
+    // -- they disagree exactly when a transition auto-advanced out from under C#, which is the
+    // failure mode that deadlocks IsCurrentAnimationFinished().
+    public string CurrentNode
+    {
+        get
+        {
+            var branch = RootPlayback.GetCurrentNode().ToString();
+            var nested = AnimationTree.Get($"parameters/{branch}/playback")
+                .As<AnimationNodeStateMachinePlayback>();
+            return nested is null ? branch : $"{branch}/{nested.GetCurrentNode()}";
+        }
+    }
+
     public bool IsCurrentAnimationFinished()
     {
         if (!IsTravelComplete()) return false;
