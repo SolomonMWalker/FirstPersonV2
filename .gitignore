@@ -11,3 +11,13 @@
 # graphify machine-local files
 graphify-out/.graphify_python
 graphify-out/cache/
+graphify-out/.graphify_root
+graphify-out/manifest.json
+
+# Machine-specific editor settings (absolute paths differ per machine)
+.vscode/settings.json
+.idea/**/workspace.xml
+.idea/**/shelf/
+.idea/**/usage.statistics.xml
+.vs/
+*.csproj.user
