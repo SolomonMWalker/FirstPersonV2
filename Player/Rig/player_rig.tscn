@@ -1,11 +1,11 @@
-[gd_scene format=3 uid="uid://ddbsaxux3ovur"]
+[gd_scene format=3 uid="uid://bhpfu0khveksh"]
 
 [ext_resource type="PackedScene" uid="uid://caixirco0r8ti" path="res://Assets/Blender/Arms.glb" id="1_3mbro"]
-[ext_resource type="Script" uid="uid://ciglti735rx7c" path="res://RigController.cs" id="2_jlf0t"]
-[ext_resource type="Script" uid="uid://xs202khb8uxg" path="res://RevolverCylinderRotationModifier.cs" id="3_vh7l8"]
-[ext_resource type="Script" uid="uid://csfiuwgihnlal" path="res://StateMachine/StateMachine.cs" id="4_48s4c"]
-[ext_resource type="Script" uid="uid://dqb33m31l7id" path="res://StateMachine/ParallelState.cs" id="5_4e7jw"]
-[ext_resource type="Script" uid="uid://crtr3umctqeyl" path="res://StateMachine/CompoundState.cs" id="6_7s3gu"]
+[ext_resource type="Script" uid="uid://ciglti735rx7c" path="res://Player/Rig/RigController.cs" id="2_jlf0t"]
+[ext_resource type="Script" uid="uid://xs202khb8uxg" path="res://Player/Rig/Revolver/RevolverCylinderRotationModifier.cs" id="3_vh7l8"]
+[ext_resource type="Script" uid="uid://csfiuwgihnlal" path="res://Shared/StateMachine/StateMachine.cs" id="4_48s4c"]
+[ext_resource type="Script" uid="uid://dqb33m31l7id" path="res://Shared/StateMachine/ParallelState.cs" id="5_4e7jw"]
+[ext_resource type="Script" uid="uid://crtr3umctqeyl" path="res://Shared/StateMachine/CompoundState.cs" id="6_7s3gu"]
 [ext_resource type="Script" uid="uid://cffoh4q1iacbi" path="res://PlayerRigStates/WeaponRevolverState.cs" id="7_fvk4a"]
 [ext_resource type="Script" uid="uid://djk2k3kgmvc2a" path="res://PlayerRigStates/AimState.cs" id="8_aqknt"]
 [ext_resource type="Script" uid="uid://58pf6lf3i4cx" path="res://PlayerRigStates/HipState.cs" id="9_8fe7j"]
@@ -17,8 +17,8 @@
 [ext_resource type="Script" uid="uid://c7insb8k3rq05" path="res://PlayerRigStates/InsertBulletState.cs" id="15_d0bat"]
 [ext_resource type="Script" uid="uid://c7closdaw2tf6" path="res://PlayerRigStates/CloseCylinderState.cs" id="16_vs41u"]
 [ext_resource type="Script" uid="uid://c7intrp1x5md8" path="res://PlayerRigStates/InterruptState.cs" id="17_7lif0"]
-[ext_resource type="Script" uid="uid://dun080cox3oij" path="res://RevolverController.cs" id="18_kevy0"]
-[ext_resource type="Script" uid="uid://cd5opbt1o0k2o" path="res://RevolverCylinderController.cs" id="19_p6yyq"]
+[ext_resource type="Script" uid="uid://dun080cox3oij" path="res://Player/Rig/Revolver/RevolverController.cs" id="18_kevy0"]
+[ext_resource type="Script" uid="uid://cd5opbt1o0k2o" path="res://Player/Rig/Revolver/RevolverCylinderController.cs" id="19_p6yyq"]
 [ext_resource type="PackedScene" path="res://Assets/Weapons/revolver_shell.tscn" id="20_fethi"]
 
 [sub_resource type="AnimationNodeAnimation" id="Anim_AimFire"]
@@ -233,7 +233,7 @@ script = ExtResource("2_jlf0t")
 Revolver = NodePath("WeaponControllers/RevolverController")
 AnimationTree = NodePath("AnimationTree")
 
-[node name="Skeleton3D" parent="RigArmature" parent_id_path=PackedInt32Array(1907299206) index="0" unique_id=314929608]
+[node name="Skeleton3D" parent="RigArmature" parent_id_path=PackedInt32Array(2081120038) index="0" unique_id=618733627]
 bones/1/position = Vector3(0.62319916, -0.23332143, -0.69142526)
 bones/1/rotation = Quaternion(0.6735852, -0.2119018, 0.6818761, -0.19085485)
 bones/2/position = Vector3(-0.41848147, -0.4601254, 0.437012)
@@ -304,25 +304,25 @@ influence = 1.0
 script = ExtResource("3_vh7l8")
 metadata/_custom_type_script = "uid://xs202khb8uxg"
 
-[node name="bulletCasing1" parent="RigArmature/Skeleton3D" index="2" unique_id=1708286600]
+[node name="bulletCasing1" parent="RigArmature/Skeleton3D" index="2" unique_id=630692127]
 visible = false
 
-[node name="bulletCasing2" parent="RigArmature/Skeleton3D" index="3" unique_id=1464794789]
+[node name="bulletCasing2" parent="RigArmature/Skeleton3D" index="3" unique_id=1584047944]
 visible = false
 
-[node name="bulletCasing3" parent="RigArmature/Skeleton3D" index="4" unique_id=2033386302]
+[node name="bulletCasing3" parent="RigArmature/Skeleton3D" index="4" unique_id=1406607791]
 visible = false
 
-[node name="bulletCasing4" parent="RigArmature/Skeleton3D" index="5" unique_id=1355378839]
+[node name="bulletCasing4" parent="RigArmature/Skeleton3D" index="5" unique_id=1157987473]
 visible = false
 
-[node name="bulletCasing5" parent="RigArmature/Skeleton3D" index="6" unique_id=1333524021]
+[node name="bulletCasing5" parent="RigArmature/Skeleton3D" index="6" unique_id=184343547]
 visible = false
 
-[node name="bulletCasing6" parent="RigArmature/Skeleton3D" index="7" unique_id=710718067]
+[node name="bulletCasing6" parent="RigArmature/Skeleton3D" index="7" unique_id=2136537961]
 visible = false
 
-[node name="AnimationPlayer" parent="." index="1" unique_id=1424847936]
+[node name="AnimationPlayer" parent="." index="1" unique_id=437588386]
 reset_on_save = false
 
 [node name="AnimationTree" type="AnimationTree" parent="." index="2" unique_id=1227782880]

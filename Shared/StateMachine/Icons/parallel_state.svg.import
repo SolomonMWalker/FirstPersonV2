@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bpbmbbvocdsgx"
-path="res://.godot/imported/atomic_state.svg-70d43fa751aaa653363249b0a9d09660.ctex"
+uid="uid://bd32fwdfb6ge8"
+path="res://.godot/imported/parallel_state.svg-a1d96bdab31165ef1b77f4813edb4611.ctex"
 metadata={
 "has_editor_variant": true,
 "vram_texture": false
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://StateMachine/Icons/atomic_state.svg"
-dest_files=["res://.godot/imported/atomic_state.svg-70d43fa751aaa653363249b0a9d09660.ctex"]
+source_file="res://Shared/StateMachine/Icons/parallel_state.svg"
+dest_files=["res://.godot/imported/parallel_state.svg-a1d96bdab31165ef1b77f4813edb4611.ctex"]
 
 [params]
 

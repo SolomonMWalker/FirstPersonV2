@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" uid="uid://dggxwrxcj3iow" path="res://Player/PlayerController.cs" id="1_player"]
 [ext_resource type="Script" uid="uid://mr4yjig6y86j" path="res://Player/ClamberController.cs" id="2_clamber"]
-[ext_resource type="Script" uid="uid://csfiuwgihnlal" path="res://StateMachine/StateMachine.cs" id="3_sm"]
-[ext_resource type="Script" uid="uid://crtr3umctqeyl" path="res://StateMachine/CompoundState.cs" id="4_compound"]
+[ext_resource type="Script" uid="uid://csfiuwgihnlal" path="res://Shared/StateMachine/StateMachine.cs" id="3_sm"]
+[ext_resource type="Script" uid="uid://crtr3umctqeyl" path="res://Shared/StateMachine/CompoundState.cs" id="4_compound"]
 [ext_resource type="Script" uid="uid://bcnx21w1ivrut" path="res://Player/States/LocomotingState.cs" id="5_locomoting"]
 [ext_resource type="Script" uid="uid://pv2h8072kpbq" path="res://Player/States/GroundedState.cs" id="6_grounded"]
 [ext_resource type="Script" uid="uid://df4qvvxj8qw6q" path="res://Player/States/InAirState.cs" id="7_inair"]
@@ -13,7 +13,7 @@
 [ext_resource type="Script" uid="uid://b1xxcgrt88eii" path="res://Player/States/CrouchingState.cs" id="11_crouching"]
 [ext_resource type="Script" uid="uid://d35li1co3iiqs" path="res://Player/States/ClamberingState.cs" id="12_clambering"]
 [ext_resource type="Script" uid="uid://d0n1ub471d1c2" path="res://Player/CameraController.cs" id="13_camera"]
-[ext_resource type="PackedScene" uid="uid://ddbsaxux3ovur" path="res://player_rig.tscn" id="13_dkpta"]
+[ext_resource type="PackedScene" uid="uid://bhpfu0khveksh" path="res://Player/Rig/player_rig.tscn" id="13_dkpta"]
 [ext_resource type="Script" uid="uid://cyqb6ca3osvw2" path="res://Player/ViewmodelRenderer.cs" id="15_viewmodel"]
 [ext_resource type="Shader" uid="uid://3fg3j5w7j2rx" path="res://Assets/Materials/viewmodel.gdshader" id="16_vmshader"]
 
