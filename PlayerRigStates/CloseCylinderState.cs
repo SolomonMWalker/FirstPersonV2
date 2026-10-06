@@ -9,8 +9,7 @@ public partial class CloseCylinderState : AtomicState
     [Export] public RevolverController RevolverController { get; set; }
     [Export] public RigController RigController { get; set; }
 
-    // Reach-to-close, then the close itself.
-    private int _phase;
+    private bool _closing;
 
     public override void _Ready()
     {
@@ -21,22 +20,21 @@ public partial class CloseCylinderState : AtomicState
     public override void StateEntered()
     {
         base.StateEntered();
-        _phase = 0;
+        _closing = false;
         RigController.Travel("Reload/ToClose");
         GD.Print($"[reload] {Name} tree={RigController.CurrentNode} ammo={RevolverController.ammoInCylinder} reserve={RevolverController.reserveAmmo} left={RevolverController.reloadRemaining}");
     }
 
     public override void StatePhysicsProcessing(double delta)
     {
-        if (_phase != 0 || !RigController.IsCurrentAnimationFinished()) return;
-        _phase = 1;
+        if (_closing || !RigController.IsCurrentAnimationFinished()) return;
+        _closing = true;
         RigController.Travel("Reload/Close");
     }
 
     protected virtual void AddTransitions()
     {
-        // No Interrupt edge, deliberately: a fire press while the cylinder is shutting is ignored.
-        // The player presses again once the gun is back in idle.
-        AddTransition("Idle", () => _phase == 1 && RigController.IsCurrentAnimationFinished());
+        // No Interrupt edge: fire is ignored while closing.
+        AddTransition("Idle", () => _closing && RigController.IsCurrentAnimationFinished());
     }
 }

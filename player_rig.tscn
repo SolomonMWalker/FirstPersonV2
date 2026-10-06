@@ -181,7 +181,7 @@ states/ToClose/position = Vector2(780, 100)
 states/Turn/node = SubResource("Anim_ReloadTurn")
 states/Turn/position = Vector2(554.6667, 26)
 transitions = ["Start", "InsertFirst", SubResource("Rt_start_first"), "InsertFirst", "ToClose", SubResource("Rt_first_close"), "InsertFirst", "Turn", SubResource("Rt_first_turn"), "InsertFirst", "RevolverReloadInterrupt", SubResource("Rt_first_int"), "Turn", "InsertNext", SubResource("Rt_turn_next"), "Turn", "RevolverReloadInterrupt", SubResource("Rt_turn_int"), "InsertNext", "ToClose", SubResource("Rt_next_close"), "InsertNext", "Turn", SubResource("Rt_next_turn"), "InsertNext", "RevolverReloadInterrupt", SubResource("Rt_next_int"), "ToClose", "Close", SubResource("Rt_toclose_close"), "RevolverReloadInterrupt", "Close", SubResource("Rt_int_close"), "Close", "End", SubResource("Rt_close_end")]
-graph_offset = Vector2(68, -17)
+graph_offset = Vector2(440, 13)
 
 [sub_resource type="AnimationNodeAnimation" id="Anim_OpenAim"]
 animation = &"RevolverRigReloadStartOpenCylinderAim"
@@ -228,10 +228,10 @@ states/Start/position = Vector2(100, 240)
 transitions = ["Start", "Hip", SubResource("Rr_start_hip"), "Hip", "Aim", SubResource("Rr_hip_aim"), "Aim", "Hip", SubResource("Rr_aim_hip"), "Hip", "RevolverRigReloadStartOpenCylinderHip", SubResource("Rr_hip_openhip"), "Aim", "RevolverRigReloadStartOpenCylinderAim", SubResource("Rr_aim_openaim"), "RevolverRigReloadStartOpenCylinderHip", "Reload", SubResource("Rr_openhip_reload"), "RevolverRigReloadStartOpenCylinderAim", "Reload", SubResource("Rr_openaim_reload"), "Reload", "Hip", SubResource("Rr_reload_hip"), "Reload", "Aim", SubResource("Rr_reload_aim")]
 graph_offset = Vector2(25, 72)
 
-[node name="PlayerRig" unique_id=1490377202 node_paths=PackedStringArray("AnimationTree", "Revolver") instance=ExtResource("1_3mbro")]
+[node name="PlayerRig" unique_id=1490377202 node_paths=PackedStringArray("Revolver", "AnimationTree") instance=ExtResource("1_3mbro")]
 script = ExtResource("2_jlf0t")
-AnimationTree = NodePath("AnimationTree")
 Revolver = NodePath("WeaponControllers/RevolverController")
+AnimationTree = NodePath("AnimationTree")
 
 [node name="Skeleton3D" parent="RigArmature" parent_id_path=PackedInt32Array(1907299206) index="0" unique_id=314929608]
 bones/1/position = Vector3(0.62319916, -0.23332143, -0.69142526)

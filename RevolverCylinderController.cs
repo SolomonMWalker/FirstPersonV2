@@ -14,45 +14,28 @@ public partial class RevolverCylinderController : Node
     [Export] public PackedScene ShellScene { get; set; }
     [Export] public float EjectSpeed { get; set; } = 2.0f;
     [Export] public float EjectSpread { get; set; } = 0.4f;
-    // The casings are skinned entirely to this bone, so it defines both where each chamber is
-    // and which way is "out of the cylinder".
+    // Casings are skinned to this bone; it defines chamber positions and eject direction.
     [Export] public string CylinderBoneName { get; set; } = "revolverCylinderRotationBone";
-    
-    // Where the cylinder rests with `bulletsLeft` rounds in it -- 0, 60, 120 ... 360 -- the one
-    // table every rotation below looks into. Ported from the FirstPerson project's
-    // CylinderController._bulletInTopLeftBasis, and checked against the chamber angles measured
-    // out of Arms.blend: all six positions agree.
-    //
-    // Positive, because the chambers are numbered so that bullet 6 comes under the hammer first.
-    // The fire order and this sign are the same fact, not two.
-    //
-    // The model's rest does not put the right chamber under the hammer -- it sits one round
-    // clockwise. PhaseDegrees rotates the whole cycle rigidly to line up: every position and the
-    // startup seed in _Ready move together, so no delta changes and nothing can desynchronise.
-    //
-    // This is only safe BECAUSE _Ready seeds SpinDegrees from ShootPosition. Without that seed
-    // SpinDegrees starts at a hard 0 and a non-zero phase makes just the first rotation wrong,
-    // which is what an earlier 29.3 here did -- it turned cock #1 into an 89.3-degree turn.
-    //
-    // One chamber, so a whole 60. If it lands one chamber the other way, flip the sign.
-    private const float PhaseDegrees = -60f;
 
-    private static float ShootPosition(int bulletsLeft) => (6 - bulletsLeft) * 60f + PhaseDegrees;
+    // The model rests one chamber off. Relies on _Ready seeding the rotation from ShootPosition.
+    private const float PhaseDegrees = -60f;
+    private const float DegreesPerChamber = 60f;
+    private const float AnimationFrame = 1f / 24f;
+
+    // Cylinder angle with `bulletsLeft` rounds loaded.
+    private static float ShootPosition(int bulletsLeft) =>
+        (RevolverController.CylinderCapacity - bulletsLeft) * DegreesPerChamber + PhaseDegrees;
 
     public override void _Ready()
     {
         base._Ready();
         TintChambersForDebug();
-        // The invariant the whole scheme rests on: the cylinder sits at ShootPosition of whatever
-        // is loaded. Seed it, so starting part-loaded from the inspector is not a phase error.
+        // Invariant: the cylinder always rests at ShootPosition(ammoInCylinder).
         RotateCylinderTo(ShootPosition(RevolverController.ammoInCylinder), 0f);
     }
 
-    // ponytail: debug aid so live rounds vs spent cases are readable at a glance.
-    // MaterialOverride, so the meshes' real materials are left alone. ViewmodelRenderer reads
-    // these back through GetActiveMaterial() and folds the colour into the viewmodel shader, so
-    // this has to stay a plain BaseMaterial3D and has to run first -- it does, the rig readies
-    // before the renderer node. Delete the _Ready call to turn it off.
+    // ponytail: debug tint for live vs spent rounds; delete the _Ready call to turn it off.
+    // Must stay a BaseMaterial3D and run before ViewmodelRenderer, which reads it back.
     private void TintChambersForDebug()
     {
         Tint(Bullets, Colors.Blue);
@@ -69,34 +52,27 @@ public partial class RevolverCylinderController : Node
         }
     }
 
-    // Cocking advances to the chamber this shot will fire -- which is exactly where the cylinder
-    // rests once ammoInCylinder drops by one.
-    // Cocking advances to where the cylinder will rest once this shot is spent: +60.
     public void RotateCylinderForPushHammerDown()
     {
-        RotateCylinderTo(ShootPosition(RevolverController.ammoInCylinder - 1), (3.0f/24.0f));
+        RotateCylinderTo(ShootPosition(RevolverController.ammoInCylinder - 1), 3 * AnimationFrame);
     }
 
-    // Reloading runs the table the other way: -60, bringing the next empty chamber up to the same
-    // position that fires. That opposition is the whole scheme -- it needs no second constant, and
-    // adding one is what previously made the open step one way and every turn after it step back.
     public void RotateCylinderForReload()
     {
-        RotateCylinderTo(ShootPosition(RevolverController.ammoInCylinder + 1), (6.0f/24.0f));
+        RotateCylinderTo(ShootPosition(RevolverController.ammoInCylinder + 1), 6 * AnimationFrame);
     }
 
     public void RotateCylinderReloadTurnCylinder()
     {
-        RotateCylinderTo(ShootPosition(RevolverController.ammoInCylinder + 1), (3.0f/24.0f));
+        RotateCylinderTo(ShootPosition(RevolverController.ammoInCylinder + 1), 3 * AnimationFrame);
     }
 
-    // A no-op when the invariant holds -- each insert already raised the count to match where the
-    // cylinder is. It is here to snap the canonical position back if anything drifted.
+    // Normally a no-op; snaps back if anything drifted.
     public void RotateCylinderAfterReload()
     {
-        RotateCylinderTo(ShootPosition(RevolverController.ammoInCylinder), (6.0f/24.0f));
+        RotateCylinderTo(ShootPosition(RevolverController.ammoInCylinder), 6 * AnimationFrame);
     }
-    
+
     private void RotateCylinderTo(float targetRotationInDegrees, float durationInSeconds)
     {
         RevolverCylinderRotationModifier.RotateTo(targetRotationInDegrees, durationInSeconds);
@@ -105,8 +81,7 @@ public partial class RevolverCylinderController : Node
     public void FireBullet()
     {
         if (RevolverController.ammoInCylinder <= 0) return;
-        // Called before the count drops, so the round under the hammer is bullet number
-        // ammoInCylinder -- the highest one still loaded. Arrays are 0-based, hence the -1.
+        // Called before the count drops.
         var indexOfBullet = RevolverController.ammoInCylinder - 1;
         Bullets[indexOfBullet].Visible = false;
         BulletShells[indexOfBullet].Visible = true;
@@ -114,11 +89,8 @@ public partial class RevolverCylinderController : Node
 
     public void ReloadBullet()
     {
-        if (RevolverController.ammoInCylinder >= 6) return;
-        // Called before the count rises, so the round being seated is bullet number
-        // ammoInCylinder + 1 -- the next one up. Firing takes the highest loaded and reloading
-        // adds the next, so bullets 1..ammoInCylinder are live and the rest spent: always one
-        // contiguous block, which is what makes an interrupted reload leave a sane cylinder.
+        if (RevolverController.ammoInCylinder >= RevolverController.CylinderCapacity) return;
+        // Called before the count rises. Live rounds stay one contiguous block from index 0.
         var indexOfBullet = RevolverController.ammoInCylinder;
         Bullets[indexOfBullet].Visible = true;
         BulletShells[indexOfBullet].Visible = false;
@@ -126,7 +98,7 @@ public partial class RevolverCylinderController : Node
 
     public void EmptyBulletShellsFromCylinder()
     {
-        if (RevolverController.ammoInCylinder >= 6) return;
+        if (RevolverController.ammoInCylinder >= RevolverController.CylinderCapacity) return;
         if (ShellScene is null)
         {
             GD.PushError($"{Name}: ShellScene is not assigned; no casings will be ejected.");
@@ -142,12 +114,7 @@ public partial class RevolverCylinderController : Node
             return;
         }
 
-        // The cylinder bone's live world transform, which the rotation modifier is spinning.
-        // Bone local Y is the cylinder's axis -- that is what the rotation modifier spins about --
-        // and -Y is out of the BACK of the cylinder, toward the player. Measured off the chamber
-        // meshes: a live round and a spent case share a rear face at local Y -0.016, but the live
-        // round reaches +0.0446 where the case stops at +0.0326. That extra 12mm is the
-        // projectile, so +Y is the muzzle.
+        // Bone +Y points toward the muzzle, so -Y ejects out the back toward the player.
         var boneWorld = skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(boneIndex);
         var ejectDirection = -boneWorld.Basis.Y.Normalized();
         var player = GetTree().GetFirstNodeInGroup("player") as PhysicsBody3D;
@@ -163,13 +130,11 @@ public partial class RevolverCylinderController : Node
 
             var shell = ShellScene.Instantiate<RigidBody3D>();
             GetTree().CurrentScene.AddChild(shell);
-            // Started clear of the cylinder it is leaving, so the solver has nothing to resolve.
+            // Spawned clear of the cylinder so the solver doesn't push it out.
             shell.GlobalTransform = new Transform3D(boneWorld.Basis.Orthonormalized(),
                 spawn + ejectDirection * 0.02f);
 
-            // Spread ACROSS the ejection axis, not added in world axes. Added raw it fought the
-            // axis directly -- up to 41 degrees off backward, with the speed swinging 1.2 to
-            // 3.0 m/s. Projected, every shell leaves backward at EjectSpeed.
+            // Spread only across the ejection axis so speed and direction stay consistent.
             var spread = RandomSpread();
             spread -= ejectDirection * spread.Dot(ejectDirection);
             shell.LinearVelocity = (ejectDirection + spread).Normalized() * EjectSpeed;
@@ -177,27 +142,18 @@ public partial class RevolverCylinderController : Node
         }
     }
 
-    // The gun is drawn with an overridden projection at its own FOV (viewmodel.gdshader); a shell
-    // parented to the level is drawn with the world camera's. Same world point, different
-    // projection, so an uncorrected shell appears about 100px away from the cylinder -- it reads
-    // as ejecting from the muzzle.
-    // A point projects to roughly (x/z, y/z) / tan(fov/2) in view space, so scaling the spawn's
-    // view-space X and Y by the ratio of the two half-angle tangents makes the world camera draw
-    // it exactly where the gun is. Measured residual: 0.00 px.
-    // The trade is ~0.2 m of lateral world-space offset, which only matters once the shell has
-    // fallen away from the gun.
+    // Moves a viewmodel-FOV point so the world camera draws it in the same screen spot.
     private static Vector3 ToWorldPass(Vector3 point, Camera3D worldCamera, float viewmodelFov)
     {
         if (worldCamera is null || viewmodelFov <= 0f) return point;
-        var k = Mathf.Tan(Mathf.DegToRad(worldCamera.Fov * 0.5f))
-                / Mathf.Tan(Mathf.DegToRad(viewmodelFov * 0.5f));
-        var eye = worldCamera.GlobalTransform;
-        var local = eye.AffineInverse() * point;
-        return eye * new Vector3(local.X * k, local.Y * k, local.Z);
+        var fovScale = Mathf.Tan(Mathf.DegToRad(worldCamera.Fov * 0.5f))
+                       / Mathf.Tan(Mathf.DegToRad(viewmodelFov * 0.5f));
+        var cameraTransform = worldCamera.GlobalTransform;
+        var viewSpacePoint = cameraTransform.AffineInverse() * point;
+        return cameraTransform * new Vector3(viewSpacePoint.X * fovScale, viewSpacePoint.Y * fovScale, viewSpacePoint.Z);
     }
 
-    // These meshes are skinned, so their node transform is the skeleton's, not the chamber's.
-    // The chamber's real position has to come back through the skinning chain.
+    // Skinned meshes report the skeleton's transform, so resolve through the skin bind pose.
     private Vector3 ChamberPosition(Skeleton3D skeleton, Transform3D boneWorld, int boneIndex,
         MeshInstance3D shellMesh)
     {
@@ -213,12 +169,9 @@ public partial class RevolverCylinderController : Node
             }
         }
 
-        // Not skinned to the cylinder bone: fall back to the bone itself rather than the
-        // skeleton origin, which is where the mesh's own transform would wrongly point.
         return boneWorld.Origin;
     }
 
-    // Componentwise in world axes; the caller projects out the part along the ejection axis.
     private Vector3 RandomSpread() => new(
         (float)GD.RandRange(-EjectSpread, EjectSpread),
         (float)GD.RandRange(-EjectSpread, EjectSpread),

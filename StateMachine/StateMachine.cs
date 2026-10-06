@@ -14,23 +14,16 @@ public class ChangeStateEventArgs(string stateName) : EventArgs
 [Icon("res://StateMachine/Icons/state_machine.svg")]
 public partial class StateMachine : Node
 {
-    // The top of the chart. Everything below it is found by walking children, so this is the only
-    // wiring the machine needs -- usually the single State child of this node.
+    // Defaults to the first State child.
     [Export] public State RootState { get; set; }
     public List<State> States { get; private set; } = [];
 
-    // Transitions applied during the last drain. Normally 0 or 1, and a handful when transient
-    // states chain. It is the only outward sign of two edges fighting over the same configuration:
-    // that thrash still settles on a plausible-looking state every frame, so the state name alone
-    // cannot tell it apart from a machine at rest -- this can, and a test can assert on it.
+    // Transitions applied during the last drain. Persistently >1 means two edges are fighting.
     public int LastTransitionCount { get; private set; }
 
-    // Safety cap: if more than this many transitions resolve in a single frame we assume a
-    // transition loop (e.g. two states that keep targeting each other) and bail out.
     private const int MaxTransitionsPerFrame = 64;
 
-    // Path relative to the root ("Grounded/Idle"), plus a bare-name index that only resolves when
-    // the name is unambiguous. Godot only enforces name uniqueness among siblings.
+    // Bare names resolve only when unique; Godot only enforces uniqueness among siblings.
     private readonly Dictionary<string, State> _statesByPath = [];
     private readonly Dictionary<string, State> _statesByName = [];
     private readonly HashSet<string> _ambiguousNames = [];
@@ -48,8 +41,6 @@ public partial class StateMachine : Node
     {
         base._Ready();
 
-        // Mirrors CompoundState.DefaultState: fall back to the first State child, so a machine
-        // built in a scene needs no node-path export to wire itself up.
         RootState ??= GetChildren().OfType<State>().FirstOrDefault();
 
         if (RootState is null)
@@ -99,8 +90,7 @@ public partial class StateMachine : Node
         }
     }
 
-    // Resolves lazily as well as at startup: transitions wired after the machine is ready would
-    // otherwise stay dead forever. Reports an unresolvable target once, not once per frame.
+    // Also called lazily, for transitions added after _Ready.
     private State ResolveTarget(State source, Transition transition)
     {
         if (transition.ToState is not null) return transition.ToState;
@@ -136,9 +126,7 @@ public partial class StateMachine : Node
         States.ForEach(s => s.StateChangeRequired += HandleChangeStateEvent);
     }
 
-    // Imperative path: a state raised OnStateChangeRequired. We only enqueue here; the change is
-    // applied from the tick. This is what keeps a transition raised inside StateEntered from
-    // re-entering the machine mid-transition.
+    // Queued rather than applied, so a request from StateEntered can't re-enter mid-transition.
     public void HandleChangeStateEvent(object sender, ChangeStateEventArgs args)
     {
         if (sender is not State source) return;
@@ -157,8 +145,7 @@ public partial class StateMachine : Node
 
     public override void _PhysicsProcess(double delta) => Tick(delta, physics: true);
 
-    // Transitions resolve on BOTH ticks. Guards that read physics facts (IsOnFloor, velocity) would
-    // otherwise be sampled at render cadence and miss inputs.
+    // Transitions resolve on both ticks so physics-based guards aren't sampled at render cadence.
     private void Tick(double delta, bool physics)
     {
         EvaluateTransitions();
@@ -171,10 +158,7 @@ public partial class StateMachine : Node
         }
     }
 
-    // ---- transition selection -------------------------------------------------------------
-
-    // Walk up from every active leaf, deepest source first, so a child's transition preempts an
-    // ancestor's. One transition per source per microstep.
+    // Deepest source first, so a child's transition preempts its ancestors'.
     private void EvaluateTransitions()
     {
         foreach (var leaf in ActiveLeaves())
@@ -193,10 +177,9 @@ public partial class StateMachine : Node
         }
     }
 
+    // At most one pending transition per source.
     private void Enqueue(PendingTransition pending)
     {
-        // Conflict rule: at most one transition per source state in flight. Deduping on the target
-        // instead would silently discard another source's transition effect.
         foreach (var queued in _pendingTransitions)
         {
             if (queued.Source == pending.Source) return;
@@ -205,8 +188,7 @@ public partial class StateMachine : Node
         _pendingTransitions.Enqueue(pending);
     }
 
-    // Drain the queue fully each tick, so chains of transient states resolve within one frame
-    // instead of one hop per frame.
+    // Drains fully so chains of transient states resolve in one frame.
     private void ProcessPendingTransitions()
     {
         var processed = 0;
@@ -224,26 +206,22 @@ public partial class StateMachine : Node
 
             var pending = _pendingTransitions.Dequeue();
 
-            // The source may have been exited by an earlier transition in this same drain.
+            // An earlier transition in this drain may have exited the source.
             if (!pending.Source.Enabled) continue;
 
             ApplyTransition(pending.Source, pending.Target, pending.Transition);
             LastTransitionCount++;
 
-            // Catch on-enter transitions of the states we just activated so they chain this tick.
             EvaluateTransitions();
         }
     }
 
-    // ---- the core algorithm ---------------------------------------------------------------
-
-    // Exit innermost-first, run the transition effect, then enter outermost-first (SCXML order).
+    // SCXML order: exit innermost-first, run the effect, enter outermost-first.
     private void ApplyTransition(State source, State target, Transition transition)
     {
         var domain = LeastCommonAncestor(source, target);
 
-        // A null domain means source and target share no proper ancestor (e.g. targeting the root),
-        // so the entire configuration leaves, root included.
+        // Null domain: the whole configuration exits, root included.
         List<State> exiting = [];
         if (domain is null) exiting.AddRange(ActiveConfiguration());
         else CollectActiveDescendants(domain, exiting);
@@ -263,8 +241,7 @@ public partial class StateMachine : Node
         }
     }
 
-    // The transition domain: the deepest state that is a PROPER ancestor of both source and target.
-    // Using proper ancestors is what makes an external self-transition exit and re-enter its state.
+    // Proper ancestors only, so an external self-transition exits and re-enters its state.
     private static State LeastCommonAncestor(State source, State target)
     {
         var a = source.GetAncestorChain();
@@ -290,13 +267,12 @@ public partial class StateMachine : Node
         };
     }
 
-    // Active descendants of state, outermost first. Excludes state itself -- the domain does not exit.
+    // Outermost first, excluding state itself.
     private static void CollectActiveDescendants(State state, List<State> outList)
     {
         switch (state)
         {
             case null:
-                // No common ancestor: the whole machine is leaving, root included.
                 return;
             case CompoundState c when c.ActiveState is { Enabled: true }:
                 outList.Add(c.ActiveState);
@@ -313,8 +289,7 @@ public partial class StateMachine : Node
         }
     }
 
-    // Entry set from state down to target, then default entry below it. Parallel siblings that are
-    // not on the path get their own default entry.
+    // Parallel siblings off the path get default entry.
     private static void CollectEntry(State state, HashSet<State> onPath, State target, List<State> outList)
     {
         outList.Add(state);
@@ -345,8 +320,6 @@ public partial class StateMachine : Node
         }
     }
 
-    // Default entry: a compound resolves to its EntryState (DefaultState, or the child it last had
-    // active if it remembers), a parallel enters every region.
     private static void CollectDefaultEntry(State state, List<State> outList)
     {
         switch (state)
@@ -378,9 +351,7 @@ public partial class StateMachine : Node
         }
     }
 
-    // ---- queries --------------------------------------------------------------------------
-
-    // The active states, outermost first. Materialised because transitions mutate the tree.
+    // Outermost first.
     public List<State> ActiveConfiguration()
     {
         if (RootState is null || !RootState.Enabled) return [];

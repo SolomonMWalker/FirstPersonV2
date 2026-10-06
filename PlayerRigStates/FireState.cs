@@ -37,8 +37,6 @@ public partial class FireState : AtomicState
 
     protected virtual void AddTransitions()
     {
-        // RevolverController.Fire() already cleared isHammerDown, so Idle lands on the
-        // hammer-up clip when we get back.
         AddTransition("Idle", () => RigController.IsCurrentAnimationFinished());
     }
 }

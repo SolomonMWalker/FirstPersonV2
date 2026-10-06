@@ -17,8 +17,7 @@ public partial class StaggeredState : GruntState
 
     protected override void AddTransitions()
     {
-        // Unlike the aim/fire pair, stagger's exits are AtEnd + Enabled -- the tree parks on the
-        // last frame and waits for code -- so the finished check is safe here.
+        // Safe here: stagger's tree exits wait for code instead of auto-advancing.
         AddTransition("Active", () => Animator.IsCurrentAnimationFinished());
     }
 }

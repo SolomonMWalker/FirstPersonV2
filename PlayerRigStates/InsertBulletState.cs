@@ -18,7 +18,6 @@ public partial class InsertBulletState : AtomicState
     public override void StateEntered()
     {
         base.StateEntered();
-        // This state seats one round; claim it before the guards read what is left.
         RevolverController.reloadRemaining--;
         RigController.Travel("Reload/InsertNext");
         GD.Print($"[reload] {Name} tree={RigController.CurrentNode} ammo={RevolverController.ammoInCylinder} reserve={RevolverController.reserveAmmo} left={RevolverController.reloadRemaining}");
@@ -26,7 +25,7 @@ public partial class InsertBulletState : AtomicState
 
     protected virtual void AddTransitions()
     {
-        // Not until the clip is on screen: a travel still in flight has nowhere to abort from.
+        // Can't abort a travel still in flight.
         AddTransition("Interrupt",
             () => RevolverController.reloadInterrupted && RigController.IsTravelComplete());
         AddTransition("TurnCylinder",

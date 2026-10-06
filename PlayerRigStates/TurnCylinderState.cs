@@ -24,7 +24,7 @@ public partial class TurnCylinderState : AtomicState
 
     protected virtual void AddTransitions()
     {
-        // Not until the clip is on screen: a travel still in flight has nowhere to abort from.
+        // Can't abort a travel still in flight.
         AddTransition("Interrupt",
             () => RevolverController.reloadInterrupted && RigController.IsTravelComplete());
         AddTransition("InsertNextBullet", () => RigController.IsCurrentAnimationFinished());

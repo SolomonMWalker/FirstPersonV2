@@ -9,7 +9,7 @@ public partial class AimState : AtomicState
     [Export] public RevolverController RevolverController { get; set; }
     [Export] public RigController RigController { get; set; }
 
-    // The Action region's Idle state. Stance may only change while it is active.
+    // Stance only changes while this is active.
     [Export] public State Idle { get; set; }
 
     public override void _Ready()

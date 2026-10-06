@@ -9,8 +9,7 @@ public partial class InterruptState : AtomicState
     [Export] public RevolverController RevolverController { get; set; }
     [Export] public RigController RigController { get; set; }
 
-    // The abort reach, then the same close clip the normal path uses.
-    private int _phase;
+    private bool _closing;
 
     public override void _Ready()
     {
@@ -21,24 +20,22 @@ public partial class InterruptState : AtomicState
     public override void StateEntered()
     {
         base.StateEntered();
-        // Consumed here, not in the guard: the guard is polled on both ticks, and clearing it
-        // there would drop the flag before this state got to act on it.
+        // Consumed here, not in the guard, which is polled on both ticks.
         RevolverController.reloadInterrupted = false;
-        _phase = 0;
-        // The nested node is RevolverReloadInterrupt -- the one nested state without a short name.
+        _closing = false;
         RigController.Travel("Reload/RevolverReloadInterrupt");
         GD.Print($"[reload] {Name} tree={RigController.CurrentNode} ammo={RevolverController.ammoInCylinder} reserve={RevolverController.reserveAmmo} left={RevolverController.reloadRemaining}");
     }
 
     public override void StatePhysicsProcessing(double delta)
     {
-        if (_phase != 0 || !RigController.IsCurrentAnimationFinished()) return;
-        _phase = 1;
+        if (_closing || !RigController.IsCurrentAnimationFinished()) return;
+        _closing = true;
         RigController.Travel("Reload/Close");
     }
 
     protected virtual void AddTransitions()
     {
-        AddTransition("Idle", () => _phase == 1 && RigController.IsCurrentAnimationFinished());
+        AddTransition("Idle", () => _closing && RigController.IsCurrentAnimationFinished());
     }
 }

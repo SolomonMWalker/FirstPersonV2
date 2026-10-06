@@ -19,10 +19,7 @@ public abstract partial class State : Node
         return [this];
     }
 
-    // Declarative outgoing transitions, evaluated by the StateMachine while this state is active.
-    // Transitions on a compound/parallel state are evaluated while ANY descendant is active, and a
-    // descendant's own transition preempts them (deepest source wins). Evaluated in insertion order;
-    // first match wins. Optional: states can still transition imperatively via OnStateChangeRequired.
+    // Evaluated in order while this state or any descendant is active; first passing guard wins.
     public List<Transition> Transitions { get; } = [];
 
     public Transition AddTransition(string toStateName, Func<bool> guard = null, Action onTransition = null)
@@ -32,7 +29,7 @@ public abstract partial class State : Node
         return transition;
     }
 
-    // Preferred overload: rename-safe, needs no lookup or startup validation.
+    // Preferred: rename-safe.
     public Transition AddTransition(State toState, Func<bool> guard = null, Action onTransition = null)
     {
         var transition = new Transition(toState, guard, onTransition);
@@ -40,7 +37,6 @@ public abstract partial class State : Node
         return transition;
     }
 
-    // The first transition whose guard currently passes, or null if none are eligible.
     public Transition GetEligibleTransition()
     {
         foreach (var transition in Transitions)
@@ -53,13 +49,12 @@ public abstract partial class State : Node
 
     public bool Enabled { get; private set; }
 
-    // Plain flag setters. They do NOT cascade -- the StateMachine computes the exact exit and entry
-    // sets from the least common ancestor and enters/exits each state itself.
+    // Non-cascading; the StateMachine enters and exits each state itself.
     public void Enable() => Enabled = true;
 
     public void Disable() => Enabled = false;
 
-    // The enter/exit hooks. Override these; never Enable/Disable.
+    // Override these, not Enable/Disable.
     public virtual void StateEntered()
     {
         Enable();
@@ -75,7 +70,7 @@ public abstract partial class State : Node
 
     public virtual string GetFullStateString() => "";
 
-    // Strict ancestors that are States, outermost first. Excludes this state.
+    // Outermost first, excluding this state.
     public List<State> GetAncestorChain()
     {
         List<State> chain = [];

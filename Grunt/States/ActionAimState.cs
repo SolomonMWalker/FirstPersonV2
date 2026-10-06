@@ -11,10 +11,7 @@ public partial class ActionAimState : GruntState
 
     protected override void AddTransitions()
     {
-        // aimGun -> fireGun is AtEnd + Auto in the AnimationTree, so the tree leads and the chart
-        // follows it. Waiting on IsCurrentAnimationFinished() instead would deadlock: once the
-        // tree advances on its own, its current node stops matching the travel target and the
-        // travel never reads as complete. See AnimationTreeDriver.CurrentNode.
+        // The tree auto-advances aimGun -> fireGun; IsCurrentAnimationFinished would deadlock.
         AddTransition("Fire", () => Animator.CurrentNode.EndsWith("fireGun"));
     }
 }

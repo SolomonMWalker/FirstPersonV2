@@ -4,7 +4,6 @@ using Godot;
 
 namespace FirstPerson.StateMachines;
 
-// All children are active whenever this state is active.
 [GlobalClass]
 [Icon("res://StateMachine/Icons/parallel_state.svg")]
 public partial class ParallelState : State

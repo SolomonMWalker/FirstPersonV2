@@ -5,23 +5,17 @@ using Godot;
 
 namespace FirstPerson.StateMachines;
 
-// Exactly one child is active at a time. The StateMachine owns ActiveState; it is updated as part
-// of computing the entry set, so this class no longer decides anything about transitions itself.
+// Exactly one child active at a time; ActiveState is set by the StateMachine.
 [GlobalClass]
 [Icon("res://StateMachine/Icons/compound_state.svg")]
 public partial class CompoundState : State
 {
-    // Which child this region enters when nothing says otherwise. Unset falls back to the first
-    // State child, so a region with an obvious starting state needs no wiring.
+    // Defaults to the first State child.
     [Export] public State DefaultState;
 
-    // Shallow history (SCXML's <history type="shallow">). Off by default: re-entering resolves to
-    // DefaultState. On, the region resumes whichever child it was in when it last exited, so a
-    // transition that suspends it -- one taken by an ancestor, or by a parallel sibling region --
-    // gives it back unchanged instead of resetting it.
+    // Shallow history: re-entry resumes the last active child instead of DefaultState.
     [Export] public bool RememberActiveState;
 
-    // Where default entry lands: the remembered child, or the declared default.
     public State EntryState => RememberActiveState && ActiveState is not null ? ActiveState : DefaultState;
 
     public List<State> ChildrenStates { get; private set; } = [];
