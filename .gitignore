@@ -7,3 +7,7 @@
 *.blend2
 *.blend3
 *.blend@
+
+# graphify machine-local files
+graphify-out/.graphify_python
+graphify-out/cache/
