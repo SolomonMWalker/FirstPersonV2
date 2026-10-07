@@ -43,7 +43,7 @@ _subresources={
 "animations": {
 "RESET": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://Assets/Animations/RESET.res",
+"save_to_file/fallback_path": "res://Assets/Animations/PlayerRig/Revolver/RESET.res",
 "save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://bpljujmw1ywef",
 "settings/loop_mode": 0,
@@ -2099,7 +2099,7 @@ _subresources={
 },
 "RevolverRigAimFire": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://Assets/Animations/RevolverRigAimFire.res",
+"save_to_file/fallback_path": "res://Assets/Animations/PlayerRig/Revolver/RevolverRigAimFire.res",
 "save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://dknb0gaaxp0ju",
 "settings/loop_mode": 0,
@@ -4155,7 +4155,7 @@ _subresources={
 },
 "RevolverRigAimHammerDownIdle": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://Assets/Animations/RevolverRigAimHammerDownIdle.res",
+"save_to_file/fallback_path": "res://Assets/Animations/PlayerRig/Revolver/RevolverRigAimHammerDownIdle.res",
 "save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://bgquloov1r2vl",
 "settings/loop_mode": 0,
@@ -6211,7 +6211,7 @@ _subresources={
 },
 "RevolverRigAimHammerUpIdle": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://Assets/Animations/RevolverRigAimHammerUpIdle.res",
+"save_to_file/fallback_path": "res://Assets/Animations/PlayerRig/Revolver/RevolverRigAimHammerUpIdle.res",
 "save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://bkrxf67ve1kuk",
 "settings/loop_mode": 0,
@@ -8267,7 +8267,7 @@ _subresources={
 },
 "RevolverRigHipFire": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://Assets/Animations/RevolverRigHipFire.res",
+"save_to_file/fallback_path": "res://Assets/Animations/PlayerRig/Revolver/RevolverRigHipFire.res",
 "save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://bte8dgp0vij1m",
 "settings/loop_mode": 0,
@@ -10323,7 +10323,7 @@ _subresources={
 },
 "RevolverRigHipHammerDownIdle": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://Assets/Animations/RevolverRigHipHammerDownIdle.res",
+"save_to_file/fallback_path": "res://Assets/Animations/PlayerRig/Revolver/RevolverRigHipHammerDownIdle.res",
 "save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://ceb1doqybwjg8",
 "settings/loop_mode": 0,
@@ -12379,7 +12379,7 @@ _subresources={
 },
 "RevolverRigHipHammerUpIdle": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://Assets/Animations/RevolverRigHipHammerUpIdle.res",
+"save_to_file/fallback_path": "res://Assets/Animations/PlayerRig/Revolver/RevolverRigHipHammerUpIdle.res",
 "save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://db8r5xakpq7u7",
 "settings/loop_mode": 0,
@@ -14435,7 +14435,7 @@ _subresources={
 },
 "RevolverRigPushHammerDownAim": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://Assets/Animations/RevolverRigPushHammerDownAim.res",
+"save_to_file/fallback_path": "res://Assets/Animations/PlayerRig/Revolver/RevolverRigPushHammerDownAim.res",
 "save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://bppr5qys7nh1q",
 "settings/loop_mode": 0,
@@ -16491,7 +16491,7 @@ _subresources={
 },
 "RevolverRigPushHammerDownHip": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://Assets/Animations/RevolverRigPushHammerDownHip.res",
+"save_to_file/fallback_path": "res://Assets/Animations/PlayerRig/Revolver/RevolverRigPushHammerDownHip.res",
 "save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://3cn8xvtpdbiv",
 "settings/loop_mode": 0,
@@ -18547,7 +18547,7 @@ _subresources={
 },
 "RevolverRigReloadCloseCylinder": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://Assets/Animations/RevolverRigReloadCloseCylinder.res",
+"save_to_file/fallback_path": "res://Assets/Animations/PlayerRig/Revolver/RevolverRigReloadCloseCylinder.res",
 "save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://db35dj371kpyk",
 "settings/loop_mode": 0,
@@ -20603,7 +20603,7 @@ _subresources={
 },
 "RevolverRigReloadEndOpenCylinderInsertFirstBullet": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://Assets/Animations/RevolverRigReloadEndOpenCylinderInsertFirstBullet.res",
+"save_to_file/fallback_path": "res://Assets/Animations/PlayerRig/Revolver/RevolverRigReloadEndOpenCylinderInsertFirstBullet.res",
 "save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://dmv15420de2f0",
 "settings/loop_mode": 0,
@@ -22659,7 +22659,7 @@ _subresources={
 },
 "RevolverRigReloadInsertNextBullet": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://Assets/Animations/RevolverRigReloadInsertNextBullet.res",
+"save_to_file/fallback_path": "res://Assets/Animations/PlayerRig/Revolver/RevolverRigReloadInsertNextBullet.res",
 "save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://c6uy1kose2ono",
 "settings/loop_mode": 0,
@@ -24715,7 +24715,7 @@ _subresources={
 },
 "RevolverRigReloadInterruptToCloseCylinder": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://Assets/Animations/RevolverRigReloadInterruptToCloseCylinder.res",
+"save_to_file/fallback_path": "res://Assets/Animations/PlayerRig/Revolver/RevolverRigReloadInterruptToCloseCylinder.res",
 "save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://flps5f1cmnht",
 "settings/loop_mode": 0,
@@ -26771,7 +26771,7 @@ _subresources={
 },
 "RevolverRigReloadStartOpenCylinderAim": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://Assets/Animations/RevolverRigReloadStartOpenCylinderAim.res",
+"save_to_file/fallback_path": "res://Assets/Animations/PlayerRig/Revolver/RevolverRigReloadStartOpenCylinderAim.res",
 "save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://1aiknyrr774i",
 "settings/loop_mode": 0,
@@ -28827,7 +28827,7 @@ _subresources={
 },
 "RevolverRigReloadStartOpenCylinderHip": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://Assets/Animations/RevolverRigReloadStartOpenCylinderHip.res",
+"save_to_file/fallback_path": "res://Assets/Animations/PlayerRig/Revolver/RevolverRigReloadStartOpenCylinderHip.res",
 "save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://cyjivke160y1i",
 "settings/loop_mode": 0,
@@ -30883,7 +30883,7 @@ _subresources={
 },
 "RevolverRigReloadToCloseCylinder": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://Assets/Animations/RevolverRigReloadToCloseCylinder.res",
+"save_to_file/fallback_path": "res://Assets/Animations/PlayerRig/Revolver/RevolverRigReloadToCloseCylinder.res",
 "save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://objhwqdokgwk",
 "settings/loop_mode": 0,
@@ -32939,7 +32939,7 @@ _subresources={
 },
 "RevolverRigReloadTurnCylinder": {
 "save_to_file/enabled": true,
-"save_to_file/fallback_path": "res://Assets/Animations/RevolverRigReloadTurnCylinder.res",
+"save_to_file/fallback_path": "res://Assets/Animations/PlayerRig/Revolver/RevolverRigReloadTurnCylinder.res",
 "save_to_file/keep_custom_tracks": true,
 "save_to_file/path": "uid://b246i6bu77nl6",
 "settings/loop_mode": 0,
