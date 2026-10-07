@@ -6,11 +6,11 @@ public partial class InCombatState : GruntState
     public override void StateEntered()
     {
         base.StateEntered();
-        Animator.Posture = "InCombat";
+        Animator.CombatState = GruntCombatState.InCombat;
     }
 
     protected override void AddTransitions()
     {
-        AddTransition("NotInCombat", () => !Animator.TestInCombat);
+        AddTransition("NotInCombat", () => !Grunt.IsInCombat);
     }
 }

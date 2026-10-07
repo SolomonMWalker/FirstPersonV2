@@ -6,17 +6,17 @@ public partial class FallingState : GruntState
     public override void StateEntered()
     {
         base.StateEntered();
-        Animator.Override = "falling";
+        Animator.Override = GruntOverride.Falling;
     }
 
     public override void StateExited()
     {
         base.StateExited();
-        Animator.Override = null;
+        Animator.Override = GruntOverride.None;
     }
 
     protected override void AddTransitions()
     {
-        AddTransition("Active", () => !Animator.TestFalling);
+        AddTransition("Active", () => Grunt.IsOnFloor());
     }
 }

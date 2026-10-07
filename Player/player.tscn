@@ -20,6 +20,7 @@
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
 
 [node name="Player" type="CharacterBody3D" unique_id=1878783226 node_paths=PackedStringArray("Clamber", "Rig") groups=["player"]]
+collision_layer = 5
 floor_snap_length = 0.35
 script = ExtResource("1_player")
 Clamber = NodePath("Components/ClamberComponent")

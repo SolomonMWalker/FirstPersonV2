@@ -6,11 +6,11 @@ public partial class IdleState : GruntState
     public override void StateEntered()
     {
         base.StateEntered();
-        Animator.Motion = "idle";
+        Animator.Motion = GruntMotion.Idle;
     }
 
     protected override void AddTransitions()
     {
-        AddTransition("Walking", () => Animator.TestWalking);
+        AddTransition("Walking", () => Grunt.IsMoving);
     }
 }

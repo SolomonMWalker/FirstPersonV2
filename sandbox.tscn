@@ -1,0 +1,58 @@
+[gd_scene format=3 uid="uid://keqc2pkudeb1"]
+
+[ext_resource type="Material" uid="uid://drljhmw7xl0se" path="res://Assets/Materials/checker_material.tres" id="1_cojph"]
+[ext_resource type="PackedScene" uid="uid://bqp5m2xk4v3n1" path="res://UI/pause_menu.tscn" id="2_p7lbm"]
+[ext_resource type="PackedScene" uid="uid://d4fberfjpttwp" path="res://Player/player.tscn" id="2_rvmsc"]
+[ext_resource type="PackedScene" uid="uid://dp2ofvgepctd8" path="res://Grunt/grunt_enemy.tscn" id="4_rvmsc"]
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_6cejb"]
+vertices = PackedVector3Array(-12.955251, -9.881447, -16.33245, -12.955251, -9.881447, 30.66755, 35.04475, -9.881447, 30.66755, 35.04475, -9.881447, -16.33245)
+polygons = [PackedInt32Array(3, 2, 0), PackedInt32Array(0, 2, 1)]
+geometry_parsed_geometry_type = 1
+agent_height = 1.75
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_f7g2b"]
+sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+ground_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+
+[sub_resource type="Sky" id="Sky_4ptq8"]
+sky_material = SubResource("ProceduralSkyMaterial_f7g2b")
+
+[sub_resource type="Environment" id="Environment_sb12i"]
+background_mode = 2
+sky = SubResource("Sky_4ptq8")
+glow_enabled = true
+
+[node name="TestLevel" type="Node3D" unique_id=2067639631]
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=1817046303]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.692664, 10.881447, -7.120163)
+navigation_mesh = SubResource("NavigationMesh_6cejb")
+
+[node name="CSGCombiner3D" type="CSGCombiner3D" parent="NavigationRegion3D" unique_id=1996816898]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.692664, -10.881447, 7.120163)
+layers = 17
+use_collision = true
+collision_layer = 17
+collision_mask = 0
+
+[node name="CSGBox3D" type="CSGBox3D" parent="NavigationRegion3D/CSGCombiner3D" unique_id=1457105698]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.69791317, 0, 0.04738617)
+use_collision = true
+size = Vector3(48.9, 1, 48)
+material = ExtResource("1_cojph")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=156305515]
+environment = SubResource("Environment_sb12i")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=343594926]
+transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
+shadow_enabled = true
+
+[node name="Player" parent="." unique_id=501260263 instance=ExtResource("2_rvmsc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.6967397, 0)
+
+[node name="PauseMenu" parent="." unique_id=683662993 instance=ExtResource("2_p7lbm")]
+
+[node name="Grunt_Enemy" parent="." unique_id=804714910 instance=ExtResource("4_rvmsc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.012365, 0.5, 16.952356)

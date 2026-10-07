@@ -12,7 +12,8 @@ public partial class GruntActiveState : ParallelState
     public override void _Ready()
     {
         base._Ready();
-        AddTransition("Falling", () => Animator.TestFalling);
+        var grunt = (GruntEnemy)Owner;
+        AddTransition("Falling", () => grunt.IsFalling);
         AddTransition("Staggered", () => Animator.TestStagger, () => Animator.TestStagger = false);
     }
 }

@@ -1,65 +1,92 @@
 using System.Collections.Generic;
 using Godot;
 
-// Each statechart region sets one facet; this composes them into a single animation path.
+public enum GruntCombatState { NotInCombat, InCombat }
+public enum GruntMotion { Idle, Walk }
+public enum GruntAction { None, Firing }
+public enum GruntOverride { None, Falling, Stagger, Dead }
+
+// Each statechart region sets one AnimParam; this composes them into a single animation path.
 public partial class GruntAnimator : AnimationTreeDriver
 {
-    private static readonly Dictionary<(string Posture, string Motion), string> Clips = new()
+    // Enum -> AnimationTree node name, so either can be renamed independently.
+    private static readonly Dictionary<GruntCombatState, string> CombatStateBranches = new()
     {
-        [("NotInCombat", "idle")] = "idleWithGunDown",
-        [("NotInCombat", "walk")] = "walkGunDown",
-        [("InCombat", "idle")] = "idleWithGunReady",
-        [("InCombat", "walk")] = "walkGunReady",
+        [GruntCombatState.NotInCombat] = "NotInCombat",
+        [GruntCombatState.InCombat] = "InCombat",
+    };
+
+    private static readonly Dictionary<(GruntCombatState, GruntMotion), string> Clips = new()
+    {
+        [(GruntCombatState.NotInCombat, GruntMotion.Idle)] = "idleWithGunDown",
+        [(GruntCombatState.NotInCombat, GruntMotion.Walk)] = "walkGunDown",
+        [(GruntCombatState.InCombat, GruntMotion.Idle)] = "idleWithGunReady",
+        [(GruntCombatState.InCombat, GruntMotion.Walk)] = "walkGunReady",
+    };
+
+    // Firing enters at aimGun; the tree auto-advances to fireGun.
+    private static readonly Dictionary<GruntAction, string> Actions = new()
+    {
+        [GruntAction.Firing] = "aimGun",
+    };
+
+    // TODO: Dead has no tree node yet.
+    private static readonly Dictionary<GruntOverride, string> Overrides = new()
+    {
+        [GruntOverride.Falling] = "falling",
+        [GruntOverride.Stagger] = "stagger",
     };
 
     [ExportGroup("Test drivers")]
     // Temporary until perception, movement and damage exist.
-    [Export] public bool TestInCombat { get; set; }
-    [Export] public bool TestWalking { get; set; }
     [Export] public bool TestFire { get; set; }
-    [Export] public bool TestFalling { get; set; }
     [Export] public bool TestStagger { get; set; }
 
-    private string _posture = "NotInCombat";
-    private string _motion = "idle";
-    private string _action;
-    private string _override;
-    private bool _dirty = true;
+    // AnimParam values
+    private GruntCombatState _combatState = GruntCombatState.NotInCombat;
+    private GruntMotion _motion = GruntMotion.Idle;
+    private GruntAction _action = GruntAction.None;
+    private GruntOverride _override = GruntOverride.None;
 
-    // Write-only so regions can't read each other's facets.
-    public string Posture { set => Latch(ref _posture, value); }
-    public string Motion { set => Latch(ref _motion, value); }
-    public string Action { set => Latch(ref _action, value); }
-    public string Override { set => Latch(ref _override, value); }
+    // Set when an AnimParam field changes, so the next physics frame travels to the new animation.
+    private bool _animParamChangeSinceLastFrame = true;
 
-    private void Latch(ref string facet, string value)
+    // Write-only so regions can't read each other's AnimParams.
+    public GruntCombatState CombatState { set => AnimParamSet(ref _combatState, value); }
+    public GruntMotion Motion { set => AnimParamSet(ref _motion, value); }
+    public GruntAction Action { set => AnimParamSet(ref _action, value); }
+    public GruntOverride Override { set => AnimParamSet(ref _override, value); }
+
+    private void AnimParamSet<T>(ref T animParam, T value)
     {
-        if (facet == value) return;
-        facet = value;
-        _dirty = true;
+        if (EqualityComparer<T>.Default.Equals(animParam, value)) return;
+        animParam = value;
+        _animParamChangeSinceLastFrame = true;
     }
 
     public override void _Ready()
     {
         base._Ready();
-        // After the StateMachine, so facets set this frame travel this frame.
+        // After the StateMachine, so AnimParams set this frame travel this frame.
         ProcessPhysicsPriority = 1;
     }
 
-    // One Travel per frame; several facets can change in a single transition.
+    // One Travel per frame; several AnimParams can change in a single transition.
     public override void _PhysicsProcess(double delta)
     {
-        if (!_dirty) return;
-        _dirty = false;
-        Travel(Compose());
+        if (!_animParamChangeSinceLastFrame) return;
+        _animParamChangeSinceLastFrame = false;
+        Travel(ComposeAnimationPath());
     }
 
-    // Precedence: override, then action, then posture + motion.
-    private string Compose()
+    // Precedence: override, then action, then combat state + motion.
+    private string ComposeAnimationPath()
     {
-        if (_override is not null) return _override;
+        if (_override != GruntOverride.None) return Overrides[_override];
+        var branch = CombatStateBranches[_combatState];
         // Actions only exist in the InCombat branch.
-        if (_action is not null && _posture == "InCombat") return $"{_posture}/{_action}";
-        return $"{_posture}/{Clips[(_posture, _motion)]}";
+        if (_action != GruntAction.None && _combatState == GruntCombatState.InCombat)
+            return $"{branch}/{Actions[_action]}";
+        return $"{branch}/{Clips[(_combatState, _motion)]}";
     }
 }

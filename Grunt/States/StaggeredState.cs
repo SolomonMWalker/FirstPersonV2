@@ -6,13 +6,13 @@ public partial class StaggeredState : GruntState
     public override void StateEntered()
     {
         base.StateEntered();
-        Animator.Override = "stagger";
+        Animator.Override = GruntOverride.Stagger;
     }
 
     public override void StateExited()
     {
         base.StateExited();
-        Animator.Override = null;
+        Animator.Override = GruntOverride.None;
     }
 
     protected override void AddTransitions()

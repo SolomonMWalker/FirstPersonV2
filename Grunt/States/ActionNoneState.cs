@@ -6,11 +6,11 @@ public partial class ActionNoneState : GruntState
     public override void StateEntered()
     {
         base.StateEntered();
-        Animator.Action = null;
+        Animator.Action = GruntAction.None;
     }
 
     protected override void AddTransitions()
     {
-        AddTransition("Aim", () => Animator.TestFire, () => Animator.TestFire = false);
+        AddTransition("Firing", () => Animator.TestFire, () => Animator.TestFire = false);
     }
 }
