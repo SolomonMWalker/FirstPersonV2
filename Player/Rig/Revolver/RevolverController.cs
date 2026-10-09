@@ -8,6 +8,15 @@ public partial class RevolverController : Node
     [Export] public RevolverCylinderController RevolverCylinderController { get; set; }
     [Export] public State Idle { get; set; }
 
+    [ExportGroup("Shot")]
+    [Export(PropertyHint.None, "suffix:°")] public float HipSpreadDegrees { get; set; } = 2f;
+    [Export(PropertyHint.None, "suffix:°")] public float AimSpreadDegrees { get; set; } = 0.5f;
+    [Export] public int PelletsPerShot { get; set; } = 1;
+    [Export] public int DamagePerPellet { get; set; } = 50;
+
+    // Emitted synchronously from Fire(), which runs inside the player's physics step, so handlers may query physics.
+    [Signal] public delegate void OnFiredEventHandler(float spreadDegrees, int pellets, int damagePerPellet);
+
     public const int CylinderCapacity = 6;
 
     public bool CanAct => Idle is { Enabled: true };
@@ -69,6 +78,7 @@ public partial class RevolverController : Node
         GD.Print("Fire");
         isHammerDown = false;
         fireTrigger = true;
+        EmitSignalOnFired(aiming ? AimSpreadDegrees : HipSpreadDegrees, PelletsPerShot, DamagePerPellet);
     }
 
     public void PushHammerDown()

@@ -100,6 +100,7 @@ reload={
 3d_physics/layer_3="player"
 3d_physics/layer_4="hittable"
 3d_physics/layer_5="clamber"
+3d_physics/layer_6="interactable"
 
 [physics]
 

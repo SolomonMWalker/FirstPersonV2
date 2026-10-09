@@ -14,17 +14,19 @@
 [ext_resource type="Script" uid="uid://d35li1co3iiqs" path="res://Player/States/ClamberingState.cs" id="12_clambering"]
 [ext_resource type="Script" uid="uid://d0n1ub471d1c2" path="res://Player/CameraController.cs" id="13_camera"]
 [ext_resource type="PackedScene" uid="uid://bhpfu0khveksh" path="res://Player/Rig/player_rig.tscn" id="13_dkpta"]
+[ext_resource type="Script" uid="uid://bgrwjqpym7rme" path="res://Components/HitscanComponent.cs" id="15_pisgm"]
 [ext_resource type="Script" uid="uid://cyqb6ca3osvw2" path="res://Player/ViewmodelRenderer.cs" id="15_viewmodel"]
 [ext_resource type="Shader" uid="uid://3fg3j5w7j2rx" path="res://Assets/Materials/viewmodel.gdshader" id="16_vmshader"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
 
-[node name="Player" type="CharacterBody3D" unique_id=1878783226 node_paths=PackedStringArray("Clamber", "Rig") groups=["player"]]
+[node name="Player" type="CharacterBody3D" unique_id=1878783226 node_paths=PackedStringArray("Clamber", "Rig", "HitscanComponent") groups=["player"]]
 collision_layer = 5
 floor_snap_length = 0.35
 script = ExtResource("1_player")
 Clamber = NodePath("Components/ClamberComponent")
 Rig = NodePath("Camera3D/PlayerRig")
+HitscanComponent = NodePath("Components/HitscanComponent")
 
 [node name="StateMachine" type="Node" parent="." unique_id=620021452 node_paths=PackedStringArray("RootState")]
 script = ExtResource("3_sm")
@@ -76,11 +78,19 @@ script = ExtResource("13_camera")
 [node name="PlayerRig" parent="Camera3D" unique_id=1490377202 instance=ExtResource("13_dkpta")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, 0)
 
+[node name="InteractRaycast3D" type="RayCast3D" parent="Camera3D" unique_id=658428158]
+collision_mask = 32
+
 [node name="Components" type="Node3D" parent="." unique_id=77945987]
 
 [node name="ClamberComponent" type="Node3D" parent="Components" unique_id=1121582334 node_paths=PackedStringArray("Player")]
 script = ExtResource("2_clamber")
 Player = NodePath("../..")
+
+[node name="HitscanComponent" type="Node" parent="Components" unique_id=576166396 node_paths=PackedStringArray("Shooter")]
+script = ExtResource("15_pisgm")
+CollisionMask = 9
+Shooter = NodePath("../..")
 
 [node name="ViewmodelRenderer" type="Node" parent="." unique_id=96605071 node_paths=PackedStringArray("Viewmodel")]
 script = ExtResource("15_viewmodel")

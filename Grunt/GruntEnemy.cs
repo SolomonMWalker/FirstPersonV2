@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+using FirstPersonV3.Components;
 using Godot;
 
 namespace FirstPerson;
@@ -5,6 +8,12 @@ namespace FirstPerson;
 // Root of grunt_enemy.tscn. Owns the body's physics and the AI's tuning; behaviour lives in the StateMachine.
 public partial class GruntEnemy : CharacterBody3D
 {
+    [ExportGroup("References")]
+    [Export] public PhysicalBoneSimulator3D PhysicalBoneSimulator3D { get; set; }
+    [Export] public HealthComponent HealthComponent { get; set; }
+    [Export] public FlickerRedHitReactionComponent FlickerRedHitReactionComponent { get; set; }
+
+    [ExportGroup("Physics")]
     // Air time before Falling; absorbs IsOnFloor flicker on stairs, slope crests and small drops.
     [Export] public float FallGraceTime { get; set; } = 0.15f;
 
@@ -23,6 +32,8 @@ public partial class GruntEnemy : CharacterBody3D
     // Horizontal speed above which Locomotion plays the walk animation.
     [Export] public float WalkAnimationSpeed { get; set; } = 0.1f;
 
+    private List<PhysicalBone3DHitbox> _pBHitboxes = [];
+
     private float _airTime;
 
     public bool IsFalling => _airTime > FallGraceTime;
@@ -31,6 +42,8 @@ public partial class GruntEnemy : CharacterBody3D
     public bool IsInCombat { get; private set; }
 
     public bool IsMoving => HorizontalVelocity.LengthSquared() > WalkAnimationSpeed * WalkAnimationSpeed;
+
+    public bool IsDead { get; private set; } = false;
 
     public bool HasTarget => IsInstanceValid(Target);
 
@@ -50,7 +63,21 @@ public partial class GruntEnemy : CharacterBody3D
 
         if (CombatStartZone is not null)
             CombatStartZone.BodyEntered += OnCombatStartZoneBodyEntered;
+
+        _pBHitboxes = [.. PhysicalBoneSimulator3D.GetChildren().OfType<PhysicalBone3DHitbox>()];
+
+        WireUpSignals();
     }
+
+    private void WireUpSignals()
+    {
+        foreach (var hitbox in _pBHitboxes)
+            hitbox.Hit += OnHitboxHit;
+        HealthComponent.HealthAtZero += OnHealthAtZero;
+    }
+
+    private void OnHitboxHit(PhysicalBone3DHitbox source, int damageAmount, Vector3 damageSourceGlobalPosition) =>
+        OnHit(damageAmount, damageSourceGlobalPosition);
 
     private void OnCombatStartZoneBodyEntered(Node3D body)
     {
@@ -84,4 +111,18 @@ public partial class GruntEnemy : CharacterBody3D
     }
 
     private static Vector3 Flatten(Vector3 v) => new(v.X, 0f, v.Z);
+
+    private void OnHit(int damageAmount, Vector3 damageSourceGlobalPosition)
+    {
+        if(damageAmount > 0)
+        {
+            HealthComponent.ReduceHealth(damageAmount);
+            FlickerRedHitReactionComponent.FlickerRed();
+        }
+    }
+
+    private void OnHealthAtZero()
+    {
+        IsDead = true;
+    }
 }

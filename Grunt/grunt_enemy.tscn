@@ -2,7 +2,6 @@
 
 [ext_resource type="PackedScene" uid="uid://4vfprlv8ylw4" path="res://Assets/Blender/gruntBasicEnemy.glb" id="1_mo5yj"]
 [ext_resource type="Script" uid="uid://fwccxep82svk" path="res://Shared/PhysicalBone3DHitbox.cs" id="2_8e6o0"]
-[ext_resource type="Script" uid="uid://dkdcy5ijpp8oq" path="res://Components/HitboxComponent.cs" id="3_jxrls"]
 [ext_resource type="Script" uid="uid://csfiuwgihnlal" path="res://Shared/StateMachine/StateMachine.cs" id="4_n0ui7"]
 [ext_resource type="Script" uid="uid://crtr3umctqeyl" path="res://Shared/StateMachine/CompoundState.cs" id="6_naa58"]
 [ext_resource type="Script" uid="uid://1203ywfe4cex" path="res://Shared/StateMachine/AtomicState.cs" id="7_55hg3"]
@@ -22,6 +21,8 @@
 [ext_resource type="Script" uid="uid://hrh7u7v3fma5" path="res://Grunt/States/NoRotationState.cs" id="22_gnrt"]
 [ext_resource type="Script" uid="uid://ckp3so0u6okdr" path="res://Grunt/States/RotateToTargetState.cs" id="23_grtt"]
 [ext_resource type="Script" uid="uid://hpn6brm0wyfv" path="res://Grunt/States/RotateToMovementDirectionState.cs" id="24_grtm"]
+[ext_resource type="Script" uid="uid://33co80fpeiml" path="res://Components/HealthComponent.cs" id="25_hlth"]
+[ext_resource type="Script" uid="uid://cbk4xy1wmcho1" path="res://Components/FlickerRedHitReactionComponent.cs" id="26_flkr"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_6cejb"]
 radius = 0.35
@@ -214,9 +215,12 @@ graph_offset = Vector2(134, -39)
 [sub_resource type="SphereShape3D" id="SphereShape3D_6cejb"]
 radius = 10.0
 
-[node name="Grunt_Enemy" unique_id=804714910 node_paths=PackedStringArray("CombatStartZone", "NavAgent") instance=ExtResource("1_mo5yj")]
+[node name="Grunt_Enemy" unique_id=804714910 node_paths=PackedStringArray("PhysicalBoneSimulator3D", "HealthComponent", "FlickerRedHitReactionComponent", "CombatStartZone", "NavAgent") instance=ExtResource("1_mo5yj")]
 collision_layer = 0
 script = ExtResource("19_gene")
+PhysicalBoneSimulator3D = NodePath("GruntRig/Skeleton3D/PhysicalBoneSimulator3D")
+HealthComponent = NodePath("Components/HealthComponent")
+FlickerRedHitReactionComponent = NodePath("Components/FlickerRedHitReactionComponent")
 CombatStartZone = NodePath("CombatStartZone")
 NavAgent = NodePath("NavigationAgent3D")
 
@@ -533,13 +537,15 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1)
 
 [node name="Components" type="Node3D" parent="." index="3" unique_id=1636316671]
 
-[node name="HitboxComponent" type="Node" parent="Components" index="0" unique_id=1944817995 node_paths=PackedStringArray("HitboxParent")]
-script = ExtResource("3_jxrls")
-HitboxParent = NodePath("../../GruntRig/Skeleton3D/PhysicalBoneSimulator3D")
-
-[node name="GruntAnimator" type="Node3D" parent="Components" index="1" unique_id=203096929 node_paths=PackedStringArray("AnimationTree")]
+[node name="GruntAnimator" type="Node3D" parent="Components" index="0" unique_id=203096929 node_paths=PackedStringArray("AnimationTree")]
 script = ExtResource("8_gani")
 AnimationTree = NodePath("../../AnimationTree")
+
+[node name="HealthComponent" type="Node" parent="Components" index="1" unique_id=1873402215]
+script = ExtResource("25_hlth")
+
+[node name="FlickerRedHitReactionComponent" type="Node" parent="Components" index="2" unique_id=926148530]
+script = ExtResource("26_flkr")
 
 [node name="AnimationTree" type="AnimationTree" parent="." index="5" unique_id=150110889]
 tree_root = SubResource("AnimationNodeStateMachine_x1ur1")

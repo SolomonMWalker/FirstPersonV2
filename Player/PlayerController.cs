@@ -14,6 +14,8 @@ public partial class PlayerController : CharacterBody3D
 
 	[Export] public RigController Rig;
 
+	[Export] public HitscanComponent HitscanComponent { get; set; }
+
 	public Vector2 MoveInput { get; private set; }
 	public bool JumpPressed { get; private set; }
 	// Latched until consumed by entering Sprinting; re-armed only by releasing shift.
@@ -58,6 +60,7 @@ public partial class PlayerController : CharacterBody3D
 		_standHeight = _capsule.Height;
 
 		Clamber ??= GetNodeOrNull<ClamberController>("ClamberController");
+		Rig.Revolver.OnFired += OnRevolverFired;
 		// After the StateMachine, so MoveAndSlide uses the velocity the states just wrote.
 		ProcessPhysicsPriority = 1;
 		Input.MouseMode = Input.MouseModeEnum.Captured;
@@ -77,6 +80,11 @@ public partial class PlayerController : CharacterBody3D
 	{
 		Velocity = Velocity with { Y = JumpVelocity };
 		JumpedThisAirborne = true;
+	}
+
+	private void OnRevolverFired(float spreadDegrees, int pellets, int damagePerPellet)
+	{
+		HitscanComponent.FireHitscan(Camera.GlobalTransform, spreadDegrees, pellets, damagePerPellet);
 	}
 
 	public override void _PhysicsProcess(double delta)
